@@ -3,8 +3,21 @@
 #ifndef SG_TYPES_H_
 #define SG_TYPES_H_
 
+#if defined __StratifyOS__
 #include <mcu/types.h>
+#else
+//need to define u32, s32, u16, s16, etc
 #include <stdint.h>
+typedef uint8_t u8;
+typedef int8_t s8;
+typedef uint16_t u16;
+typedef int16_t s16;
+typedef uint32_t u32;
+typedef int32_t s32;
+typedef uint64_t u64;
+typedef int64_t s64;
+#endif
+
 #include <sys/types.h>
 
 #define SG_VERSION "0.0.1"
@@ -42,7 +55,7 @@ enum {
 #define SG_ENABLE_FLAG (1<<15)
 #define SG_FILL_FLAG (1<<14)
 
-typedef i16 sg_int_t;
+typedef s16 sg_int_t;
 typedef u16 sg_uint_t;
 typedef sg_uint_t sg_size_t;
 
@@ -83,7 +96,7 @@ typedef struct MCU_PACK {
 typedef struct MCU_PACK {
 	sg_size_t rx; //x radius
 	sg_size_t ry; //y radius
-	i16 start, stop; //start/stop angles
+	s16 start, stop; //start/stop angles
 } sg_arc_t;
 
 typedef struct MCU_PACK {
@@ -108,7 +121,7 @@ typedef struct MCU_PACK {
 
 typedef struct MCU_PACK {
 	u16 type; //type of primitive object
-	i16 rotation; //vector space rotation
+	s16 rotation; //vector space rotation
 	sg_point_t shift;
 	union {
 		sg_arc_t arc;
@@ -138,7 +151,7 @@ typedef struct MCU_PACK {
 /*! \brief Describes how an sg_icon_t is mapped to a sg_bitmap_t */
 typedef struct MCU_PACK {
 	sg_point_t shift; //shift within screen (absolute)
-	i16 rotation; //rotate within screen (absolute)
+	s16 rotation; //rotate within screen (absolute)
 	sg_dim_t size; //scaling
 	u8 thickness_fill; //execute fill items -- fill if SG_MAP_FILL_FLAG
 	u8 op;
