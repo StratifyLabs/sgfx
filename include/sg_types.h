@@ -36,7 +36,8 @@ typedef int64_t s64;
 #define SG_BOTTOM (SG_MAP_MAX)
 
 #define SG_ANIMATION_STEP_FLAG (1<<15)
-#define SG_MAP_FILL_FLAG (1<<8)
+#define SG_MAP_FILL_FLAG (1<<7)
+#define SG_MAP_THICKNESS_MASK ~(SG_MAP_FILL_FLAG)
 
 enum {
 	SG_LINE,
@@ -94,9 +95,10 @@ typedef struct MCU_PACK {
 } sg_triangle_t;
 
 typedef struct MCU_PACK {
-	sg_size_t rx; //x radius
-	sg_size_t ry; //y radius
-	s16 start, stop; //start/stop angles
+	sg_size_t rx /*! X radius */;
+	sg_size_t ry /*! Y radius */;
+	s16 start /*! Start angle */;
+	s16 stop /*!  Stop angle */;
 } sg_arc_t;
 
 typedef struct MCU_PACK {
@@ -119,41 +121,52 @@ typedef struct MCU_PACK {
 	//this must be 4 byte aligned
 } sg_bitmap_hdr_t;
 
+/*! \brief Icon Primitive Structure
+ * \details Describes an icon primitive */
 typedef struct MCU_PACK {
-	u16 type; //type of primitive object
-	s16 rotation; //vector space rotation
-	sg_point_t shift;
+	u16 type /*! type of primitive object (e.g. SG_LINE) */;
+	s16 rotation /*! Primitive rotation within the icon */;
+	sg_point_t shift /*! Primitive offset within the icon */;
 	union {
-		sg_arc_t arc;
+		sg_arc_t arc /*! Primitive data for SG_ARC */;
 		sg_triangle_t triangle;
-		sg_line_t line;
+		sg_line_t line /*! Primitive data for SG_LINE */;
 		sg_rect_t rect;
 		sg_circle_t circle;
 	};
 } sg_icon_primitive_t;
 
+
+/*! \brief Graphics Bounds Structure
+ * \details Describes an area using two points */
 typedef struct MCU_PACK {
-	sg_point_t top_left;
-	sg_point_t bottom_right;
+	sg_point_t top_left /*! Top left corner of the bounded area */;
+	sg_point_t bottom_right /*! Bottom right corner of the bounded area */;
 } sg_bounds_t;
 
-typedef struct HPWL_PACK {
-	sg_point_t point;
-	sg_dim_t dim;
+
+/*! \brief Graphics Region Structure
+ * \details Describes an area using a point and a dimension */
+typedef struct MCU_PACK {
+	sg_point_t point /*! Top left corner of the region */;
+	sg_dim_t dim /*! Dimesions of the region */;
 } sg_region_t;
 
+/*! \brief Graphics Icon Structure
+ * \details Describes a scalable graphic that can be drawn on a bitmap */
 typedef struct MCU_PACK {
 	u16 total /*! Total number of elements */;
 	u16 fill_total /*! Total number of fill elements */;
 	const sg_icon_primitive_t * elements;
 } sg_icon_t;
 
-/*! \brief Describes how an sg_icon_t is mapped to a sg_bitmap_t */
+/*! \brief Graphics Map Structure
+ * \details Describes how an sg_icon_t is mapped to a sg_bitmap_t */
 typedef struct MCU_PACK {
 	sg_point_t shift; //shift within screen (absolute)
 	s16 rotation; //rotate within screen (absolute)
 	sg_dim_t size; //scaling
-	u8 thickness_fill; //execute fill items -- fill if SG_MAP_FILL_FLAG
+	u8 o_thickness_fill; //execute fill items -- fill if SG_MAP_FILL_FLAG
 	u8 op;
 } sg_map_t;
 
