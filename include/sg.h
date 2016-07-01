@@ -197,21 +197,21 @@ void sg_pour(sg_bmap_t * bmap, sg_point_t p);
  */
 
 //drawing
-void sg_draw(sg_bmap_t * bitmap, const sg_icon_primitive_t * prim, const sg_map_t * map, sg_bounds_t * attr);
-void sg_draw_list(sg_bmap_t * bitmap, const sg_icon_primitive_t prim_list[], unsigned int total, const sg_map_t * map, sg_bounds_t * attr);
-void sg_draw_icon(sg_bmap_t * bitmap, const sg_icon_t * icon, const sg_map_t * map, sg_bounds_t * attr);
+void sg_draw(sg_bmap_t * bitmap, const sg_icon_primitive_t * prim, const sg_map_t * map, sg_bounds_t * bounds);
+void sg_draw_list(sg_bmap_t * bitmap, const sg_icon_primitive_t prim_list[], unsigned int total, const sg_map_t * map, sg_bounds_t * bounds);
+void sg_draw_icon(sg_bmap_t * bitmap, const sg_icon_t * icon, const sg_map_t * map, sg_bounds_t * bounds);
 
-static inline sg_dim_t sg_draw_attr_dim(const sg_bounds_t * attr){
+static inline sg_dim_t sg_draw_attr_dim(const sg_bounds_t * bounds){
 	sg_dim_t d;
-	d.w = attr->bottom_right.x - attr->top_left.x;
-	d.h = attr->bottom_right.y - attr->top_left.y;
+	d.w = bounds->bottom_right.x - bounds->top_left.x;
+	d.h = bounds->bottom_right.y - bounds->top_left.y;
 	return d;
 }
 
-static inline sg_point_t sg_draw_attr_center(const sg_bounds_t * attr){
+static inline sg_point_t sg_draw_attr_center(const sg_bounds_t * bounds){
 	sg_point_t p;
-	p.x = (attr->bottom_right.x + attr->top_left.x)/2;
-	p.y = (attr->bottom_right.y + attr->top_left.y)/2;
+	p.x = (bounds->bottom_right.x + bounds->top_left.x)/2;
+	p.y = (bounds->bottom_right.y + bounds->top_left.y)/2;
 	return p;
 }
 

@@ -18,7 +18,7 @@
 
 #define SG_FONT_FLAG_BOLD (1<<0)
 
-typedef struct MCU_TYPE {
+typedef struct MCU_PACK {
 	u8 type;
 	u8 flags;
 	u16 h;

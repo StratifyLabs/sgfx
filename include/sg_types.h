@@ -52,9 +52,16 @@ enum {
 	SG_OP_INV
 };
 
+enum {
+	SG_FORMAT_a1,
+	SG_FORMAT_a8,
+	SG_FORMAT_g1,
+	SG_FORMAT_r5g6b5,
+
+};
+
 #define SG_TYPE_MASK (0xFF)
 #define SG_ENABLE_FLAG (1<<15)
-#define SG_FILL_FLAG (1<<14)
 
 typedef s16 sg_int_t;
 typedef u16 sg_uint_t;
@@ -160,14 +167,37 @@ typedef struct MCU_PACK {
 	const sg_icon_primitive_t * elements;
 } sg_icon_t;
 
+#define SG_PEN_FLAG_SET (1<<0)
+#define SG_PEN_FLAG_CLR (1<<1)
+#define SG_PEN_FLAG_INVERT (1<<3)
+#define SG_PEN_FLAG_BLEND (1<<4)
+#define SG_PEN_MODE_MASK (SG_PEN_FLAG_SET|SG_PEN_FLAG_CLR|SG_PEN_FLAG_ASSIGN|SG_PEN_FLAG_INVERT|SG_PEN_FLAG_BLEND)
+#define SG_PEN_FLAG_FILL (1<<15)
+
+typedef struct MCU_PACK {
+	union {
+		u32 color;
+		u8 rgba[4];
+	};
+} sg_color_t;
+
+typedef struct MCU_PACK {
+	u16 o_flags;
+	u8 thickness;
+	u8 resd;
+	union {
+		u32 color;
+		u8 rgba[4];
+	};
+} sg_pen_t;
+
 /*! \brief Graphics Map Structure
  * \details Describes how an sg_icon_t is mapped to a sg_bitmap_t */
 typedef struct MCU_PACK {
 	sg_point_t shift; //shift within screen (absolute)
 	s16 rotation; //rotate within screen (absolute)
 	sg_dim_t size; //scaling
-	u8 o_thickness_fill; //execute fill items -- fill if SG_MAP_FILL_FLAG
-	u8 op;
+	sg_pen_t pen; //color, fill, thickness, operation
 } sg_map_t;
 
 

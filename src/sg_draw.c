@@ -26,7 +26,7 @@ void sg_draw(sg_bmap_t * bitmap, const sg_icon_primitive_t * prim, const sg_map_
 
 void sg_draw_icon(sg_bmap_t * bitmap, const sg_icon_t * icon, const sg_map_t * map, sg_bounds_t * attr){
 	unsigned int total;
-	if( map->o_thickness_fill == 0 ){
+	if( map->pen.o_flags & SG_PEN_FLAG_FILL ){
 		total = icon->total;
 	} else {
 		total = icon->total - icon->fill_total;
@@ -59,7 +59,7 @@ void draw_line(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * m
 	p2 = p->line.p;
 	sg_size_t thickness;
 
-	thickness = map->o_thickness_fill;
+	thickness = map->pen.thickness;
 	if( thickness == 0 ){
 		thickness = 1;
 	}
@@ -84,9 +84,9 @@ void draw_line(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * m
 	//add the option to invert the line
 
 	//now draw a line between the two points
-	if( map->op == SG_OP_CLR ){
+	if( map->pen.o_flags & SG_PEN_FLAG_CLR ){
 		sg_clr_line(bm, p1, p2, thickness);
-	} else if( map->op == SG_OP_INV ){
+	} else if( map->pen.o_flags & SG_PEN_FLAG_INVERT ){
 		sg_inv_line(bm, p1, p2, thickness);
 	} else {
 		sg_set_line(bm, p1, p2, thickness);
@@ -107,7 +107,7 @@ void draw_arc(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * ma
 	sg_size_t thickness;
 
 
-	thickness = map->o_thickness_fill;
+	thickness = map->pen.thickness;
 	if( thickness == 0 ){
 		thickness = 1;
 	}
@@ -167,8 +167,10 @@ void draw_arc(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * ma
 				if( pen.y > attr->bottom_right.y ){ attr->bottom_right.y = pen.y; }
 			}
 
-			if( map->op == SG_OP_CLR ){
+			if( map->pen.o_flags & SG_PEN_FLAG_CLR ){
 				sg_clr_pixel(bm, pen);
+			} else if( map->pen.o_flags & SG_PEN_FLAG_INVERT ){
+				sg_inv_pixel(bm, pen);
 			} else {
 				sg_set_pixel(bm, pen);
 			}
