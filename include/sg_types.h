@@ -46,11 +46,6 @@ enum {
 	SG_TYPE_TOTAL
 };
 
-enum {
-	SG_OP_SET,
-	SG_OP_CLR,
-	SG_OP_INV
-};
 
 enum {
 	SG_FORMAT_a1,

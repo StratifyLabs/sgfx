@@ -1,6 +1,7 @@
 //Copyright 2011-2016 Tyler Gilbert; All Rights Reserved
 
-
+#include <unistd.h>
+#include <stdio.h>
 #include <string.h>
 #include "sg.h"
 
@@ -60,27 +61,37 @@ void sg_fill(sg_bmap_t * mg, sg_bmap_data_t v, sg_int_t start, sg_size_t h){
 }
 
 
-void sg_pour(sg_bmap_t * mg, sg_point_t p){
+void sg_pour(sg_bmap_t * mg, sg_point_t p, const sg_pen_t * pen){
 	sg_int_t xmin, xmax;
 	sg_point_t above;
 	sg_point_t below;
 	u8 is_above, is_below;
+	u8 active;
+
+	if( pen->o_flags & SG_PEN_FLAG_SET ){
+		//sett the values to
+		active = 1;
+	} else {
+		active = 0;
+	}
 
 	if( !sg_x_visible(mg, p.x) ){
 		return;
 	}
 
-	sg_tst_hedge(mg, p, &xmin, &xmax); //find the bounding points xmin and xmax
-	is_above = !sg_tst_hline(mg, xmin, xmax, p.y+1, &(above.x)); //see if anywhere above the bounded region is blank
-	is_below = !sg_tst_hline(mg, xmin, xmax, p.y-1, &(below.x)); //see if anywhere below the bounded region is blank
+	//check the pen
+
+	sg_tst_hedge(mg, p, &xmin, &xmax, active); //find the bounding points xmin and xmax
+	is_above = !sg_tst_hline(mg, xmin, xmax, p.y+1, &(above.x), active); //see if anywhere above the bounded region is blank
+	is_below = !sg_tst_hline(mg, xmin, xmax, p.y-1, &(below.x), active); //see if anywhere below the bounded region is blank
 	sg_set_hline(mg, xmin, xmax, p.y, 1);
 	if( is_above ){
 		above.y = p.y+1;
-		sg_pour(mg, above); //if the above line has a blank spot -- fill it
+		sg_pour(mg, above, pen); //if the above line has a blank spot -- fill it
 	}
 	if( is_below ){
 		below.y = p.y-1;
-		sg_pour(mg, below); //if the below line has a blank spot -- fill it
+		sg_pour(mg, below, pen); //if the below line has a blank spot -- fill it
 	}
 }
 
@@ -135,7 +146,7 @@ int sg_assign_bitmap_area(sg_bmap_t * mg, sg_point_t dest, const sg_bmap_t * bit
 	return sg_set_bitmap_area(mg, dest, bitmap, p_src, d);
 }
 
-u8 sg_tst_hline(const sg_bmap_t * mg, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos){
+u8 sg_tst_hline(const sg_bmap_t * mg, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos, u8 active){
 	sg_point_t p;
 	if( !sg_y_visible(mg, y) ){
 		return 1;
@@ -144,7 +155,7 @@ u8 sg_tst_hline(const sg_bmap_t * mg, sg_int_t xmin, sg_int_t xmax, sg_int_t y, 
 	sg_bound_x(mg, &xmax);
 	p.y = y;
 	for(p.x = xmin; p.x < xmax; p.x++){
-		if( sg_tst_bounded_pixel(mg,p) == 0 ){
+		if( sg_tst_bounded_pixel(mg,p) != active ){
 			*pos = p.x;
 			return false;
 		}
@@ -152,14 +163,14 @@ u8 sg_tst_hline(const sg_bmap_t * mg, sg_int_t xmin, sg_int_t xmax, sg_int_t y, 
 	return 1;
 }
 
-void sg_tst_hedge(const sg_bmap_t * mg, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax){
+void sg_tst_hedge(const sg_bmap_t * mg, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active){
 	sg_point_t min;
 	sg_point_t max;
 	sg_bound(mg, &p);
 	min.point = p.point;
 	max.point = p.point;
-	while( sg_tst_bounded_pixel(mg, min) == false ){ min.x--; }
-	while( sg_tst_bounded_pixel(mg, max) == false ){ max.x++; }
+	while( sg_tst_bounded_pixel(mg, min) != active ){ min.x--; }
+	while( sg_tst_bounded_pixel(mg, max) != active ){ max.x++; }
 	*xmin = min.x+1;
 	*xmax = max.x;
 	return;

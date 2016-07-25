@@ -159,8 +159,8 @@ sg_bmap_data_t sg_op_inv(sg_bmap_data_t current, sg_bmap_data_t input);
 sg_bmap_data_t sg_op_assign(sg_bmap_data_t current, sg_bmap_data_t input);
 
 
-u8 sg_tst_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos);
-void sg_tst_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax);
+u8 sg_tst_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos, u8 active);
+void sg_tst_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active);
 
 void sg_set_vline(sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax, sg_size_t thickness);
 void sg_set_hline(sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_size_t thickness);
@@ -187,7 +187,7 @@ void sg_set_area(sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t v);
 void sg_clr_area(sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t v);
 void sg_inv_area(sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t v);
 
-void sg_pour(sg_bmap_t * bmap, sg_point_t p);
+void sg_pour(sg_bmap_t * bmap, sg_point_t p, const sg_pen_t * pen);
 
 /*! @} */
 

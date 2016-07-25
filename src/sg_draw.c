@@ -1,5 +1,7 @@
 //Copyright 2011-2016 Tyler Gilbert; All Rights Reserved
 
+#include <unistd.h>
+#include <stdio.h>
 #include "sg.h"
 
 
@@ -183,7 +185,7 @@ void draw_fill(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * m
 	sg_point_t center;
 	center.point = p->shift.point;
 	sg_point_map(&center, map);
-	sg_pour(bm, center);
+	sg_pour(bm, center, &(map->pen));
 }
 
 
