@@ -198,7 +198,7 @@ int sg_op_area(sg_bmap_t * mg, sg_point_t p, sg_dim_t d, sg_bmap_data_t v, sg_bm
 			tp.x = p.x;
 			tp.y = p.y+i;
 			dest = mg->data + sg_offset(tp, sg_cols);
-			row_mask = calc_row_mask(v, i);
+			row_mask = calc_row_mask(v, tp.y);
 
 			for(j=0; j < col_span; j++){
 
