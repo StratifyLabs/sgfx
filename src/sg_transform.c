@@ -613,9 +613,8 @@ int sg_animate_bounce_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * an
 
 			d.h = animation->path.motion + count;
 
-			//sg_clr_area(mg, dest, d, 0xFF);
-			//sg_set_area(mg, dest, d, 0xAA); //this is for a checkboard background (not currently working well)
-			sg_set_area(mg, dest, d, 0xFF);
+			sg_clr_area(mg, dest, d, 0xFF);
+			sg_set_area(mg, dest, d, 0xAA); //this is for a checkerboard background (not currently working well)
 
 
 			if( animation->path.step == animation->path.step_total ){
@@ -680,8 +679,8 @@ static int sg_animate_bounce_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animati
 			dest.x = start.x;
 			dest.y = start.y + animation->dim.h - d.h;
 
-			//sg_clr_area(mg, dest, d, 0xFF);
-			sg_set_area(mg, dest, d, 0xFF);
+			sg_clr_area(mg, dest, d, 0xFF);
+			sg_set_area(mg, dest, d, 0xAA);
 
 			if( animation->path.step == animation->path.step_total ){
 				animation->path.step = SG_ANIMATION_STEP_FLAG;
@@ -741,8 +740,8 @@ static int sg_animate_bounce_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animati
 
 			d.w = animation->path.motion + count;
 
-			//sg_clr_area(mg, dest, d, 0xFF);
-			sg_set_area(mg, dest, d, 0xFF);
+			sg_clr_area(mg, dest, d, 0xFF);
+			sg_set_area(mg, dest, d, 0xAA);
 
 			if( animation->path.step == animation->path.step_total ){
 				animation->path.step = SG_ANIMATION_STEP_FLAG;
@@ -806,9 +805,9 @@ static int sg_animate_bounce_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animat
 			dest.x = start.x + animation->dim.w - d.w;
 			dest.y = start.y;
 
-			//sg_clr_area(mg, dest, d, 0xFF);
-			//sg_set_area(mg, dest, d, 0xAA); //this is for a checkboard background (not working well)
-			sg_set_area(mg, dest, d, 0xFF);
+			sg_clr_area(mg, dest, d, 0xFF);
+			sg_set_area(mg, dest, d, 0xAA); //this is for a checkerboard background (not working well)
+			//sg_set_area(mg, dest, d, 0xFF); //solid white background
 
 			if( animation->path.step == animation->path.step_total ){
 				animation->path.step = SG_ANIMATION_STEP_FLAG;
