@@ -40,19 +40,24 @@ typedef int64_t s64;
 #define SG_MAP_THICKNESS_MASK ~(SG_MAP_FILL_FLAG)
 
 enum {
-	SG_LINE,
-	SG_ARC,
+	SG_LINE /*! A line */,
+	SG_ARC /*! An Arc */,
 	SG_FILL,
+	SG_POUR /*! Pour in the area */ = SG_FILL,
+	//SG_QUADRATIC_BEZIER,
+	//SG_CUBIC_BEZIER,
 	SG_TYPE_TOTAL
 };
 
 
 enum {
-	SG_FORMAT_a1,
-	SG_FORMAT_a8,
-	SG_FORMAT_g1,
-	SG_FORMAT_r5g6b5,
-
+	SG_FORMAT_A1 /*! 1-bit, monochrome */,
+	SG_FORMAT_P2 /*! 2-bit, 4-color palette */,
+	SG_FORMAT_P4 /*! 4-bit, 16-color palette */,
+	SG_FORMAT_P8 /*! 8-bit, 256-color palette */,
+	SG_FORMAT_R5G6B5 /*! 16-bit R5 G6 B5 */,
+	SG_FORMAT_R8G8B8 /*! 24-bit R8 G8 B8 */,
+	SG_FORMAT_A8R8G8B8 /*! 32-bit A8 R8 G8 B8 */,
 };
 
 #define SG_TYPE_MASK (0xFF)
@@ -131,10 +136,10 @@ typedef struct MCU_PACK {
 	sg_point_t shift /*! Primitive offset within the icon */;
 	union {
 		sg_arc_t arc /*! Primitive data for SG_ARC */;
-		sg_triangle_t triangle;
+		//sg_triangle_t triangle;
 		sg_line_t line /*! Primitive data for SG_LINE */;
-		sg_rect_t rect;
-		sg_circle_t circle;
+		//sg_rect_t rect;
+		//sg_circle_t circle;
 	};
 } sg_icon_primitive_t;
 
@@ -180,6 +185,7 @@ typedef struct MCU_PACK {
 	u16 o_flags;
 	u8 thickness;
 	u8 resd;
+	//the following union should just be sg_color_t color;
 	union {
 		u32 color;
 		u8 rgba[4];

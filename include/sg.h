@@ -72,6 +72,9 @@ void sg_shift_right(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
 void sg_shift_left(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
 void sg_shift_up(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
 void sg_shift_down(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
+//replace the above functions with
+//void sg_transform_shift(sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d);
+
 
 /*! \details This function sets the pixels in a bitmap
  * based on the pixels of the source bitmap
@@ -119,6 +122,9 @@ int sg_assign_bitmap(sg_bmap_t * bmap, const sg_bmap_t * bitmap, sg_point_t p);
  */
 int sg_assign_bitmap_area(sg_bmap_t * bmap, sg_point_t dest, const sg_bmap_t * bitmap, sg_point_t p_src, sg_dim_t d);
 
+//the above functions need to be replaced with -- the functions need to support 1-bit, 2-bit, 4-bit, 8-bit, 16-bit, 24-bit, and 32-bit colors
+//void sg_draw_bitmap(sg_bmap_t * bmap, sg_point_t p_dest, const sg_bmap_t * bitmap, const sg_pen_t * pen);
+//void sg_draw_bitmap_area(sg_bmap_t * bmap, sg_point_t p_dest, const sg_bmap_t * bitmap, sg_point_t p_src, sg_dim_t d, const sg_pen_t * pen);
 
 /*! @} */
 
@@ -188,6 +194,15 @@ void sg_clr_area(sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t v);
 void sg_inv_area(sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t v);
 
 void sg_pour(sg_bmap_t * bmap, sg_point_t p, const sg_pen_t * pen);
+
+//the above fucntions need to be replaced with -- the functions need to support 1-bit, 2-bit, 4-bit, 8-bit, 16-bit, 24-bit, and 32-bit colors
+//void sg_draw_pixel(sg_bmap_t * bmap, sg_point_t p, const sg_pen_t * pen);
+//void sg_draw_line(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, const sg_pen_t * pen);
+//void sg_draw_quadtratic_bezier(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, const sg_pen_t * pen);
+//void sg_draw_cubic_bezier(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4, const sg_pen_t * pen);
+//void sg_draw_rectangle(sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, const sg_pen_t * pen);
+//void sg_draw_pour(sg_bmap_t * bmap, sg_point_t p, const sg_pen_t * pen);
+//void sg_draw_fill(sg_bmap_t * bmap, sg_point_t p, const sg_pen_t * pen);
 
 /*! @} */
 
