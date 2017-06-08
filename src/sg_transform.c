@@ -1,19 +1,22 @@
-/*
- * sg_shift.c
- *
- *  Created on: Jun 7, 2017
- *      Author: tgil
- */
+//Copyright 2011-2016 Tyler Gilbert; All Rights Reserved
 
+#include "sg_config.h"
 #include "sg.h"
 
 
-static void shift_right(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
-static void shift_left(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
-static void shift_up(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
-static void shift_down(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
+static void shift_right(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
+static void shift_left(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
+static void shift_up(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
+static void shift_down(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d);
 
-void sg_shift(sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d){
+
+void sg_transform_flip_xy(const sg_bmap_t * bmap){}
+
+void sg_transform_flip_x(const sg_bmap_t * bmap){}
+
+void sg_transform_flip_y(const sg_bmap_t * bmap){}
+
+void sg_transform_shift(const sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d){
 
 	if( shift.x < 0 ){
 		shift_left(bmap, shift.x*-1, p, d);
@@ -29,7 +32,7 @@ void sg_shift(sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d){
 
 }
 
-void shift_right(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
+void shift_right(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 	sg_int_t i;
 
 	int page_size;
@@ -59,7 +62,7 @@ void shift_right(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 	}
 }
 
-void shift_left(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
+void shift_left(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 	sg_int_t i;
 	int page_size;
 	int bytes_shifted = 0;
@@ -88,7 +91,7 @@ void shift_left(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 	}
 }
 
-void shift_up(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
+void shift_up(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_size_t rows_shifted;
@@ -134,7 +137,7 @@ void shift_up(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 	}
 }
 
-void shift_down(sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
+void shift_down(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t shift_dim;

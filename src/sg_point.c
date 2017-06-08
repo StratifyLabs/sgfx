@@ -1,5 +1,6 @@
 //Copyright 2011-2016 Tyler Gilbert; All Rights Reserved
 
+#include "sg_config.h"
 #include "sg.h"
 
 typedef struct {

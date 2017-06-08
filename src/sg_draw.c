@@ -1,12 +1,13 @@
 //Copyright 2011-2016 Tyler Gilbert; All Rights Reserved
 
 #include <string.h>
+#include "sg_config.h"
 #include "sg.h"
 
 static inline int abs_value(int x){  if( x < 0 ){ return x*-1; } return x; }
 
-static void draw_vline(sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax);
-static void draw_hline(sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y);
+static void draw_vline(const sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax);
+static void draw_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_size_t thickness);
 static void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active);
 static u8 get_hline(const sg_bmap_t * mg, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos, u8 active);
 
@@ -16,7 +17,7 @@ sg_color_t sg_get_pixel(const sg_bmap_t * bmap, sg_point_t p){
 	return sg_cursor_get_pixel(&cursor);
 }
 
-void sg_draw_pixel(sg_bmap_t * bmap, sg_point_t p){
+void sg_draw_pixel(const sg_bmap_t * bmap, sg_point_t p){
 	//draw a pixel at point p
 	sg_cursor_t cursor;
 	sg_cursor_set(&cursor, bmap, p);
@@ -24,7 +25,7 @@ void sg_draw_pixel(sg_bmap_t * bmap, sg_point_t p){
 }
 
 
-void sg_draw_line(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
+void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
 	int dx, dy;
 	int adx, ady;
 	int rise, run;
@@ -39,7 +40,7 @@ void sg_draw_line(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
 	}
 
 	if( p2.y == p1.y ){
-		draw_hline(bmap, p1.x < p2.x ? p1.x : p2.x, p1.x > p2.x ? p1.x : p2.x, p1.y);
+		draw_hline(bmap, p1.x < p2.x ? p1.x : p2.x, p1.x > p2.x ? p1.x : p2.x, p1.y, bmap->pen.thickness);
 		return;
 	}
 
@@ -107,35 +108,59 @@ void sg_draw_line(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
 	}
 }
 
-void sg_draw_quadtratic_bezier(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3){
+void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3){
 
 }
 
-void sg_draw_cubic_bezier(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4){
+void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4){
 
 }
 
-void sg_draw_rectangle(sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
+void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
 	sg_cursor_t y_cursor;
 	sg_cursor_t x_cursor;
 	sg_size_t i;
 	sg_cursor_set(&y_cursor, bmap, p);
 
 	for(i=0; i < d.h; i++){
-		memcpy(&x_cursor, &y_cursor, sizeof(sg_cursor_t));
+		sg_cursor_copy(&x_cursor, &y_cursor);
 		sg_cursor_draw_hline(&x_cursor, d.w);
-		sg_cursor_inc_x(&y_cursor);
+		sg_cursor_inc_y(&y_cursor);
 	}
 }
 
-void sg_draw_pour(sg_bmap_t * bmap, sg_point_t p){
+void sg_invert_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
+	sg_cursor_t y_cursor;
+	sg_cursor_t x_cursor;
+	sg_size_t i;
+	sg_cursor_set(&y_cursor, bmap, p);
+
+	for(i=0; i < d.h; i++){
+		sg_cursor_copy(&x_cursor, &y_cursor);
+		sg_cursor_invert_hline(&x_cursor, d.w);
+		sg_cursor_inc_y(&y_cursor);
+	}
+}
+
+void sg_clear_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
+	sg_cursor_t y_cursor;
+	sg_cursor_t x_cursor;
+	sg_size_t i;
+	sg_cursor_set(&y_cursor, bmap, p);
+
+	for(i=0; i < d.h; i++){
+		sg_cursor_copy(&x_cursor, &y_cursor);
+		sg_cursor_clear_hline(&x_cursor, d.w);
+		sg_cursor_inc_y(&y_cursor);
+	}
+}
+
+void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p){
 	sg_int_t xmin, xmax;
 	sg_point_t above;
 	sg_point_t below;
 	u8 is_above, is_below;
 	u8 active;
-	sg_size_t push_thickness = bmap->pen.thickness;
-
 
 	if( bmap->pen.color ){
 		//set the values to
@@ -148,14 +173,13 @@ void sg_draw_pour(sg_bmap_t * bmap, sg_point_t p){
 		return;
 	}
 
-	 bmap->pen.thickness = 1;
 
 	//check the pen
 
 	get_hedge(bmap, p, &xmin, &xmax, active); //find the bounding points xmin and xmax
 	is_above = !get_hline(bmap, xmin, xmax, p.y+1, &(above.x), active); //see if anywhere above the bounded region is blank
 	is_below = !get_hline(bmap, xmin, xmax, p.y-1, &(below.x), active); //see if anywhere below the bounded region is blank
-	draw_hline(bmap, xmin, xmax, p.y);
+	draw_hline(bmap, xmin, xmax, p.y, 1);
 	if( is_above ){
 		above.y = p.y+1;
 		sg_draw_pour(bmap, above); //if the above line has a blank spot -- fill it
@@ -165,24 +189,44 @@ void sg_draw_pour(sg_bmap_t * bmap, sg_point_t p){
 		sg_draw_pour(bmap, below); //if the below line has a blank spot -- fill it
 	}
 
-	bmap->pen.thickness = push_thickness;
 }
 
-void sg_draw_fill(sg_bmap_t * bmap){
-	//fill the entire bmap with the specified pen
+void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height){
+	//fill the specified region with the specified patterns
 	sg_size_t i;
 	sg_cursor_t y_cursor;
 	sg_cursor_t x_cursor;
-	sg_cursor_set(&y_cursor, bmap, sg_point(0,0));
+	sg_bmap_data_t pattern;
+	sg_bmap_data_t odd_pattern_color;
+	sg_bmap_data_t even_pattern_color;
+	sg_cursor_set(&y_cursor, bmap, p);
 
-	for(i=0; i < bmap->dim.h; i++){
-		memcpy(&x_cursor, &y_cursor, sizeof(sg_cursor_t));
-		sg_cursor_draw_hline(&x_cursor, bmap->dim.w);
-		sg_cursor_inc_x(&y_cursor);
+	even_pattern_color = 0;
+	odd_pattern_color = 0;
+	for(i=0; i < SG_PIXELS_PER_WORD; i++){
+		if( even_pattern & (1<<i) ){
+			even_pattern_color |= (bmap->pen.color << (i*SG_BITS_PER_PIXEL));
+		}
+
+		if( odd_pattern & (1<<i) ){
+			odd_pattern_color |= (bmap->pen.color << (i*SG_BITS_PER_PIXEL));
+		}
 	}
+
+	for(i=0; i < d.h; i++){
+		sg_cursor_copy(&x_cursor, &y_cursor);
+		if( (i/pattern_height) % 2 ){
+			pattern = even_pattern_color;
+		} else {
+			pattern = odd_pattern_color;
+		}
+		sg_cursor_draw_pattern(&x_cursor, d.w, pattern);
+		sg_cursor_inc_y(&y_cursor);
+	}
+
 }
 
-void sg_draw_bitmap(sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src){
+void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src){
 	sg_size_t i;
 	sg_cursor_t y_dest_cursor;
 	sg_cursor_t x_dest_cursor;
@@ -195,10 +239,11 @@ void sg_draw_bitmap(sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * 
 	//take bitmap and draw it on bmap
 	for(i=0; i < bmap_src->dim.h; i++){
 
-		memcpy(&x_dest_cursor, &y_dest_cursor, sizeof(sg_cursor_t));
-		memcpy(&x_src_cursor, &y_src_cursor, sizeof(sg_cursor_t));
+		sg_cursor_copy(&x_dest_cursor, &y_dest_cursor);
+		sg_cursor_copy(&x_src_cursor, &y_src_cursor);
 
 		//use a function that uses two cursors to copy data
+		sg_cursor_draw_cursor(&x_dest_cursor, &x_src_cursor, bmap_src->dim.w);
 
 		sg_cursor_inc_y(&y_dest_cursor);
 		sg_cursor_inc_y(&y_src_cursor);
@@ -208,13 +253,13 @@ void sg_draw_bitmap(sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * 
 }
 
 
-void sg_draw_sub_bitmap(sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src){
+void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src){
 
 
 }
 
 
-void draw_vline(sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax){
+void draw_vline(const sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax){
 	sg_point_t p;
 	sg_size_t thickness = bmap->pen.thickness;
 	sg_size_t half_thick = thickness/2;
@@ -226,16 +271,15 @@ void draw_vline(sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax){
 
 	//for(i=ymin-half_thick; i <= ymax+half_thick; i++){
 	for(p.y=ymin; p.y <= ymax; p.y++){
-		memcpy(&x_cursor, &y_cursor, sizeof(sg_cursor_t));
+		sg_cursor_copy(&x_cursor, &y_cursor);
 		sg_cursor_draw_hline(&x_cursor, thickness);
-		sg_cursor_inc_x(&y_cursor);
+		sg_cursor_inc_y(&y_cursor);
 
 	}
 }
 
-void draw_hline(sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y){
+void draw_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_size_t thickness){
 	sg_point_t p;
-	sg_size_t thickness = bmap->pen.thickness;
 	sg_size_t half_thick = thickness/2;
 	sg_size_t it;
 	sg_cursor_t x_cursor;
@@ -245,7 +289,7 @@ void draw_hline(sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y){
 	sg_cursor_set(&y_cursor, bmap, p);
 
 	for(it=0; it < thickness; it++){
-		memcpy(&x_cursor, &y_cursor, sizeof(sg_cursor_t));
+		sg_cursor_copy(&x_cursor, &y_cursor);
 		sg_cursor_draw_hline(&x_cursor, xmax - xmin);
 		sg_cursor_inc_y(&y_cursor);
 	}

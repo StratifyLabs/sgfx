@@ -24,7 +24,6 @@ extern "C" {
  * 	- Pixel manipulation
  *
  *
- * 	You can
  *
  *
  */
@@ -34,34 +33,23 @@ extern "C" {
  */
 
 /*! \details Change effective size without free/alloc sequence */
-void sg_set_data(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_size_t w, sg_size_t h, u8 bits_per_pixel);
-void sg_show(const sg_bmap_t * bmap);
+void sg_bmap_set_data(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_dim_t dim);
+sg_bmap_data_t * sg_bmap_data(const sg_bmap_t * bmap, sg_point_t p);
+size_t sg_calc_bmap_size(sg_dim_t dim);
 
-static inline sg_size_t sg_margin_left(const sg_bmap_t * bmap){ return bmap->margin_top_left.w; }
-static inline sg_size_t sg_margin_right(const sg_bmap_t * bmap){ return bmap->margin_bottom_right.w; }
-static inline sg_size_t sg_margin_top(const sg_bmap_t * bmap){ return bmap->margin_top_left.h; }
-static inline sg_size_t sg_margin_bottom(const sg_bmap_t * bmap){ return bmap->margin_bottom_right.h; }
-static inline sg_int_t sg_x_max(const sg_bmap_t * bmap){ return bmap->dim.w -1; }
-static inline sg_int_t sg_y_max(const sg_bmap_t * bmap){ return bmap->dim.h -1; }
-static inline size_t sg_calc_byte_width(sg_size_t w){ return (w + 7) >> 3; }
-static inline size_t sg_calc_word_width(sg_size_t w){ return (w + 31) >> 5; }
-static inline size_t sg_calc_size(sg_dim_t d){ return sg_calc_byte_width(d.w) * d.h; }
-static inline int sg_offset(const sg_bmap_t * bmap, sg_point_t p) { return (p.x/SG_PIXELS_PER_WORD) + p.y*(bmap->columns); }
-static inline sg_bmap_data_t sg_mask(sg_int_t x){ return ( SG_PIXEL_MASK << ((x % SG_PIXELS_PER_WORD)*SG_BITS_PER_PIXEL) ); }
-static inline sg_bmap_data_t sg_pixel(sg_int_t x, u16 color){ return color << ((x % SG_PIXELS_PER_WORD)*SG_BITS_PER_PIXEL); }
+void sg_bmap_show(const sg_bmap_t * bmap);
+static inline void sg_bmap_copy(sg_bmap_t * dest, const sg_bmap_t * src){ memcpy(dest, src, sizeof(sg_bmap_t)); }
 
-/*! \details Returns the bitmap height in pixels */
-static inline sg_size_t sg_h(sg_bmap_t * bmap){ return bmap->dim.h; }
-/*! \details Returns the bitmap width in pixels */
-static inline sg_size_t sg_w(sg_bmap_t * bmap){ return bmap->dim.w; }
-/*! \details Returns the number of byte columns of the bitmap */
-static inline sg_size_t sg_cols(sg_bmap_t * bmap){ return bmap->columns; }
-/*! \details Returns the number of bits per pixel */
-static inline u8 sg_bits_per_pixel(sg_bmap_t * bmap){ return bmap->bits_per_pixel; }
-/*! \details Returns a pointer to the word of the target point */
-static inline sg_bmap_data_t * sg_data(const sg_bmap_t * bmap, sg_point_t p){ return bmap->data + sg_offset(bmap, p); }
-/*! \details Returns the number of bytes used byt the bitmap */
-static inline size_t sg_size(const sg_bmap_t * bmap){ return sg_calc_byte_width(bmap->dim.w) * bmap->dim.h; }
+static inline sg_size_t sg_bmap_margin_left(const sg_bmap_t * bmap){ return bmap->margin_top_left.w; }
+static inline sg_size_t sg_bmap_margin_right(const sg_bmap_t * bmap){ return bmap->margin_bottom_right.w; }
+static inline sg_size_t sg_bmap_margin_top(const sg_bmap_t * bmap){ return bmap->margin_top_left.h; }
+static inline sg_size_t sg_bmap_margin_bottom(const sg_bmap_t * bmap){ return bmap->margin_bottom_right.h; }
+static inline sg_int_t sg_bmap_x_max(const sg_bmap_t * bmap){ return bmap->dim.w -1; }
+static inline sg_int_t sg_bmap_y_max(const sg_bmap_t * bmap){ return bmap->dim.h -1; }
+static inline sg_size_t sg_bmap_h(const sg_bmap_t * bmap){ return bmap->dim.h; }
+static inline sg_size_t sg_bmap_w(const sg_bmap_t * bmap){ return bmap->dim.w; }
+static inline sg_size_t sg_bmap_cols(const sg_bmap_t * bmap){ return bmap->columns; }
+
 
 /*! @} */
 
@@ -70,14 +58,14 @@ static inline size_t sg_size(const sg_bmap_t * bmap){ return sg_calc_byte_width(
  */
 
 /*! \details Flip the x axis of the bitmap (horizontal mirror) */
-void sg_flip_x(sg_bmap_t * bmap);
+void sg_transform_flip_x(const sg_bmap_t * bmap);
 /*! \details Flip the y axis of the bitmap (vertical mirror) */
-void sg_flip_y(sg_bmap_t * bmap);
+void sg_transform_flip_y(const sg_bmap_t * bmap);
 /*! \details Flip both axes of the bitmap (horizontal and vertical mirror) */
-void sg_flip_xy(sg_bmap_t * bmap);
+void sg_transform_flip_xy(const sg_bmap_t * bmap);
 
 
-void sg_shift(sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d);
+void sg_transform_shift(const sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d);
 
 
 
@@ -182,7 +170,10 @@ void sg_cursor_dec_y(sg_cursor_t * cursor);
 sg_color_t sg_cursor_get_pixel(const sg_cursor_t * cursor);
 void sg_cursor_draw_pixel(const sg_cursor_t * cursor);
 void sg_cursor_draw_hline(sg_cursor_t * cursor, sg_size_t width);
-void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, sg_cursor_t * src_cursor, sg_size_t width);
+void sg_cursor_invert_hline(sg_cursor_t * cursor, sg_size_t width);
+void sg_cursor_clear_hline(sg_cursor_t * cursor, sg_size_t width);
+void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cursor, sg_size_t width);
+void sg_cursor_draw_pattern(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_t pattern);
 void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
 void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
 
@@ -196,13 +187,16 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 
 //the above functions need to be replaced with -- the functions need to support 1-bit, 2-bit, 4-bit, 8-bit, 16-bit, 24-bit, and 32-bit colors
 sg_color_t sg_get_pixel(const sg_bmap_t * bmap, sg_point_t p);
-void sg_draw_pixel(sg_bmap_t * bmap, sg_point_t p);
-void sg_draw_line(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
-void sg_draw_quadtratic_bezier(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3);
-void sg_draw_cubic_bezier(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4);
-void sg_draw_rectangle(sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
-void sg_draw_pour(sg_bmap_t * bmap, sg_point_t p);
-void sg_draw_fill(sg_bmap_t * bmap);
+void sg_draw_pixel(const sg_bmap_t * bmap, sg_point_t p);
+void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
+void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3);
+void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4);
+void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+void sg_invert_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+void sg_clear_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p);
+void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height);
+
 
 /*! \details This function sets the pixels in a bitmap
  * based on the pixels of the source bitmap
@@ -212,7 +206,7 @@ void sg_draw_fill(sg_bmap_t * bmap);
  * @param bmap_src The source bitmap
  * @return Zero on success
  */
-void sg_draw_bitmap(sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src);
+void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src);
 
 /*! \details This function draws a subset of
  * the source bitmap on the destination bitmap.
@@ -224,7 +218,7 @@ void sg_draw_bitmap(sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * 
  * @param d_src The dimensions of the area to copy
  * @return Zero on success
  */
-void sg_draw_sub_bitmap(sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src);
+void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src);
 
 /*! @} */
 
@@ -260,8 +254,10 @@ int sg_animate_init(sg_animation_t * animation,
 
 typedef struct MCU_PACK {
 	u32 version;
-	void (*set_data)(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_size_t w, sg_size_t h, u8 bits_per_pixel);
-	sg_color_t (*get_pixel)(const sg_bmap_t * bmap, sg_point_t p);
+	sg_size_t bits_per_pixel;
+	void (*bmap_set_data)(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_dim_t dim);
+	sg_bmap_data_t * (*bmap_data)(const sg_bmap_t * bmap, sg_point_t p);
+	size_t (*calc_bmap_size)(sg_dim_t dim);
 
 	void (*point_set)(sg_point_t * d, sg_point_t p);
 	void (*point_map)(sg_point_t * d, const sg_map_t * m);
@@ -278,10 +274,10 @@ typedef struct MCU_PACK {
 	void (*point_bound_x)(const sg_bmap_t * bmap, sg_int_t * x);
 	void (*point_bound_y)(const sg_bmap_t * bmap, sg_int_t * y);
 
-	void (*flip_x)(sg_bmap_t * bmap);
-	void (*flip_y)(sg_bmap_t * bmap);
-	void (*flip_xy)(sg_bmap_t * bmap);
-	void (*shift)(sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d);
+	void (*transform_flip_x)(const sg_bmap_t * bmap);
+	void (*transform_flip_y)(const sg_bmap_t * bmap);
+	void (*transform_flip_xy)(const sg_bmap_t * bmap);
+	void (*transform_shift)(const sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d);
 
 	void (*cursor_set)(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p);
 	void (*cursor_inc_x)(sg_cursor_t * cursor);
@@ -291,17 +287,25 @@ typedef struct MCU_PACK {
 	sg_color_t (*cursor_get_pixel)(const sg_cursor_t * cursor);
 	void (*cursor_draw_pixel)(const sg_cursor_t * cursor);
 	void (*cursor_draw_hline)(sg_cursor_t * cursor, sg_size_t width);
-	void (*cursor_draw_cursor)(sg_cursor_t * dest_cursor, sg_cursor_t * src_cursor, sg_size_t width);
+	void (*cursor_invert_hline)(sg_cursor_t * cursor, sg_size_t width);
+	void (*cursor_clear_hline)(sg_cursor_t * cursor, sg_size_t width);
+	void (*cursor_draw_cursor)(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cursor, sg_size_t width);
+	void (*cursor_draw_pattern)(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_t pattern);
 	void (*cursor_shift_right)(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
 	void (*cursor_shift_left)(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
 
-	void (*draw_pixel)(sg_bmap_t * bmap, sg_point_t p);
-	void (*draw_line)(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
-	void (*draw_quadtratic_bezier)(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3);
-	void (*draw_cubic_bezier)(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4);
-	void (*draw_rectangle)(sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
-	void (*draw_pour)(sg_bmap_t * bmap, sg_point_t p);
-	void (*draw_fill)(sg_bmap_t * bmap);
+	sg_color_t (*get_pixel)(const sg_bmap_t * bmap, sg_point_t p);
+	void (*draw_pixel)(const sg_bmap_t * bmap, sg_point_t p);
+	void (*draw_line)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
+	void (*draw_quadtratic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3);
+	void (*draw_cubic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4);
+	void (*draw_rectangle)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+	void (*invert_rectangle)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+	void (*clear_rectangle)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+	void (*draw_pour)(const sg_bmap_t * bmap, sg_point_t p);
+	void (*draw_pattern)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height);
+	void (*draw_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src);
+	void (*draw_sub_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src);
 
 	void (*vector_draw_primitive)(sg_bmap_t * bitmap, const sg_icon_primitive_t * prim, const sg_map_t * map, sg_bounds_t * bounds);
 	void (*vector_draw_primitive_list)(sg_bmap_t * bitmap, const sg_icon_primitive_t prim_list[], unsigned int total, const sg_map_t * map, sg_bounds_t * bounds);

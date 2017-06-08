@@ -17,6 +17,7 @@ typedef int IRQn_Type;
 #include <mcu/arch/cmsis/core_cm3.h>
 #endif
 
+#include "sg_config.h"
 #include "sg.h"
 
 static int sg_animate_push_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
@@ -36,19 +37,6 @@ static int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animat
 static int sg_animate_bounce_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
 static int sg_animate_bounce_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
 static int sg_animate_bounce_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
-
-
-void sg_flip_xy(sg_bmap_t * bmap){
-
-}
-
-void sg_flip_x(sg_bmap_t * bmap){
-
-}
-
-void sg_flip_y(sg_bmap_t * bmap){
-
-}
 
 
 static u32 sum_of_squares(u32 x){
@@ -138,7 +126,7 @@ int sg_animate_push_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t 
 		dest.y = start.y;
 
 		shift.x = count;
-		sg_shift(bmap, shift, start, d);
+		sg_transform_shift(bmap, shift, start, d);
 		sg_draw_sub_bitmap(bmap, dest, scratch, src, shift_dim);
 
 		return 1;
@@ -179,7 +167,7 @@ int sg_animate_push_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 		shift.x = -1*count;
 		shift.y = 0;
 
-		sg_shift(bmap, shift, start, d);
+		sg_transform_shift(bmap, shift, start, d);
 		sg_draw_sub_bitmap(bmap, dest, scratch, src, shift_dim);
 
 		animation->path.motion += count;
@@ -214,7 +202,7 @@ int sg_animate_push_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * a
 
 		shift.y = -1*count;
 
-		sg_shift(bmap, shift, start, animation->dim);
+		sg_transform_shift(bmap, shift, start, animation->dim);
 		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
 		animation->path.motion += count;
@@ -245,7 +233,7 @@ int sg_animate_push_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 		d.h = count;
 
 		shift.y = count;
-		sg_shift(bmap, shift, start, animation->dim);
+		sg_transform_shift(bmap, shift, start, animation->dim);
 		sg_draw_sub_bitmap(bmap, start, scratch, src, d);
 
 
@@ -328,7 +316,7 @@ int sg_animate_undo_slide_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation
 
 		shift.y = count;
 
-		sg_shift(bmap, shift, start, animation->dim);
+		sg_transform_shift(bmap, shift, start, animation->dim);
 
 		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
@@ -387,7 +375,7 @@ int sg_animate_undo_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animati
 		d.h = animation->dim.h - animation->path.motion + count;
 
 		shift.y = -1*count;
-		sg_shift(bmap, shift, start, d);
+		sg_transform_shift(bmap, shift, start, d);
 
 		d.h = count;
 
@@ -451,7 +439,7 @@ int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 			dest.y = start.y;
 
 			shift.y = count;
-			sg_shift(bmap, shift, src, d);
+			sg_transform_shift(bmap, shift, src, d);
 
 			d.h = animation->path.motion + count;
 
@@ -517,7 +505,7 @@ static int sg_animate_bounce_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 			d.h = animation->dim.h - animation->path.motion;
 
 			shift.y = count;
-			sg_shift(bmap, shift, src, d);
+			sg_transform_shift(bmap, shift, src, d);
 
 			d.h = animation->path.motion + count;
 			dest.x = start.x;
@@ -584,7 +572,7 @@ static int sg_animate_bounce_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 			dest.y = start.y;
 
 			shift.x = count;
-			sg_shift(bmap, shift, src, d);
+			sg_transform_shift(bmap, shift, src, d);
 
 			d.w = animation->path.motion + count;
 
@@ -649,7 +637,7 @@ static int sg_animate_bounce_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_ani
 			d.h = animation->dim.h;
 
 			shift.y = -1*count;
-			sg_shift(bmap, shift, src, d);
+			sg_transform_shift(bmap, shift, src, d);
 
 			d.w = animation->path.motion + count;
 			dest.x = start.x + animation->dim.w - d.w;

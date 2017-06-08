@@ -19,20 +19,6 @@ typedef int64_t s64;
 #endif
 
 
-/*
- *
- * Library build defines 1, 2, 4, 8, 16 -- number
- *
- *
- */
-#if !defined SG_BITS_PER_PIXEL
-#define SG_BITS_PER_PIXEL 4
-#endif
-
-
-#define SG_PIXELS_PER_WORD (32 / SG_BITS_PER_PIXEL)
-#define SG_PIXEL_MASK ((1<<SG_BITS_PER_PIXEL) - 1)
-
 
 #include <sys/types.h>
 
@@ -68,13 +54,12 @@ enum {
 
 
 enum {
-	SG_FORMAT_A1 /*! 1-bit, monochrome */,
-	SG_FORMAT_P2 /*! 2-bit, 4-color palette */,
-	SG_FORMAT_P4 /*! 4-bit, 16-color palette */,
-	SG_FORMAT_P8 /*! 8-bit, 256-color palette */,
-	SG_FORMAT_R5G6B5 /*! 16-bit R5 G6 B5 */,
-	SG_FORMAT_R8G8B8 /*! 24-bit R8 G8 B8 */,
-	SG_FORMAT_A8R8G8B8 /*! 32-bit A8 R8 G8 B8 */,
+	SG_FORMAT_VARIABLE /*! Bits-per-pixel is determined by the bitmap */ = 0,
+	SG_FORMAT_P1 /*! 1-bit, 2-color palette (or monochrome graphics) */ = 1,
+	SG_FORMAT_P2 /*! 2-bit, 4-color palette */ = 2,
+	SG_FORMAT_P4 /*! 4-bit, 16-color palette */ = 4,
+	SG_FORMAT_P8 /*! 8-bit, 256-color palette */ = 8,
+	SG_FORMAT_R5G6B5 /*! 16-bit R5 G6 B5 */ = 16
 };
 
 #define SG_TYPE_MASK (0xFF)
@@ -123,7 +108,6 @@ typedef struct MCU_PACK {
 
 typedef struct MCU_PACK {
 	sg_bmap_data_t * data;
-	u8 bits_per_pixel;
 	sg_pen_t pen;
 	sg_dim_t dim;
 	sg_dim_t margin_top_left;
@@ -167,6 +151,8 @@ typedef struct MCU_PACK {
 	sg_size_t w;
 	sg_size_t h;
 	size_t size;
+	sg_size_t bits_per_pixel;
+	u16 resd;
 	//this must be 4 byte aligned
 } sg_bitmap_hdr_t;
 

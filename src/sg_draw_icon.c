@@ -2,6 +2,8 @@
 
 #include <unistd.h>
 #include <stdio.h>
+
+#include "sg_config.h"
 #include "sg.h"
 
 
