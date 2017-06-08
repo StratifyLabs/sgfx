@@ -1,193 +1,292 @@
 //Copyright 2011-2016 Tyler Gilbert; All Rights Reserved
 
-#include <unistd.h>
-#include <stdio.h>
+#include <string.h>
 #include "sg.h"
 
+static inline int abs_value(int x){  if( x < 0 ){ return x*-1; } return x; }
 
-static void draw_line(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * map, sg_bounds_t * attr);
-static void draw_arc(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * map, sg_bounds_t * attr);
-static void draw_fill(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * map, sg_bounds_t * attr);
+static void draw_vline(sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax);
+static void draw_hline(sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y);
+static void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active);
+static u8 get_hline(const sg_bmap_t * mg, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos, u8 active);
 
-static void (*draw_func [SG_TYPE_TOTAL])(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * map, sg_bounds_t * attr) = {
-		draw_line,
-		draw_arc,
-		draw_fill
-};
-
-
-void sg_draw(sg_bmap_t * bitmap, const sg_icon_primitive_t * prim, const sg_map_t * map, sg_bounds_t * attr){
-	int type;
-	type = prim->type & SG_TYPE_MASK;
-	if( prim->type & SG_ENABLE_FLAG ){
-		if( (type & SG_TYPE_MASK) < SG_TYPE_TOTAL ){
-			draw_func[type](prim, bitmap, map, attr);
-		}
-	}
+sg_color_t sg_get_pixel(const sg_bmap_t * bmap, sg_point_t p){
+	sg_cursor_t cursor;
+	sg_cursor_set(&cursor, bmap, p);
+	return sg_cursor_get_pixel(&cursor);
 }
 
-void sg_draw_icon(sg_bmap_t * bitmap, const sg_icon_t * icon, const sg_map_t * map, sg_bounds_t * attr){
-	unsigned int total;
-	if( map->pen.o_flags & SG_PEN_FLAG_FILL ){
-		total = icon->total;
-	} else {
-		total = icon->total - icon->fill_total;
-	}
-	sg_draw_list(bitmap, icon->elements, total, map, attr);
-}
-
-void sg_draw_list(sg_bmap_t * bitmap, const sg_icon_primitive_t prim_list[], unsigned int total, const sg_map_t * map, sg_bounds_t * attr){
-	unsigned int i;
-
-	if( attr ){
-		attr->bottom_right.x = -SG_MAX;
-		attr->bottom_right.y = -SG_MAX;
-		attr->top_left.x = SG_MAX;
-		attr->top_left.y = SG_MAX;
-	}
-
-	for(i=0; i < total; i++){
-		sg_draw(bitmap, &(prim_list[i]), map, attr);
-	}
+void sg_draw_pixel(sg_bmap_t * bmap, sg_point_t p){
+	//draw a pixel at point p
+	sg_cursor_t cursor;
+	sg_cursor_set(&cursor, bmap, p);
+	sg_cursor_draw_pixel(&cursor);
 }
 
 
-void draw_line(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * map, sg_bounds_t * attr){
-	//draw a line from bottom left to top right
-	sg_point_t p1;
-	sg_point_t p2;
-
-	p1 = p->shift;
-	p2 = p->line.p;
-	sg_size_t thickness;
-
-	thickness = map->pen.thickness;
-	if( thickness == 0 ){
-		thickness = 1;
-	}
-
-
-	//apply bitmap space rotation
-	sg_point_map(&p1, map);
-	sg_point_map(&p2, map);
-
-	if( attr ){
-		if( p1.x < attr->top_left.x ){ attr->top_left.x = p1.x; }
-		if( p1.y < attr->top_left.y ){ attr->top_left.y = p1.y; }
-		if( p2.x < attr->top_left.x ){ attr->top_left.x = p2.x; }
-		if( p2.y < attr->top_left.y ){ attr->top_left.y = p2.y; }
-
-		if( p1.x > attr->bottom_right.x ){ attr->bottom_right.x = p1.x; }
-		if( p1.y > attr->bottom_right.y ){ attr->bottom_right.y = p1.y; }
-		if( p2.x > attr->bottom_right.x ){ attr->bottom_right.x = p2.x; }
-		if( p2.y > attr->bottom_right.y ){ attr->bottom_right.y = p2.y; }
-	}
-
-	//add the option to invert the line
-
-	//now draw a line between the two points
-	if( map->pen.o_flags & SG_PEN_FLAG_CLR ){
-		sg_clr_line(bm, p1, p2, thickness);
-	} else if( map->pen.o_flags & SG_PEN_FLAG_INVERT ){
-		sg_inv_line(bm, p1, p2, thickness);
-	} else {
-		sg_set_line(bm, p1, p2, thickness);
-	}
-}
-
-void draw_arc(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * map, sg_bounds_t * attr){
+void sg_draw_line(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
+	int dx, dy;
+	int adx, ady;
+	int rise, run;
 	int i;
-	int points;
-	int step;
-	int radians = p->arc.stop - p->arc.start;
-	sg_int_t t;
-	sg_int_t r;
-	sg_size_t unit;
-	sg_int_t thick;
-
+	sg_point_t p;
+	sg_point_t tmp;
+	sg_size_t thickness = bmap->pen.thickness;
 	sg_size_t half_thick;
-	sg_size_t thickness;
 
-
-	thickness = map->pen.thickness;
 	if( thickness == 0 ){
 		thickness = 1;
+	}
+
+	if( p2.y == p1.y ){
+		draw_hline(bmap, p1.x < p2.x ? p1.x : p2.x, p1.x > p2.x ? p1.x : p2.x, p1.y);
+		return;
+	}
+
+	if( p2.x == p1.x ){
+		draw_vline(bmap, p1.x, p1.y < p2.y ? p1.y : p2.y, p1.y > p2.y ? p1.y : p2.y);
+		return;
 	}
 
 	half_thick = thickness/2;
 
-	sg_point_t pen;
-	sg_point_t circum;
-	circum.point = 0;
-
-	unit = sg_point_map_pixel_size(map);
-
-	if( p->arc.rx < p->arc.ry ){
-		r = p->arc.ry;
+	if( p2.y > p1.y ){
+		dy = 1;
 	} else {
-		r = p->arc.rx;
+		dy = -1;
 	}
 
-	r += (thickness-1)*unit;
-
-	sg_point_shift_x(&circum, r);
-	sg_point_map(&circum, map);
-
-	points = ((circum.x - map->shift.x) * 2 * 320) / 100 * (radians) / SG_TRIG_POINTS;
-	if( points > SG_TRIG_POINTS ){
-		points = SG_TRIG_POINTS;
-	}
-
-	if( points == 0 ){
-		points = 1;
-	}
-
-	if( radians == 0 ){
-		step = 1;
+	if( p2.x > p1.x ){
+		dx = 1;
 	} else {
-		step = points / (radians);
+		dx = -1;
 	}
 
-	if( step == 0 ){
-		step = 1;
-	}
+	adx = abs_value(p2.x - p1.x);
+	ady = abs_value(p2.y - p1.y);
+	rise = (p2.y - p1.y);
+	run = (p2.x - p1.x);
 
-	//! \todo implement thickness
-	for(t=0; t < thickness; t++){
-		thick = unit * (t - half_thick);
-		for(i=p->arc.start; i < p->arc.stop; i+=step){
-			pen.point = 0;
-			sg_point_arc(&pen, p->arc.rx + thick, p->arc.ry + thick, i);
-			sg_point_rotate(&pen, p->rotation);
-			sg_point_shift(&pen, p->shift);
-			sg_point_map(&pen, map);
+	p.x = p1.x;
+	p.y = p1.y;
+	if( adx > ady ){
 
-			if( attr ){
-				if( pen.x < attr->top_left.x ){ attr->top_left.x = pen.x; }
-				if( pen.y < attr->top_left.y ){ attr->top_left.y = pen.y; }
-				if( pen.x > attr->bottom_right.x ){ attr->bottom_right.x = pen.x; }
-				if( pen.y > attr->bottom_right.y ){ attr->bottom_right.y = pen.y; }
+		while(p.x != p2.x ){
+			for(i=0; i < thickness; i++){
+				tmp.point = p.point;
+				tmp.y = p.y - half_thick + i;
+				sg_draw_pixel(bmap, tmp);
 			}
-
-			if( map->pen.o_flags & SG_PEN_FLAG_CLR ){
-				sg_clr_pixel(bm, pen);
-			} else if( map->pen.o_flags & SG_PEN_FLAG_INVERT ){
-				sg_inv_pixel(bm, pen);
-			} else {
-				sg_set_pixel(bm, pen);
+			p.x += dx;
+			p.y = ((p.x - p1.x) * rise + dy*run/2) / run + p1.y;
+		}
+	} else {
+		while(p.y != p2.y ){
+			for(i=0; i < thickness; i++){
+				tmp.point = p.point;
+				tmp.x = p.x - half_thick + i;
+				sg_draw_pixel(bmap, tmp);
 			}
+			p.y += dy;
+			p.x = ((p.y - p1.y) * run + dx*rise/2) / rise + p1.x;
 		}
 	}
 
+	if( adx <= ady ){
+		for(i=0; i < thickness; i++){
+			tmp.point = p2.point;
+			tmp.x = p2.x - half_thick + i;
+			sg_draw_pixel(bmap, tmp);
+		}
+	} else {
+		for(i=0; i < thickness; i++){
+			tmp.point = p2.point;
+			tmp.y = p2.y - half_thick + i;
+			sg_draw_pixel(bmap, tmp);
+		}
+	}
 }
 
-void draw_fill(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * map, sg_bounds_t * attr){
-	sg_point_t center;
-	center.point = p->shift.point;
-	sg_point_map(&center, map);
-	sg_pour(bm, center, &(map->pen));
+void sg_draw_quadtratic_bezier(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3){
+
+}
+
+void sg_draw_cubic_bezier(sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4){
+
+}
+
+void sg_draw_rectangle(sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
+	sg_cursor_t y_cursor;
+	sg_cursor_t x_cursor;
+	sg_size_t i;
+	sg_cursor_set(&y_cursor, bmap, p);
+
+	for(i=0; i < d.h; i++){
+		memcpy(&x_cursor, &y_cursor, sizeof(sg_cursor_t));
+		sg_cursor_draw_hline(&x_cursor, d.w);
+		sg_cursor_inc_x(&y_cursor);
+	}
+}
+
+void sg_draw_pour(sg_bmap_t * bmap, sg_point_t p){
+	sg_int_t xmin, xmax;
+	sg_point_t above;
+	sg_point_t below;
+	u8 is_above, is_below;
+	u8 active;
+	sg_size_t push_thickness = bmap->pen.thickness;
+
+
+	if( bmap->pen.color ){
+		//set the values to
+		active = 1;
+	} else {
+		active = 0;
+	}
+
+	if( !sg_x_visible(bmap, p.x) ){
+		return;
+	}
+
+	 bmap->pen.thickness = 1;
+
+	//check the pen
+
+	get_hedge(bmap, p, &xmin, &xmax, active); //find the bounding points xmin and xmax
+	is_above = !get_hline(bmap, xmin, xmax, p.y+1, &(above.x), active); //see if anywhere above the bounded region is blank
+	is_below = !get_hline(bmap, xmin, xmax, p.y-1, &(below.x), active); //see if anywhere below the bounded region is blank
+	draw_hline(bmap, xmin, xmax, p.y);
+	if( is_above ){
+		above.y = p.y+1;
+		sg_draw_pour(bmap, above); //if the above line has a blank spot -- fill it
+	}
+	if( is_below ){
+		below.y = p.y-1;
+		sg_draw_pour(bmap, below); //if the below line has a blank spot -- fill it
+	}
+
+	bmap->pen.thickness = push_thickness;
+}
+
+void sg_draw_fill(sg_bmap_t * bmap){
+	//fill the entire bmap with the specified pen
+	sg_size_t i;
+	sg_cursor_t y_cursor;
+	sg_cursor_t x_cursor;
+	sg_cursor_set(&y_cursor, bmap, sg_point(0,0));
+
+	for(i=0; i < bmap->dim.h; i++){
+		memcpy(&x_cursor, &y_cursor, sizeof(sg_cursor_t));
+		sg_cursor_draw_hline(&x_cursor, bmap->dim.w);
+		sg_cursor_inc_x(&y_cursor);
+	}
+}
+
+void sg_draw_bitmap(sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src){
+	sg_size_t i;
+	sg_cursor_t y_dest_cursor;
+	sg_cursor_t x_dest_cursor;
+	sg_cursor_t y_src_cursor;
+	sg_cursor_t x_src_cursor;
+
+	sg_cursor_set(&y_dest_cursor, bmap_dest, p_dest);
+	sg_cursor_set(&y_src_cursor, bmap_dest, sg_point(0,0));
+
+	//take bitmap and draw it on bmap
+	for(i=0; i < bmap_src->dim.h; i++){
+
+		memcpy(&x_dest_cursor, &y_dest_cursor, sizeof(sg_cursor_t));
+		memcpy(&x_src_cursor, &y_src_cursor, sizeof(sg_cursor_t));
+
+		//use a function that uses two cursors to copy data
+
+		sg_cursor_inc_y(&y_dest_cursor);
+		sg_cursor_inc_y(&y_src_cursor);
+	}
+
+
 }
 
 
+void sg_draw_sub_bitmap(sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src){
 
+
+}
+
+
+void draw_vline(sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax){
+	sg_point_t p;
+	sg_size_t thickness = bmap->pen.thickness;
+	sg_size_t half_thick = thickness/2;
+	sg_cursor_t x_cursor;
+	sg_cursor_t y_cursor;
+	p.x = x - half_thick;
+	p.y = ymin;
+	sg_cursor_set(&y_cursor, bmap, p);
+
+	//for(i=ymin-half_thick; i <= ymax+half_thick; i++){
+	for(p.y=ymin; p.y <= ymax; p.y++){
+		memcpy(&x_cursor, &y_cursor, sizeof(sg_cursor_t));
+		sg_cursor_draw_hline(&x_cursor, thickness);
+		sg_cursor_inc_x(&y_cursor);
+
+	}
+}
+
+void draw_hline(sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y){
+	sg_point_t p;
+	sg_size_t thickness = bmap->pen.thickness;
+	sg_size_t half_thick = thickness/2;
+	sg_size_t it;
+	sg_cursor_t x_cursor;
+	sg_cursor_t y_cursor;
+	p.y = y - half_thick;
+	p.x = xmin;
+	sg_cursor_set(&y_cursor, bmap, p);
+
+	for(it=0; it < thickness; it++){
+		memcpy(&x_cursor, &y_cursor, sizeof(sg_cursor_t));
+		sg_cursor_draw_hline(&x_cursor, xmax - xmin);
+		sg_cursor_inc_y(&y_cursor);
+	}
+}
+
+void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active){
+	sg_cursor_t min_cursor;
+	sg_cursor_t max_cursor;
+	sg_point_bound(bmap, &p);
+
+	sg_cursor_set(&min_cursor, bmap, p);
+	sg_cursor_set(&max_cursor, bmap, p);
+
+	while( (sg_cursor_get_pixel(&min_cursor) != 0) != active ){ sg_cursor_dec_x(&min_cursor); }
+	while( (sg_cursor_get_pixel(&max_cursor) != 0) != active ){ sg_cursor_inc_x(&max_cursor); }
+	*xmin = min_cursor.p.x+1;
+	*xmax = max_cursor.p.x;
+	return;
+}
+
+u8 get_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos, u8 active){
+	sg_point_t p;
+	sg_cursor_t cursor;
+	if( !sg_y_visible(bmap, y) ){
+		return 1;
+	}
+	sg_point_bound_x(bmap, &xmin);
+	sg_point_bound_x(bmap, &xmax);
+
+	p.x = xmin;
+	p.y = y;
+
+	sg_cursor_set(&cursor, bmap, p);
+
+	for(p.x = xmin; p.x < xmax; p.x++){
+		if( (sg_cursor_get_pixel(&cursor) != 0) != active ){
+			*pos = cursor.p.x;
+			return false;
+		}
+		sg_cursor_inc_x(&cursor);
+	}
+	return 1;
+}
 

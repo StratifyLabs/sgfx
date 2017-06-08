@@ -604,3 +604,35 @@ void sg_point_shift_y(sg_point_t * d, sg_int_t a){
 	d->y += a;
 }
 
+void sg_point_bound(const sg_bmap_t * bmap, sg_point_t * p){
+	sg_point_bound_x(bmap, &(p->x));
+	sg_point_bound_y(bmap, &(p->y));
+}
+
+void sg_point_bound_x(const sg_bmap_t * bmap, sg_int_t * x){
+	sg_int_t t = *x;
+	if( t < 0 ){
+		t = 0;
+	}
+
+	if( t >= bmap->dim.w ){
+		t = bmap->dim.w - 1 ;
+	}
+
+	*x = t;
+}
+
+void sg_point_bound_y(const sg_bmap_t * bmap, sg_int_t * y){
+	sg_int_t t = *y;
+	if( t < 0 ){
+		t = 0;
+	}
+
+	if( t >= bmap->dim.h ){
+		t = bmap->dim.h - 1 ;
+	}
+
+	*y = t;
+}
+
+

@@ -162,7 +162,7 @@
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.32632958" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix" value="${HOST}-" valueType="string"/>
 							<option id="cdt.managedbuild.option.gnu.cross.path.1028664354" name="Path" superClass="cdt.managedbuild.option.gnu.cross.path" value=" ${PathDelimiter}${TOOLSPATH}/bin" valueType="string"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="cdt.managedbuild.targetPlatform.gnu.cross.2095625567" isAbstract="false" osList="all" superClass="cdt.managedbuild.targetPlatform.gnu.cross"/>
-							<builder autoBuildTarget="all" buildPath="${workspace_loc:/sgfx}/build_release_armv7em_fpu" cleanBuildTarget="clean" id="org.eclipse.cdt.build.core.internal.builder.809521441" incrementalBuildTarget="all" managedBuildOn="true" name="CDT Internal Builder" superClass="org.eclipse.cdt.build.core.internal.builder"/>
+							<builder autoBuildTarget="all" buildPath="${workspace_loc:/sgfx}/build_release_armv7em_fpu" cleanBuildTarget="clean" id="org.eclipse.cdt.build.core.internal.builder.809521441" incrementalBuildTarget="all" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="CDT Internal Builder" superClass="org.eclipse.cdt.build.core.internal.builder"/>
 							<tool command="gcc" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" errorParsers="org.eclipse.cdt.core.GCCErrorParser" id="cdt.managedbuild.tool.gnu.cross.c.compiler.30010797" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.option.optimization.level.763623830" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" useByScannerDiscovery="false" value="gnu.c.optimization.level.size" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.794271894" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
@@ -466,5 +466,10 @@
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.cross.lib.release.388924090.1536021794.652448319.1742192579.1095616799.1131086887.1296985718.27667365;cdt.managedbuild.config.gnu.cross.lib.release.388924090.1536021794.652448319.1742192579.1095616799.1131086887.1296985718.27667365.;cdt.managedbuild.tool.gnu.cross.c.compiler.1813545336;cdt.managedbuild.tool.gnu.c.compiler.input.1099093221">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
+		<project id="sgfx.null.1428483179" name="sgfx"/>
 	</storageModule>
 </cproject>

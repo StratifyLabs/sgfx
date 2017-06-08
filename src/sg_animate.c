@@ -19,211 +19,35 @@ typedef int IRQn_Type;
 
 #include "sg.h"
 
-static int sg_animate_push_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_push_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_push_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_push_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_slide_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_undo_slide_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_slide_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_undo_slide_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_slide_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_undo_slide_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_slide_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_undo_slide_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_none(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_bounce_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_bounce_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_bounce_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
-static int sg_animate_bounce_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation);
+static int sg_animate_push_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_push_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_push_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_push_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_slide_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_undo_slide_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_slide_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_undo_slide_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_slide_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_undo_slide_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_undo_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_none(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_bounce_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_bounce_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
+static int sg_animate_bounce_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation);
 
 
-void sg_flip_xy(sg_bmap_t * mg){
-#ifndef __link
-	size_t i;
-	uint32_t tmp;
-	uint32_t * ptr = (uint32_t*)sg_data(mg,sg_point_origin());
-	size_t s = sg_size(mg) / 4;
-	uint32_t rev;
-
-	for(i=0; i < s/2; i++){
-		tmp = ptr[i];
-		ptr[i] = ptr[s - i - 1];
-		rev = __RBIT(tmp);
-		ptr[s-i-1] = rev;
-		rev = __RBIT(ptr[i]);
-		ptr[i] = rev;
-	}
-#endif
-}
-
-void sg_flip_x(sg_bmap_t * mg){
+void sg_flip_xy(sg_bmap_t * bmap){
 
 }
 
-void sg_flip_y(sg_bmap_t * mg){
+void sg_flip_x(sg_bmap_t * bmap){
 
 }
 
-void sg_shift_right(sg_bmap_t * mg, int count, sg_point_t start, sg_dim_t d){
-	uint32_t tmp0, tmp1;
-	sg_int_t i, j;
-	uint32_t * ptr;
-	size_t w = sg_byte_width(mg)/4 - 1;
+void sg_flip_y(sg_bmap_t * bmap){
 
-	int page_size;
-	int bytes_shifted = 0;
-
-	while( bytes_shifted < count ){
-
-		page_size = count - bytes_shifted;
-		if( page_size > 32 ){
-			page_size = 32;
-		}
-
-		for(i=start.y; i < start.y+d.h; i++){
-			if( sg_y_visible(mg, i) ){
-				ptr = (uint32_t *)sg_data(mg, sg_point_origin()) + i*(w+1); //point to beg of each row
-				for(j = w; j > 0; j--){
-					//need to do a byte reversal
-					tmp0 = __REV(ptr[j]);
-					tmp1 = __REV(ptr[j-1]);
-					ptr[j] = __REV((tmp0 >> page_size) | ((tmp1) << (32-page_size)));
-				}
-				ptr[0] = __REV(__REV(ptr[0]) >> page_size);
-			}
-		}
-
-		bytes_shifted += page_size;
-
-
-	}
-}
-
-void sg_shift_left(sg_bmap_t * mg, int count, sg_point_t start, sg_dim_t d){
-	uint32_t tmp0, tmp1;
-	sg_int_t i, j;
-	uint32_t * ptr;
-	ssize_t w = sg_byte_width(mg)/4 - 1;
-	int page_size;
-	int bytes_shifted = 0;
-
-	while( bytes_shifted < count ){
-
-		page_size = count - bytes_shifted;
-		if( page_size > 32 ){
-			page_size = 32;
-		}
-
-		for(i=start.y; i < start.y+d.h; i++){
-			if( sg_y_visible(mg, i) ){
-				ptr = (uint32_t *)sg_data(mg, sg_point_origin()) + i*(w+1); //point to beg of each row
-				for(j = 0; j < w; j++){
-					//need to do a byte reversal
-					tmp0 = __REV(ptr[j]);
-					tmp1 = __REV(ptr[j+1]);
-					ptr[j] = __REV((tmp0 << page_size) | ((tmp1) >> (32-page_size)));
-				}
-				ptr[w] = __REV(__REV(ptr[w]) << page_size);
-			}
-		}
-
-		bytes_shifted += page_size;
-	}
-}
-
-void sg_shift_up(sg_bmap_t * mg, int count, sg_point_t start, sg_dim_t d){
-	sg_point_t dest;
-	sg_point_t src;
-	sg_size_t rows_shifted;
-	sg_dim_t shift_dim;
-
-	if( count > mg->dim.h ){
-		count = mg->dim.h;
-	}
-
-	if( count == 0 ){
-		return;
-	}
-
-	if( d.h + start.y > mg->dim.h ){
-		d.h = mg->dim.h - start.y;
-	}
-
-	//clear the top area
-	dest.x = start.x;
-	dest.y = start.y;
-	shift_dim.w = d.w;
-	shift_dim.h = count;
-
-	src.x = start.x;
-	rows_shifted = 0;
-
-	while( rows_shifted < (d.h - count) ){
-		dest.y = start.y + rows_shifted;
-		shift_dim.h = count;
-		src.y = start.y + rows_shifted + count;
-		if( rows_shifted + shift_dim.h > mg->dim.h ){
-			shift_dim.h = d.h - rows_shifted;
-		}
-
-		sg_assign_bitmap_area(mg, dest, mg, src, shift_dim);
-		rows_shifted += shift_dim.h;
-
-		if( rows_shifted < (d.h - count) ){
-			//sg_clr_area(mg, src, shift_dim, 0xFF);
-		}
-
-	}
-}
-
-void sg_shift_down(sg_bmap_t * mg, int count, sg_point_t start, sg_dim_t d){
-	sg_point_t dest;
-	sg_point_t src;
-	sg_dim_t shift_dim;
-	sg_size_t rows_shifted;
-
-	if( count > mg->dim.h ){
-		count = mg->dim.h;
-	}
-
-	if( count == 0 ){
-		return;
-	}
-
-	if( d.h + start.y > mg->dim.h ){
-		d.h = mg->dim.h - start.y;
-	}
-
-	//clear the top area
-	dest.x = start.x;
-	dest.y = start.y + d.h - count;
-	shift_dim.w = d.w;
-	shift_dim.h = count;
-
-	src.x = start.x;
-	rows_shifted = 0;
-
-	while( rows_shifted < (d.h - count) ){
-
-		if( mg->dim.h > (2*count + rows_shifted) ){
-			shift_dim.h = count;
-			dest.y = start.y + d.h - rows_shifted - count;
-			src.y = dest.y - count;
-		} else {
-			shift_dim.h = d.h - rows_shifted - count;
-			src.y = 0;
-			dest.y = rows_shifted - shift_dim.h;
-		}
-
-		sg_assign_bitmap_area(mg, dest, mg, src, shift_dim);
-		rows_shifted += shift_dim.h;
-
-		if( rows_shifted < (d.h - count) ){
-			//sg_clr_area(mg, src, shift_dim, 0xFF);
-		}
-
-	}
 }
 
 
@@ -281,13 +105,16 @@ static sg_size_t sg_animate_calc_count(sg_animation_t * animation){
 	return count;
 }
 
-int sg_animate_push_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_push_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t shift_dim;
 	sg_size_t count;
 	sg_point_t start;
+	sg_point_t shift;
 	sg_dim_t d;
+
+	shift.y = 0;
 
 	if( animation->path.step < animation->path.step_total ){
 		count = sg_animate_calc_count(animation);
@@ -310,10 +137,9 @@ int sg_animate_push_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * a
 		dest.x = start.x;
 		dest.y = start.y;
 
-		sg_shift_right(mg, count, start, d);
-		sg_clr_area(mg, dest, shift_dim, 0xFF);
-		sg_set_bitmap_area(mg, dest, bitmap, src, shift_dim);
-
+		shift.x = count;
+		sg_shift(bmap, shift, start, d);
+		sg_draw_sub_bitmap(bmap, dest, scratch, src, shift_dim);
 
 		return 1;
 	}
@@ -322,12 +148,13 @@ int sg_animate_push_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * a
 
 }
 
-int sg_animate_push_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_push_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t shift_dim;
 	sg_point_t start;
 	sg_dim_t d;
+	sg_point_t shift;
 	sg_size_t count;
 
 	if( animation->path.step < animation->path.step_total ){
@@ -349,9 +176,11 @@ int sg_animate_push_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * an
 		src.x = start.x + animation->path.motion;
 		src.y = start.y;
 
-		sg_shift_left(mg, count, start, d);
-		sg_clr_area(mg, dest, shift_dim, 0xFF);
-		sg_set_bitmap_area(mg, dest, bitmap, src, shift_dim);
+		shift.x = -1*count;
+		shift.y = 0;
+
+		sg_shift(bmap, shift, start, d);
+		sg_draw_sub_bitmap(bmap, dest, scratch, src, shift_dim);
 
 		animation->path.motion += count;
 
@@ -360,13 +189,15 @@ int sg_animate_push_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * an
 	return 0;
 }
 
-int sg_animate_push_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_push_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t d;
 	sg_size_t count;
-
+	sg_point_t shift;
 	sg_point_t start;
+
+	shift.x = 0;
 
 	if( animation->path.step < animation->path.step_total ){
 		start = animation->start;
@@ -381,8 +212,10 @@ int sg_animate_push_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * anim
 		dest.x = start.x;
 		dest.y = start.y + animation->dim.h - d.h;
 
-		sg_shift_up(mg, count, start, animation->dim);
-		sg_assign_bitmap_area(mg, dest, bitmap, src, d);
+		shift.y = -1*count;
+
+		sg_shift(bmap, shift, start, animation->dim);
+		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
 		animation->path.motion += count;
 
@@ -391,12 +224,14 @@ int sg_animate_push_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * anim
 	return 0;
 }
 
-int sg_animate_push_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_push_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t src;
 	sg_dim_t d;
 	sg_size_t count;
-
+	sg_point_t shift;
 	sg_point_t start;
+
+	shift.x = 0;
 
 	if( animation->path.step < animation->path.step_total ){
 		start = animation->start;
@@ -409,8 +244,9 @@ int sg_animate_push_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * an
 		d.w = animation->dim.w;
 		d.h = count;
 
-		sg_shift_down(mg, count, start, animation->dim);
-		sg_assign_bitmap_area(mg, start, bitmap, src, d);
+		shift.y = count;
+		sg_shift(bmap, shift, start, animation->dim);
+		sg_draw_sub_bitmap(bmap, start, scratch, src, d);
 
 
 		return 1;
@@ -418,27 +254,27 @@ int sg_animate_push_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * an
 	return 0;
 }
 
-int sg_animate_slide_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_slide_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	//this could be used for drawers
 	return 0;
 }
 
-int sg_animate_undo_slide_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_undo_slide_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	//this could be used for drawers
 	return 0;
 }
 
-int sg_animate_slide_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_slide_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	//this could be used for drawers
 	return 0;
 }
 
-int sg_animate_undo_slide_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_undo_slide_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	//this could be used for drawers
 	return 0;
 }
 
-int sg_animate_slide_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_slide_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t d;
@@ -458,8 +294,7 @@ int sg_animate_slide_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * ani
 		d.w = animation->dim.w;
 		d.h = animation->path.motion;
 
-		sg_clr_area(mg, dest, d, 0xFF);
-		sg_set_bitmap_area(mg, dest, bitmap, src, d);
+		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
 
 		return 1;
@@ -467,13 +302,15 @@ int sg_animate_slide_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * ani
 	return 0;
 }
 
-int sg_animate_undo_slide_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_undo_slide_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t d;
 	sg_size_t count;
-
+	sg_point_t shift;
 	sg_point_t start;
+
+	shift.x = 0;
 
 	if( animation->path.step < animation->path.step_total ){
 		start = animation->start;
@@ -489,17 +326,18 @@ int sg_animate_undo_slide_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t 
 		d.w = animation->dim.w;
 		d.h = animation->path.motion;
 
-		sg_shift_down(mg, count, start, animation->dim);
+		shift.y = count;
 
-		sg_clr_area(mg, dest, d, 0xFF);
-		sg_set_bitmap_area(mg, dest, bitmap, src, d);
+		sg_shift(bmap, shift, start, animation->dim);
+
+		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
 		return 1;
 	}
 	return 0;
 }
 
-int sg_animate_slide_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t src;
 	sg_point_t dest;
 	sg_dim_t d;
@@ -518,20 +356,21 @@ int sg_animate_slide_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * a
 		d.w = animation->dim.w;
 		d.h = animation->path.motion;
 
-		sg_clr_area(mg, start, d, 0xFF);
-		sg_set_bitmap_area(mg, dest, bitmap, src, d);
+		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 		return 1;
 	}
 	return 0;
 }
 
-int sg_animate_undo_slide_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_undo_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t d;
 	sg_size_t count;
-
+	sg_point_t shift;
 	sg_point_t start;
+
+	shift.x = 0;
 
 	if( animation->path.step < animation->path.step_total ){
 		start = animation->start;
@@ -547,12 +386,12 @@ int sg_animate_undo_slide_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_
 		d.w = animation->dim.w;
 		d.h = animation->dim.h - animation->path.motion + count;
 
-		sg_shift_up(mg, count, start, d);
+		shift.y = -1*count;
+		sg_shift(bmap, shift, start, d);
 
 		d.h = count;
 
-		sg_clr_area(mg, dest, d, 0xFF);
-		sg_set_bitmap_area(mg, dest, bitmap, src, d);
+		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
 		return 1;
 	}
@@ -560,7 +399,7 @@ int sg_animate_undo_slide_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_
 
 }
 
-int sg_animate_none(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_none(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	if( animation->path.step < animation->path.step_total ){
 		animation->path.motion = sg_animate_calc_count(animation);
 		return 1;
@@ -568,14 +407,16 @@ int sg_animate_none(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animati
 	return 0;
 }
 
-int sg_animate_bounce_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t d;
 	sg_size_t count;
 	u16 step;
-
+	sg_point_t shift;
 	sg_point_t start;
+
+	shift.x = 0;
 
 	step = animation->path.step & ~(SG_ANIMATION_STEP_FLAG);
 
@@ -592,12 +433,12 @@ int sg_animate_bounce_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * an
 			d.w = animation->dim.w;
 			d.h = animation->dim.h - animation->path.motion_total + animation->path.motion;
 
-			sg_assign_bitmap_area(mg, dest, bitmap, start, d);
+			sg_draw_sub_bitmap(bmap, dest, scratch, start, d);
 
 		} else {
 			//bounce phase
 			if( step == 0 ){
-				sg_assign_bitmap_area(mg, animation->start, bitmap, animation->start, animation->dim);
+				sg_draw_sub_bitmap(bmap, animation->start, scratch, animation->start, animation->dim);
 			}
 
 			src.x = start.x;
@@ -609,12 +450,13 @@ int sg_animate_bounce_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * an
 			dest.x = start.x;
 			dest.y = start.y;
 
-			sg_shift_down(mg, count, src, d);
+			shift.y = count;
+			sg_shift(bmap, shift, src, d);
 
 			d.h = animation->path.motion + count;
 
-			sg_clr_area(mg, dest, d, 0xFF);
-			sg_set_area(mg, dest, d, 0xAA); //this is for a checkerboard background (not currently working well)
+			//! \todo CHECKERBOARD AREA
+			//sg_set_area(bmap, dest, d, 0xAA);
 
 
 			if( animation->path.step == animation->path.step_total ){
@@ -630,14 +472,15 @@ int sg_animate_bounce_up(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * an
 	return 0;
 }
 
-static int sg_animate_bounce_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+static int sg_animate_bounce_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t d;
 	sg_size_t count;
 	u16 step;
-
+	sg_point_t shift;
 	sg_point_t start;
+	shift.x = 0;
 
 	step = animation->path.step & ~(SG_ANIMATION_STEP_FLAG);
 
@@ -657,14 +500,14 @@ static int sg_animate_bounce_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animati
 			d.w = animation->dim.w;
 			d.h = animation->dim.h - animation->path.motion_total + animation->path.motion;
 
-			sg_assign_bitmap_area(mg, dest, bitmap, src, d);
+			sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
 		} else {
 			//bounce phase
 
 			if( step == 0 ){
 				//copy the drawing to the scratch area
-				sg_assign_bitmap_area(mg, animation->start, bitmap, animation->start, animation->dim);
+				sg_draw_sub_bitmap(bmap, animation->start, scratch, animation->start, animation->dim);
 			}
 
 			src.x = start.x;
@@ -673,14 +516,15 @@ static int sg_animate_bounce_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animati
 			d.w = animation->dim.w;
 			d.h = animation->dim.h - animation->path.motion;
 
-			sg_shift_up(mg, count, src, d);
+			shift.y = count;
+			sg_shift(bmap, shift, src, d);
 
 			d.h = animation->path.motion + count;
 			dest.x = start.x;
 			dest.y = start.y + animation->dim.h - d.h;
 
-			sg_clr_area(mg, dest, d, 0xFF);
-			sg_set_area(mg, dest, d, 0xAA);
+			//! \todo Checkboard background
+			//sg_set_area(bmap, dest, d, 0xAA);
 
 			if( animation->path.step == animation->path.step_total ){
 				animation->path.step = SG_ANIMATION_STEP_FLAG;
@@ -695,7 +539,7 @@ static int sg_animate_bounce_down(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animati
 	return 0;
 }
 
-static int sg_animate_bounce_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+static int sg_animate_bounce_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t d;
@@ -703,6 +547,9 @@ static int sg_animate_bounce_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animati
 	u16 step;
 
 	sg_point_t start;
+	sg_point_t shift;
+
+	shift.y = 0;
 
 	step = animation->path.step & ~(SG_ANIMATION_STEP_FLAG);
 
@@ -719,12 +566,12 @@ static int sg_animate_bounce_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animati
 			d.w = animation->dim.w - animation->path.motion_total + animation->path.motion;
 			d.h = animation->dim.h;
 
-			sg_assign_bitmap_area(mg, dest, bitmap, start, d);
+			sg_draw_sub_bitmap(bmap, dest, scratch, start, d);
 
 		} else {
 			//bounce phase
 			if( step == 0 ){
-				sg_assign_bitmap_area(mg, animation->start, bitmap, animation->start, animation->dim);
+				sg_draw_sub_bitmap(bmap, animation->start, scratch, animation->start, animation->dim);
 			}
 
 			src.x = start.x + animation->path.motion;
@@ -736,12 +583,13 @@ static int sg_animate_bounce_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animati
 			dest.x = start.x;
 			dest.y = start.y;
 
-			sg_shift_right(mg, count, src, d);
+			shift.x = count;
+			sg_shift(bmap, shift, src, d);
 
 			d.w = animation->path.motion + count;
 
-			sg_clr_area(mg, dest, d, 0xFF);
-			sg_set_area(mg, dest, d, 0xAA);
+			//! \todo checkerboard area
+			//sg_set_area(bmap, dest, d, 0xAA);
 
 			if( animation->path.step == animation->path.step_total ){
 				animation->path.step = SG_ANIMATION_STEP_FLAG;
@@ -756,14 +604,15 @@ static int sg_animate_bounce_left(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animati
 	return 0;
 }
 
-static int sg_animate_bounce_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+static int sg_animate_bounce_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t d;
 	sg_size_t count;
 	u16 step;
-
+	sg_point_t shift;
 	sg_point_t start;
+	shift.y = 0;
 
 	step = animation->path.step & ~(SG_ANIMATION_STEP_FLAG);
 
@@ -783,14 +632,14 @@ static int sg_animate_bounce_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animat
 			d.w = animation->dim.w - animation->path.motion_total + animation->path.motion;
 			d.h = animation->dim.h;
 
-			sg_assign_bitmap_area(mg, dest, bitmap, src, d);
+			sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
 		} else {
 			//bounce phase
 
 			if( step == 0 ){
 				//copy the drawing to the scratch area
-				sg_assign_bitmap_area(mg, animation->start, bitmap, animation->start, animation->dim);
+				sg_draw_sub_bitmap(bmap, animation->start, scratch, animation->start, animation->dim);
 			}
 
 			src.x = start.x;
@@ -799,15 +648,15 @@ static int sg_animate_bounce_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animat
 			d.w = animation->dim.w - animation->path.motion;
 			d.h = animation->dim.h;
 
-			sg_shift_left(mg, count, src, d);
+			shift.y = -1*count;
+			sg_shift(bmap, shift, src, d);
 
 			d.w = animation->path.motion + count;
 			dest.x = start.x + animation->dim.w - d.w;
 			dest.y = start.y;
 
-			sg_clr_area(mg, dest, d, 0xFF);
-			sg_set_area(mg, dest, d, 0xAA); //this is for a checkerboard background (not working well)
-			//sg_set_area(mg, dest, d, 0xFF); //solid white background
+			//! \todo CHECKERBOAR AREA
+			//sg_set_area(bmap, dest, d, 0xAA);
 
 			if( animation->path.step == animation->path.step_total ){
 				animation->path.step = SG_ANIMATION_STEP_FLAG;
@@ -821,7 +670,7 @@ static int sg_animate_bounce_right(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animat
 	}
 	return 0;}
 
-int (* const animations[SG_ANIMATION_TYPE_TOTAL])(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation) = {
+int (* const animations[SG_ANIMATION_TYPE_TOTAL])(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation) = {
 		sg_animate_push_left,
 		sg_animate_push_right,
 		sg_animate_push_up,
@@ -841,9 +690,9 @@ int (* const animations[SG_ANIMATION_TYPE_TOTAL])(sg_bmap_t * mg, sg_bmap_t * bi
 		sg_animate_bounce_right
 };
 
-int sg_animate(sg_bmap_t * mg, sg_bmap_t * bitmap, sg_animation_t * animation){
+int sg_animate(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
 	if( animation->type < SG_ANIMATION_TYPE_TOTAL ){
-		return animations[animation->type](mg, bitmap, animation);
+		return animations[animation->type](bmap, scratch, animation);
 	}
 	return -1;
 }

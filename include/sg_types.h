@@ -12,15 +12,32 @@ typedef uint8_t u8;
 typedef int8_t s8;
 typedef uint16_t u16;
 typedef int16_t s16;
-typedef uint32_t u32;
+typedef u32 u32;
 typedef int32_t s32;
 typedef uint64_t u64;
 typedef int64_t s64;
 #endif
 
+
+/*
+ *
+ * Library build defines 1, 2, 4, 8, 16 -- number
+ *
+ *
+ */
+#if !defined SG_BITS_PER_PIXEL
+#define SG_BITS_PER_PIXEL 4
+#endif
+
+
+#define SG_PIXELS_PER_WORD (32 / SG_BITS_PER_PIXEL)
+#define SG_PIXEL_MASK ((1<<SG_BITS_PER_PIXEL) - 1)
+
+
 #include <sys/types.h>
 
-#define SG_VERSION "0.0.1"
+#define SG_STR_VERSION "2.0.0"
+#define SG_VERSION 0x00020000
 
 #define SG_MAX (32767)
 #define SG_MIN (-32767)
@@ -66,9 +83,10 @@ enum {
 typedef s16 sg_int_t;
 typedef u16 sg_uint_t;
 typedef sg_uint_t sg_size_t;
+typedef u16 sg_color_t;
 
 //this needs to be based on 32 bit data so it's faster
-typedef u8 sg_bmap_data_t;
+typedef u32 sg_bmap_data_t;
 typedef u32 sg_unified_t;
 
 typedef union MCU_PACK {
@@ -87,14 +105,38 @@ typedef union MCU_PACK {
 	sg_unified_t dim;
 } sg_dim_t;
 
+enum {
+	SG_PEN_FLAG_TRANSPARENT_BACKGROUND /*! When set, the pen will not operate when the source color is zero */ = (1<<0),
+	SG_PEN_FLAG_INVERT = (1<<1),
+	SG_PEN_FLAG_BLEND = (1<<2),
+	SG_PEN_FLAG_FILL /*! When set, the icon will be drawn filled */ = (1<<3)
+};
+
+typedef struct MCU_PACK {
+	u16 o_flags;
+	u8 thickness;
+	u8 resd;
+	//the following union should just be sg_color_t color;
+	sg_color_t color;
+} sg_pen_t;
+
 
 typedef struct MCU_PACK {
 	sg_bmap_data_t * data;
+	u8 bits_per_pixel;
+	sg_pen_t pen;
 	sg_dim_t dim;
 	sg_dim_t margin_top_left;
 	sg_dim_t margin_bottom_right;
 	sg_size_t columns;
 } sg_bmap_t;
+
+typedef struct MCU_PACK {
+	const sg_bmap_t * bmap;
+	sg_point_t p;
+	sg_bmap_data_t * target;
+	sg_size_t shift;
+} sg_cursor_t;
 
 
 typedef struct MCU_PACK {
@@ -167,30 +209,6 @@ typedef struct MCU_PACK {
 	const sg_icon_primitive_t * elements;
 } sg_icon_t;
 
-#define SG_PEN_FLAG_SET (1<<0)
-#define SG_PEN_FLAG_CLR (1<<1)
-#define SG_PEN_FLAG_INVERT (1<<3)
-#define SG_PEN_FLAG_BLEND (1<<4)
-#define SG_PEN_MODE_MASK (SG_PEN_FLAG_SET|SG_PEN_FLAG_CLR|SG_PEN_FLAG_ASSIGN|SG_PEN_FLAG_INVERT|SG_PEN_FLAG_BLEND)
-#define SG_PEN_FLAG_FILL (1<<15)
-
-typedef struct MCU_PACK {
-	union {
-		u32 color;
-		u8 rgba[4];
-	};
-} sg_color_t;
-
-typedef struct MCU_PACK {
-	u16 o_flags;
-	u8 thickness;
-	u8 resd;
-	//the following union should just be sg_color_t color;
-	union {
-		u32 color;
-		u8 rgba[4];
-	};
-} sg_pen_t;
 
 /*! \brief Graphics Map Structure
  * \details Describes how an sg_icon_t is mapped to a sg_bitmap_t */
@@ -198,7 +216,6 @@ typedef struct MCU_PACK {
 	sg_point_t shift; //shift within screen (absolute)
 	s16 rotation; //rotate within screen (absolute)
 	sg_dim_t size; //scaling
-	sg_pen_t pen; //color, fill, thickness, operation
 } sg_map_t;
 
 
