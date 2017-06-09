@@ -18,12 +18,10 @@ typedef uint64_t u64;
 typedef int64_t s64;
 #endif
 
-
-
 #include <sys/types.h>
 
 #define SG_STR_VERSION "2.0.0"
-#define SG_VERSION 0x00020000
+#define SG_VERSION 0x0200
 
 #define SG_MAX (32767)
 #define SG_MIN (-32767)
@@ -55,11 +53,11 @@ enum {
 
 enum {
 	SG_FORMAT_VARIABLE /*! Bits-per-pixel is determined by the bitmap */ = 0,
-	SG_FORMAT_P1 /*! 1-bit, 2-color palette (or monochrome graphics) */ = 1,
-	SG_FORMAT_P2 /*! 2-bit, 4-color palette */ = 2,
-	SG_FORMAT_P4 /*! 4-bit, 16-color palette */ = 4,
-	SG_FORMAT_P8 /*! 8-bit, 256-color palette */ = 8,
-	SG_FORMAT_R5G6B5 /*! 16-bit R5 G6 B5 */ = 16
+	SG_FORMAT_1BPP /*! 1-bit, 2-color palette (or monochrome graphics) */ = 1,
+	SG_FORMAT_2BPP /*! 2-bit, 4-color palette */ = 2,
+	SG_FORMAT_4BPP /*! 4-bit, 16-color palette */ = 4,
+	SG_FORMAT_8BPP /*! 8-bit, 256-color palette */ = 8,
+	SG_FORMAT_RGB565 /*! 16-bit R5 G6 B5 */ = 16
 };
 
 #define SG_TYPE_MASK (0xFF)
@@ -152,7 +150,7 @@ typedef struct MCU_PACK {
 	sg_size_t h;
 	size_t size;
 	sg_size_t bits_per_pixel;
-	u16 resd;
+	u16 version;
 	//this must be 4 byte aligned
 } sg_bitmap_hdr_t;
 
