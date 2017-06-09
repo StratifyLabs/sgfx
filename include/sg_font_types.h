@@ -50,10 +50,10 @@ typedef struct MCU_PACK {
 	u8 num_chars /*! Number of characters in a font */;
 	u8 max_byte_width /*! Max number of bytes per line of a font */;
 	u8 max_height /*! Maximum height of a character */;
-	u8 resd0;
+	u8 bits_per_pixel /*! Number of bits in each pixel of the font bitmap */;
 	u32 size /*! Number of bytes the font occupies */;
 	u16 kerning_pairs /*! Number of kerning pairs stored in the font */;
-	u16 resd1;
+	u16 version /*! Version of the font format */;
 } sg_font_hdr_t;
 
 

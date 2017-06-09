@@ -40,16 +40,6 @@ typedef int64_t s64;
 #define SG_MAP_FILL_FLAG (1<<7)
 #define SG_MAP_THICKNESS_MASK ~(SG_MAP_FILL_FLAG)
 
-enum {
-	SG_LINE /*! A line */,
-	SG_ARC /*! An Arc */,
-	SG_FILL,
-	SG_POUR /*! Pour in the area */ = SG_FILL,
-	//SG_QUADRATIC_BEZIER,
-	//SG_CUBIC_BEZIER,
-	SG_TYPE_TOTAL
-};
-
 
 enum {
 	SG_FORMAT_VARIABLE /*! Bits-per-pixel is determined by the bitmap */ = 0,
@@ -115,11 +105,21 @@ typedef struct MCU_PACK {
 
 typedef struct MCU_PACK {
 	const sg_bmap_t * bmap;
-	sg_point_t p;
+	//sg_point_t p;
 	sg_bmap_data_t * target;
 	sg_size_t shift;
 } sg_cursor_t;
 
+
+enum {
+	SG_LINE /*! A line */,
+	SG_ARC /*! An Arc */,
+	SG_FILL,
+	SG_POUR /*! Pour in the area */ = SG_FILL,
+	//SG_QUADRATIC_BEZIER,
+	//SG_CUBIC_BEZIER,
+	SG_TYPE_TOTAL
+};
 
 typedef struct MCU_PACK {
 	sg_point_t p[2];

@@ -234,7 +234,7 @@ void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bma
 	sg_cursor_t x_src_cursor;
 
 	sg_cursor_set(&y_dest_cursor, bmap_dest, p_dest);
-	sg_cursor_set(&y_src_cursor, bmap_dest, sg_point(0,0));
+	sg_cursor_set(&y_src_cursor, bmap_src, sg_point(0,0));
 
 	//take bitmap and draw it on bmap
 	for(i=0; i < bmap_src->dim.h; i++){
@@ -242,7 +242,7 @@ void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bma
 		sg_cursor_copy(&x_dest_cursor, &y_dest_cursor);
 		sg_cursor_copy(&x_src_cursor, &y_src_cursor);
 
-		//use a function that uses two cursors to copy data
+		//copy the src cursor to the dest cursor over the source width
 		sg_cursor_draw_cursor(&x_dest_cursor, &x_src_cursor, bmap_src->dim.w);
 
 		sg_cursor_inc_y(&y_dest_cursor);
@@ -303,10 +303,9 @@ void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t *
 	sg_cursor_set(&min_cursor, bmap, p);
 	sg_cursor_set(&max_cursor, bmap, p);
 
-	while( (sg_cursor_get_pixel(&min_cursor) != 0) != active ){ sg_cursor_dec_x(&min_cursor); }
-	while( (sg_cursor_get_pixel(&max_cursor) != 0) != active ){ sg_cursor_inc_x(&max_cursor); }
-	*xmin = min_cursor.p.x+1;
-	*xmax = max_cursor.p.x;
+	while( (sg_cursor_get_pixel(&min_cursor) != 0) != active ){ sg_cursor_dec_x(&min_cursor); sg_cursor_dec_x(&min_cursor); (*xmin)--; }
+	while( (sg_cursor_get_pixel(&max_cursor) != 0) != active ){ (*xmax)++; }
+	(*xmin)++;
 	return;
 }
 
@@ -326,10 +325,9 @@ u8 get_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, s
 
 	for(p.x = xmin; p.x < xmax; p.x++){
 		if( (sg_cursor_get_pixel(&cursor) != 0) != active ){
-			*pos = cursor.p.x;
+			*pos = p.x;
 			return false;
 		}
-		sg_cursor_inc_x(&cursor);
 	}
 	return 1;
 }
