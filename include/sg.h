@@ -15,20 +15,37 @@ extern "C" {
 
 /*! \mainpage
  *
- *  #Welcome to the Stratify Graphics Page
+ *  Introduction
+ *  ---------------------------
  *
- *  The stratify graphics library is designed for working with small displays.
+ *  The stratify graphics library is designed for working with small displays. It stores
+ *  bitmaps using 1, 2, 4, or 8 bits per pixel (bpp). The bitmap can then be mapped to a
+ *  display using a color palette. This approach allows powerful graphics to run
+ *  on devices with very little memory and then to be mapped to color displays.
+ *
+ *  Let's take an example setup with the following hardware:
+ *
+ *  - Cortex M3 processor with 64KB of RAM
+ *  - 128x128xRGB565 Display
+ *
+ *  The native display requires 32KB of video memory in order to perform fast graphics operations.
+ *  If you are building a multi-color UI than only uses a few colors, you can use the Stratify
+ *  Graphics library and represent the UI using 4bpp (16 colors). The UI could be represented in 128*128*4/8 = 8KB
+ *  of RAM leaving plenty of RAM for other parts of the application.
+ *
+ *  Features
+ *  ---------------------------
  *
  *  - Bitmap memory management
- * 	- Draw vector graphics and bitmaps using a pen.
+ *  - Bitmap Transforms
+ *  - Bitmap Coordinates
+ * 	- Draw vector graphics and bitmaps using a pen
  * 	- Pixel manipulation
- *
- *
  *
  *
  */
 
-/*! \addtogroup BMAP Bitmap Management
+/*! \addtogroup BMAPMGMT Bitmap Management
  * @{
  */
 
@@ -53,7 +70,7 @@ static inline sg_size_t sg_bmap_cols(const sg_bmap_t * bmap){ return bmap->colum
 
 /*! @} */
 
-/*! \addtogroup BMAPOP Bitmap Operations
+/*! \addtogroup BMAPOP Bitmap Transforms
  * @{
  */
 
@@ -64,14 +81,21 @@ void sg_transform_flip_y(const sg_bmap_t * bmap);
 /*! \details Flip both axes of the bitmap (horizontal and vertical mirror) */
 void sg_transform_flip_xy(const sg_bmap_t * bmap);
 
-
+/*! \details Shifts a bitmap.
+ *
+ * @param bmap A pointer to the bitmap object
+ * @param shift The amount to shift (signed x,y values)
+ * @param p The point in \a bmap to start shifting (top left corner)
+ * @param d The dimensions of \a bmap to shift
+ *
+ */
 void sg_transform_shift(const sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d);
 
 
 
 /*! @} */
 
-/*! \addtogroup POINTDIM Point and Dimensions
+/*! \addtogroup COORD Bitmap Coordinates
  * @{
  */
 
@@ -139,8 +163,8 @@ static inline sg_point_t sg_point_origin(){ sg_point_t p; p.point = 0; return p;
 
 
 void sg_point_set(sg_point_t * d, sg_point_t p);
-void sg_point_map(sg_point_t * d, const sg_map_t * m);
-sg_size_t sg_point_map_pixel_size(const sg_map_t * m);
+void sg_point_map(sg_point_t * d, const sg_vector_map_t * m);
+sg_size_t sg_point_map_pixel_size(const sg_vector_map_t * m);
 void sg_point_add(sg_point_t * d, const sg_point_t * a);
 void sg_point_subtract(sg_point_t * d, const sg_point_t * a);
 void sg_point_arc(sg_point_t * d, sg_size_t rx, sg_size_t ry, i16 angle);
@@ -156,36 +180,198 @@ void sg_point_bound_y(const sg_bmap_t * bmap, sg_int_t * y);
 
 /*! @} */
 
-/*! \addtogroup CURSOR Cursor Operations
+/*! \addtogroup CURSOR Bitmap Cursor Drawing
  * @{
  */
 
+/*! \details Copies a cursor from \a src to \a dest.
+ *
+ * @param dest A pointer to the destination cursor
+ * @param src A pointer to the source cursor
+ *
+ */
 static inline void sg_cursor_copy(sg_cursor_t * dest, const sg_cursor_t * src){ memcpy(dest, src, sizeof(sg_cursor_t)); }
 
+/*! \details Sets the value of the cursor to point to \a p in \a bmap.
+ *
+ * @param cursor A pointer to the cursor
+ * @param bmap A pointer to the source bitmap object
+ * @param p The point in the \a bmap where the cursor will point
+ */
 void sg_cursor_set(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p);
+
+/*! \details Increments the cursor's x value by one.
+ *
+ * @param cursor A pointer to the cursor
+ *
+ * This function does not account for the width of bitmap object. If
+ * you need to increment through multiple rows try this approach.
+ *
+ * \code
+ *	sg_cursor_t y_cursor;
+ *	sg_cursor_t x_cursor;
+ *	sg_size_t i,j;
+ *	sg_cursor_set(&y_cursor, bmap, p);
+ *
+ *	for(i=0; i < 10; i++){
+ *		sg_cursor_copy(&x_cursor, &y_cursor);
+ *		for(j=0; j < 10; j++){
+ *
+ *			sg_cursor_inc_x(&x_cursor);
+ *		}
+ *		sg_cursor_inc_y(&y_cursor);
+ *	}
+ *
+ * \endcode
+ *
+ */
 void sg_cursor_inc_x(sg_cursor_t * cursor);
+
+/*! \details Decrements a cursor's x location.
+ *
+ * @param cursor A pointer to the cursor
+ *
+ * This function doesn't account for the size of the bmap.
+ *
+ * \sa sg_cursor_inc_x()
+ *
+ */
 void sg_cursor_dec_x(sg_cursor_t * cursor);
+
+/*! \details Increments a cursor's y location.
+ *
+ * @param cursor A pointer to the cursor
+ *
+ * This function doesn't account for the size of the bmap.
+ *
+ * \sa sg_cursor_inc_x()
+ *
+ */
 void sg_cursor_inc_y(sg_cursor_t * cursor);
+
+/*! \details Decrements a cursor's y location.
+ *
+ * @param cursor A pointer to the cursor
+ *
+ * This function doesn't account for the size of the bmap.
+ *
+ * \sa sg_cursor_inc_x()
+ *
+ */
 void sg_cursor_dec_y(sg_cursor_t * cursor);
+
+/*! \details Returns the value of the pixel at the cursor's location
+ * and increments the location of the pixel.
+ *
+ * @param cursor A pointer to the cursor
+ * @return The value of the pixel at the cursor's location (before incrementing)
+ */
 sg_color_t sg_cursor_get_pixel(sg_cursor_t * cursor);
+
+/*! \details Draws a pixel at the cursor's location
+ * and increments the location of the pixel.
+ *
+ * @param cursor A pointer to the cursor
+ */
 void sg_cursor_draw_pixel(sg_cursor_t * cursor);
+
+/*! \details Draws a horizontal line at the cursor's location
+ * and increments the cursor's position to the pixel after the
+ * end of the line.
+ *
+ * @param cursor A pointer to the cursor
+ * @param width The width of the line
+ *
+ * The cursor will use the containing sg_bmap_t's pen for
+ * color and thickness.
+ *
+ * This function operates on the bmap using 32-bit words
+ * so it is faster than simply drawing pixels using a loop.
+ *
+ */
 void sg_cursor_draw_hline(sg_cursor_t * cursor, sg_size_t width);
+
+/*! \details Inverts a horizontal line at the cursor's location
+ * and increments the cursor's position to the pixel after the
+ * end of the line.
+ *
+ * @param cursor A pointer to the cursor
+ * @param width The width of the line
+ *
+ * This function operates on the bmap using 32-bit words
+ * so it is faster than simply drawing pixels using a loop.
+ *
+ * The operation is a bitwise invert (~ C operator). Using 1bpp,
+ * the result is obvious. Using more than 1bpp, how the invert looks
+ * will depend on how the display palette is set up to render the
+ * bitmap.
+ *
+ */
 void sg_cursor_invert_hline(sg_cursor_t * cursor, sg_size_t width);
+
+/*! \details Clears a horizontal line at the cursor's location
+ * and increments the cursor's position to the pixel after the
+ * end of the line.
+ *
+ * @param cursor A pointer to the cursor
+ * @param width The width of the line
+ *
+ * This function operates on the bmap using 32-bit words
+ * so it is faster than simply drawing pixels using a loop.
+ *
+ * This operation assigns a value of 0 to the pixels.
+ */
 void sg_cursor_clear_hline(sg_cursor_t * cursor, sg_size_t width);
+
+/*! \details Draws a horizontal line on \a dest_cursor by copying the values of the \a src_cursor
+ * and updates the x location of the \a dest_cursor to the pixel past the end of the operation.
+ *
+ * @param dest_cursor The cursor where pixels will be drawn
+ * @param src_cursor The cursor where pixels are copied from
+ * @param width The number of pixels to copy
+ *
+ * This function operates on 32-bit words. It is much faster
+ * than a sg_get_pixel()/sg_draw_pixel() loop.
+ *
+ */
 void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cursor, sg_size_t width);
+
+/*! \details Draws the specified pattern in a horizontal line at \a cursor.
+ *
+ * @param cursor The cursor
+ * @param width The number of pixels to draw
+ * @param pattern The pattern to draw
+ *
+ * This function operates on 32-bit words and is much faster
+ * than a sg_draw_pixel() loop.
+ *
+ */
 void sg_cursor_draw_pattern(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_t pattern);
+
+/*! \details Shifts the pixels at cursor to the right.
+ *
+ * @param cursor A pointer to the cursor
+ * @param shift_width The number of pixels to shift
+ * @param shift_distance The distance to shift \a shift_width pixels
+ */
 void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
+
+/*! \details Shifts the pixels at cursor to the left.
+ *
+ * @param cursor A pointer to the cursor
+ * @param shift_width The number of pixels to shift
+ * @param shift_distance The distance to shift \a shift_width pixels
+ */
 void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
 
 /*! @} */
 
 
-/*! \addtogroup BMAPPRIMOP Bitmap Drawing Operations
+/*! \addtogroup BMAPPRIMOP Bitmap Drawing
  * @{
  */
 
 
-//the above functions need to be replaced with -- the functions need to support 1-bit, 2-bit, 4-bit, 8-bit, 16-bit, 24-bit, and 32-bit colors
 sg_color_t sg_get_pixel(const sg_bmap_t * bmap, sg_point_t p);
 void sg_draw_pixel(const sg_bmap_t * bmap, sg_point_t p);
 void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
@@ -223,20 +409,20 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
 /*! @} */
 
 
-/*! \addtogroup BMAPDRAW Draw Scalable Bitmap Graphics
+/*! \addtogroup BMAPVECTOR Bitmap Vector Drawing
  * @{
  */
 
 //drawing
-void sg_vector_draw_primitive(sg_bmap_t * bitmap, const sg_icon_primitive_t * prim, const sg_map_t * map, sg_bounds_t * bounds);
-void sg_vector_draw_primitive_list(sg_bmap_t * bitmap, const sg_icon_primitive_t prim_list[], unsigned int total, const sg_map_t * map, sg_bounds_t * bounds);
-void sg_vector_draw_icon(sg_bmap_t * bitmap, const sg_icon_t * icon, const sg_map_t * map, sg_bounds_t * bounds);
+void sg_vector_draw_primitive(sg_bmap_t * bitmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_bounds_t * bounds);
+void sg_vector_draw_primitive_list(sg_bmap_t * bitmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_bounds_t * bounds);
+void sg_vector_draw_icon(sg_bmap_t * bitmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_bounds_t * bounds);
 
 
 /*! @} */
 
 
-/*! \addtogroup ANIMATION Graphics Animations
+/*! \addtogroup ANIMATION Bitmap Animations
  * @{
  */
 
@@ -260,8 +446,8 @@ typedef struct MCU_PACK {
 	size_t (*calc_bmap_size)(sg_dim_t dim);
 
 	void (*point_set)(sg_point_t * d, sg_point_t p);
-	void (*point_map)(sg_point_t * d, const sg_map_t * m);
-	sg_size_t (*point_map_pixel_size)(const sg_map_t * m);
+	void (*point_map)(sg_point_t * d, const sg_vector_map_t * m);
+	sg_size_t (*point_map_pixel_size)(const sg_vector_map_t * m);
 	void (*point_add)(sg_point_t * d, const sg_point_t * a);
 	void (*point_subtract)(sg_point_t * d, const sg_point_t * a);
 	void (*point_arc)(sg_point_t * d, sg_size_t rx, sg_size_t ry, i16 angle);
@@ -307,9 +493,9 @@ typedef struct MCU_PACK {
 	void (*draw_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src);
 	void (*draw_sub_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src);
 
-	void (*vector_draw_primitive)(sg_bmap_t * bitmap, const sg_icon_primitive_t * prim, const sg_map_t * map, sg_bounds_t * bounds);
-	void (*vector_draw_primitive_list)(sg_bmap_t * bitmap, const sg_icon_primitive_t prim_list[], unsigned int total, const sg_map_t * map, sg_bounds_t * bounds);
-	void (*vector_draw_icon)(sg_bmap_t * bitmap, const sg_icon_t * icon, const sg_map_t * map, sg_bounds_t * bounds);
+	void (*vector_draw_primitive)(sg_bmap_t * bitmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_bounds_t * bounds);
+	void (*vector_draw_primitive_list)(sg_bmap_t * bitmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_bounds_t * bounds);
+	void (*vector_draw_icon)(sg_bmap_t * bitmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_bounds_t * bounds);
 
 	int (*animate)(sg_bmap_t * bmap, sg_bmap_t * bitmap, sg_animation_t * animation);
 	int (*animate_init)(sg_animation_t * animation, u8 type, u8 path, u8 step_total, sg_size_t motion_total, sg_point_t start, sg_dim_t dim);

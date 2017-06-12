@@ -7,18 +7,22 @@
 #include "sg.h"
 
 
-static void draw_line(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * map, sg_bounds_t * attr);
-static void draw_arc(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * map, sg_bounds_t * attr);
-static void draw_fill(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * map, sg_bounds_t * attr);
+static void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr);
+static void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr);
+static void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr);
+static void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr);
+static void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr);
 
-static void (*draw_func [SG_TYPE_TOTAL])(const sg_icon_primitive_t * p, sg_bmap_t * bm, const sg_map_t * map, sg_bounds_t * attr) = {
+static void (*draw_func [SG_TYPE_TOTAL])(const sg_vector_primitive_t * p, sg_bmap_t * bm, const sg_vector_map_t * map, sg_bounds_t * attr) = {
 		draw_line,
 		draw_arc,
+		draw_quadtratic_bezier,
+		draw_cubic_bezier,
 		draw_fill
 };
 
 
-void sg_vector_draw_primitive(sg_bmap_t * bitmap, const sg_icon_primitive_t * prim, const sg_map_t * map, sg_bounds_t * attr){
+void sg_vector_draw_primitive(sg_bmap_t * bitmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_bounds_t * attr){
 	int type;
 	type = prim->type & SG_TYPE_MASK;
 	if( prim->type & SG_ENABLE_FLAG ){
@@ -28,17 +32,17 @@ void sg_vector_draw_primitive(sg_bmap_t * bitmap, const sg_icon_primitive_t * pr
 	}
 }
 
-void sg_vector_draw_icon(sg_bmap_t * bmap, const sg_icon_t * icon, const sg_map_t * map, sg_bounds_t * attr){
+void sg_vector_draw_icon(sg_bmap_t * bmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_bounds_t * attr){
 	unsigned int total;
 	if( bmap->pen.o_flags & SG_PEN_FLAG_FILL ){
 		total = icon->total;
 	} else {
 		total = icon->total - icon->fill_total;
 	}
-	sg_vector_draw_primitive_list(bmap, icon->elements, total, map, attr);
+	sg_vector_draw_primitive_list(bmap, icon->primitives, total, map, attr);
 }
 
-void sg_vector_draw_primitive_list(sg_bmap_t * bitmap, const sg_icon_primitive_t prim_list[], unsigned int total, const sg_map_t * map, sg_bounds_t * attr){
+void sg_vector_draw_primitive_list(sg_bmap_t * bitmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_bounds_t * attr){
 	unsigned int i;
 
 	if( attr ){
@@ -54,7 +58,7 @@ void sg_vector_draw_primitive_list(sg_bmap_t * bitmap, const sg_icon_primitive_t
 }
 
 
-void draw_line(const sg_icon_primitive_t * p, sg_bmap_t * bmap, const sg_map_t * map, sg_bounds_t * attr){
+void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
 	//draw a line from bottom left to top right
 	sg_point_t p1;
 	sg_point_t p2;
@@ -82,7 +86,7 @@ void draw_line(const sg_icon_primitive_t * p, sg_bmap_t * bmap, const sg_map_t *
 	sg_draw_line(bmap, p1, p2);
 }
 
-void draw_arc(const sg_icon_primitive_t * p, sg_bmap_t * bmap, const sg_map_t * map, sg_bounds_t * attr){
+void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
 	int i;
 	int points;
 	int step;
@@ -158,10 +162,17 @@ void draw_arc(const sg_icon_primitive_t * p, sg_bmap_t * bmap, const sg_map_t * 
 			sg_draw_pixel(bmap, pen);
 		}
 	}
+}
+
+void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
 
 }
 
-void draw_fill(const sg_icon_primitive_t * p, sg_bmap_t * bmap, const sg_map_t * map, sg_bounds_t * attr){
+void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
+
+}
+
+void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
 	sg_point_t center;
 	center.point = p->shift.point;
 	sg_point_map(&center, map);

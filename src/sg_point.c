@@ -530,7 +530,7 @@ void sg_point_set(sg_point_t * d, sg_point_t p){
 	d->y = p.y;
 }
 
-void sg_point_map(sg_point_t * d, const sg_map_t * m){
+void sg_point_map(sg_point_t * d, const sg_vector_map_t * m){
 	sg_point_rotate(d, m->rotation);
 	//map to the space
 	int32_t tmp;
@@ -540,7 +540,7 @@ void sg_point_map(sg_point_t * d, const sg_map_t * m){
 	d->y = tmp - (m->size.h>>1) + m->shift.y;
 }
 
-sg_size_t sg_point_map_pixel_size(const sg_map_t * m){
+sg_size_t sg_point_map_pixel_size(const sg_vector_map_t * m){
 	sg_size_t p;
 	sg_size_t max = m->size.w > m->size.h ? m->size.w : m->size.h;
 	int32_t tmp;

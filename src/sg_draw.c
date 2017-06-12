@@ -227,23 +227,55 @@ void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_d
 }
 
 void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src){
-	sg_size_t i;
+	sg_int_t i;
 	sg_cursor_t y_dest_cursor;
 	sg_cursor_t x_dest_cursor;
 	sg_cursor_t y_src_cursor;
 	sg_cursor_t x_src_cursor;
+	sg_int_t h;
+	sg_int_t w;
+	sg_point_t p_src;
+
+	p_src = sg_point(0,0);
+
+	//check to see if p_dest values are negative and adjust source accordingly
+	w = bmap_src->dim.w;
+	h = bmap_src->dim.h;
+	if( p_dest.x < 0 ){
+		p_src.x = -1*p_dest.x;
+		p_dest.x = 0;
+	}
+	if( p_dest.y < 0 ){
+		p_src.y = -1*p_dest.y;
+		p_dest.y = 0;
+	}
+
+	w -= p_src.x;
+	h -= p_src.y;
 
 	sg_cursor_set(&y_dest_cursor, bmap_dest, p_dest);
-	sg_cursor_set(&y_src_cursor, bmap_src, sg_point(0,0));
+	sg_cursor_set(&y_src_cursor, bmap_src, p_src);
+
+	if( p_dest.y + h > bmap_dest->dim.h ){
+		h = bmap_dest->dim.h - p_dest.y;
+	}
+
+	if( p_dest.x + w > bmap_dest->dim.w ){
+		w = bmap_dest->dim.w - p_dest.x;
+	}
+
+	if( w < 0 ){
+		return;
+	}
 
 	//take bitmap and draw it on bmap
-	for(i=0; i < bmap_src->dim.h; i++){
+	for(i=0; i < h; i++){
 
 		sg_cursor_copy(&x_dest_cursor, &y_dest_cursor);
 		sg_cursor_copy(&x_src_cursor, &y_src_cursor);
 
 		//copy the src cursor to the dest cursor over the source width
-		sg_cursor_draw_cursor(&x_dest_cursor, &x_src_cursor, bmap_src->dim.w);
+		sg_cursor_draw_cursor(&x_dest_cursor, &x_src_cursor, w);
 
 		sg_cursor_inc_y(&y_dest_cursor);
 		sg_cursor_inc_y(&y_src_cursor);

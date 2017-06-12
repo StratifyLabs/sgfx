@@ -116,34 +116,10 @@ enum {
 	SG_ARC /*! An Arc */,
 	SG_FILL,
 	SG_POUR /*! Pour in the area */ = SG_FILL,
-	//SG_QUADRATIC_BEZIER,
-	//SG_CUBIC_BEZIER,
+	SG_QUADRATIC_BEZIER,
+	SG_CUBIC_BEZIER,
 	SG_TYPE_TOTAL
 };
-
-typedef struct MCU_PACK {
-	sg_point_t p[2];
-} sg_triangle_t;
-
-typedef struct MCU_PACK {
-	sg_size_t rx /*! X radius */;
-	sg_size_t ry /*! Y radius */;
-	s16 start /*! Start angle */;
-	s16 stop /*!  Stop angle */;
-} sg_arc_t;
-
-typedef struct MCU_PACK {
-	//list of points
-	sg_size_t r; //inner/outer radii
-} sg_circle_t;
-
-typedef struct MCU_PACK {
-	sg_point_t p;
-} sg_line_t;
-
-typedef struct MCU_PACK {
-	sg_dim_t dim;
-} sg_rect_t;
 
 typedef struct MCU_PACK {
 	sg_size_t w;
@@ -154,20 +130,6 @@ typedef struct MCU_PACK {
 	//this must be 4 byte aligned
 } sg_bitmap_hdr_t;
 
-/*! \brief Icon Primitive Structure
- * \details Describes an icon primitive */
-typedef struct MCU_PACK {
-	u16 type /*! type of primitive object (e.g. SG_LINE) */;
-	s16 rotation /*! Primitive rotation within the icon */;
-	sg_point_t shift /*! Primitive offset within the icon */;
-	union {
-		sg_arc_t arc /*! Primitive data for SG_ARC */;
-		//sg_triangle_t triangle;
-		sg_line_t line /*! Primitive data for SG_LINE */;
-		//sg_rect_t rect;
-		//sg_circle_t circle;
-	};
-} sg_icon_primitive_t;
 
 
 /*! \brief Graphics Bounds Structure
@@ -185,13 +147,50 @@ typedef struct MCU_PACK {
 	sg_dim_t dim /*! Dimesions of the region */;
 } sg_region_t;
 
+
+typedef struct MCU_PACK {
+	sg_point_t p;
+} sg_vector_line_t;
+
+typedef struct MCU_PACK {
+	sg_size_t rx /*! X radius */;
+	sg_size_t ry /*! Y radius */;
+	s16 start /*! Start angle */;
+	s16 stop /*!  Stop angle */;
+} sg_vector_arc_t;
+
+typedef struct MCU_PACK {
+	sg_point_t p1;
+	sg_point_t p2;
+} sg_vector_quadtratic_bezier_t;
+
+typedef struct MCU_PACK {
+	sg_point_t p1;
+	sg_point_t p2;
+	sg_point_t p3;
+} sg_vector_cubic_bezier_t;
+
+/*! \brief Icon Primitive Structure
+ * \details Describes an icon primitive */
+typedef struct MCU_PACK {
+	u16 type /*! type of primitive object (e.g. SG_LINE) */;
+	s16 rotation /*! Primitive rotation within the map */;
+	sg_point_t shift /*! Primitive offset within the map */;
+	union {
+		sg_vector_arc_t arc /*! Primitive data for SG_ARC */;
+		sg_vector_line_t line /*! Primitive data for SG_LINE */;
+		sg_vector_quadtratic_bezier_t quadratic_bezier /*! Primitive data for SG_QUADRATIC_BEZIER */;
+		sg_vector_cubic_bezier_t cubic_bezier /*! Primitive data for SG_CUBIC_BEZIER */;
+	};
+} sg_vector_primitive_t;
+
 /*! \brief Graphics Icon Structure
  * \details Describes a scalable graphic that can be drawn on a bitmap */
 typedef struct MCU_PACK {
-	u16 total /*! Total number of elements */;
-	u16 fill_total /*! Total number of fill elements */;
-	const sg_icon_primitive_t * elements;
-} sg_icon_t;
+	u16 total /*! Total number of primitives */;
+	u16 fill_total /*! Total number of fill primitives */;
+	const sg_vector_primitive_t * primitives;
+} sg_vector_icon_t;
 
 
 /*! \brief Graphics Map Structure
@@ -200,7 +199,7 @@ typedef struct MCU_PACK {
 	sg_point_t shift; //shift within screen (absolute)
 	s16 rotation; //rotate within screen (absolute)
 	sg_dim_t size; //scaling
-} sg_map_t;
+} sg_vector_map_t;
 
 
 enum {
