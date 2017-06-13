@@ -33,19 +33,21 @@ extern "C" {
  *  Graphics library and represent the UI using 4bpp (16 colors). The UI could be represented in 128*128*4/8 = 8KB
  *  of RAM leaving plenty of RAM for other parts of the application.
  *
- *  Features
- *  ---------------------------
+ * Features
+ * ---------------------------
  *
- *  - Bitmap memory management
- *  - Bitmap Transforms
- *  - Bitmap Coordinates
- * 	- Draw vector graphics and bitmaps using a pen
- * 	- Pixel manipulation
+ * - Compile time configuration of 1, 2, 4, or 8 bits per pixels
+ * - Bitmap memory management
+ * - Bitmap Transforms
+ * - Bitmap Coordinates
+ * - Draw vector graphics and bitmaps using a pen
+ * - Pixel manipulation
+ *
  *
  *
  */
 
-/*! \addtogroup BMAPMGMT Bitmap Management
+/*! \addtogroup BMAPMGMT Data Management
  * @{
  */
 
@@ -70,7 +72,7 @@ static inline sg_size_t sg_bmap_cols(const sg_bmap_t * bmap){ return bmap->colum
 
 /*! @} */
 
-/*! \addtogroup BMAPOP Bitmap Transforms
+/*! \addtogroup BMAPOP Transforms
  * @{
  */
 
@@ -95,7 +97,7 @@ void sg_transform_shift(const sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, 
 
 /*! @} */
 
-/*! \addtogroup COORD Bitmap Coordinates
+/*! \addtogroup COORD Coordinates
  * @{
  */
 
@@ -180,7 +182,7 @@ void sg_point_bound_y(const sg_bmap_t * bmap, sg_int_t * y);
 
 /*! @} */
 
-/*! \addtogroup CURSOR Bitmap Cursor Drawing
+/*! \addtogroup CURSOR Cursor Drawing
  * @{
  */
 
@@ -367,24 +369,132 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 /*! @} */
 
 
-/*! \addtogroup BMAPPRIMOP Bitmap Drawing
+/*! \addtogroup BMAPPRIMOP Drawing
  * @{
  */
 
 
+/*! \details Returns the color of the pixel.
+ *
+ * @param bmap A pointer to the bitmap object
+ * @param p The point in \a bmap to get the color
+ * @returns The color of the pixel at \a p
+ */
 sg_color_t sg_get_pixel(const sg_bmap_t * bmap, sg_point_t p);
+
+/*! \details Draws a pixel.
+ *
+ * @param bmap A pointer to the bitmap
+ * @param p Point where to draw the pixel
+ *
+ * The color of the pixel is determined by the bmap->pen
+ * object.
+ *
+ *
+ */
 void sg_draw_pixel(const sg_bmap_t * bmap, sg_point_t p);
+
+/*! \details Draws a line on the bitmap.
+ *
+ * @param bmap A pointer to the bmap
+ * @param p1 First point of the line
+ * @param p2 Second point of the line
+ *
+ * The color and thickness of the line are determined
+ * by the bmap->pen object.
+ *
+ */
 void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
+
+/*! \details Draws a quadratic bezier curve on the bitmap.
+ *
+ * @param bmap A pointer to the bitmap object
+ * @param p1 First point of the bezier function
+ * @param p2 Second point of the bezier function
+ * @param p3 Third point of the bezier function
+ *
+ * The color and thickness of the curve are determined by
+ * the bmap->pen object.
+ *
+ */
 void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3);
+
+/*! \details Draws a cubic bezier curve on the bitmap.
+ *
+ * @param bmap A pointer to the bitmap object
+ * @param p1 First point of the bezier function
+ * @param p2 Second point of the bezier function
+ * @param p3 Third point of the bezier function
+ * @param p4 Third point of the bezier function
+ *
+ * The color and thickness of the curve are determined by
+ * the bmap->pen object.
+ *
+ */
 void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4);
+
+/*! \details Draws a rectangle.
+ *
+ * @param bmap A pointer to the bitmap object
+ * @param p The top left corner of the rectangle
+ * @param d The dimensions of the rectangle
+ *
+ * The color of the rectangle is determined by the bmap->pen
+ * object.
+ *
+ */
 void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+
+/*! \details Inverts a rectangle.
+ *
+ * @param bmap A pointer to the bitmap object
+ * @param p The top left corner of the rectangle
+ * @param d The dimensions of the rectangle
+ *
+ * The color of the rectangle will be a bitwise invert (~ C operator)
+ * of the current color of the bitmap.
+ *
+ */
 void sg_invert_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+
+/*! \details Clears a rectangle.
+ *
+ * @param bmap A pointer to the bitmap object
+ * @param p The top left corner of the rectangle
+ * @param d The dimensions of the rectangle
+ *
+ * The color of the rectangle will be all zeros.
+ *
+ */
 void sg_clear_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+
+/*! \details Pours a color on the bitmap.
+ *
+ * @param bmap A pointer to the bitmap object
+ * @param p The point where the pour should start.
+ *
+ * The pour will fill...
+ *
+ */
 void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p);
+
+/*! \details Draws a pattern in the specified area of the bitmap.
+ *
+ * @param bmap A pointer to the bitmap
+ * @param p The top left corner of the bitmap where the pattern will start
+ * @param d The dimensions of the pattern within the bitmap
+ * @param odd_pattern The pattern for odd lines
+ * @param even_pattern The pattern for even lines
+ * @param pattern_height The height of the pattern lines
+ *
+ * The \a odd_pattern and \a even_pattern values are bitmask values.
+ * A value of 1 will draw the pattern using the bmap->pen color. A
+ * zero value will be drawn as color zero.
+ *
+ */
 void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height);
 
-
-/*! \details This function sets the pixels in a bitmap
+/*! \details Draws a bitmap on the bitmap.
  * based on the pixels of the source bitmap
  *
  * @param bmap_dest The destination bitmap
@@ -394,7 +504,7 @@ void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_d
  */
 void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src);
 
-/*! \details This function draws a subset of
+/*! \details Draws a subset of
  * the source bitmap on the destination bitmap.
  *
  * @param bmap_dest The destination bitmap
@@ -409,24 +519,72 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
 /*! @} */
 
 
-/*! \addtogroup BMAPVECTOR Bitmap Vector Drawing
+/*! \addtogroup BMAPVECTOR Vector Graphics
  * @{
  */
 
 //drawing
-void sg_vector_draw_primitive(sg_bmap_t * bitmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_bounds_t * bounds);
-void sg_vector_draw_primitive_list(sg_bmap_t * bitmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_bounds_t * bounds);
-void sg_vector_draw_icon(sg_bmap_t * bitmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_bounds_t * bounds);
+/*! \details Draws a vector primitive.
+ *
+ * @param bmap A pointer to the bitmap object
+ * @param prim A pointer to the primitive to draw
+ * @param map A pointer to the map
+ * @param bounds A pointer to the bounds object that will be populate on return if not null
+ *
+ * The vector primitive can be one of the following types:
+ * - Line (SG_LINE)
+ * - Arc (SG_ARC)
+ * - Pour (SG_POUR)
+ * - Quadratic Bezier (SG_QUADRATIC_BEZIER)
+ * - Cubic Bezier (SG_CUBIC_BEZIER)
+ *
+ * The vector primitive is defined in an abstract drawing space with dimesions
+ * of -16384 to +16384 for both width and height. The \a map defines how
+ * the primitive is mapped onto the bitmap. The map->size dimension
+ * specifies the pixel width and height in the destination bitmap. The
+ * map->shift point determines the center of the primitive on the bitmap.
+ * Finally, the map->rotation values determines the rotation of the
+ * primitive on the bitmap.
+ *
+ * After the primitive is drawn, the \a bounds parameter (if not null) will
+ * be written to hold the top left and bottom right corners of the primitive
+ * in the bitmap.
+ */
+void sg_vector_draw_primitive(sg_bmap_t * bmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_bounds_t * bounds);
+
+/*! \details Draw a list of primitives.
+ *
+ * \sa sg_vector_draw_primitive()
+ */
+void sg_vector_draw_primitive_list(sg_bmap_t * bmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_bounds_t * bounds);
+
+/*! \details Draw an icon (collection of primitives).
+ *
+ * @param bmap The bitmap to draw on
+ * @param icon A pointer to the icon object
+ * @param map A pointer to the map object
+ * @param bounds If not null, will be written with the bounds of the icon drawn on the bitmap
+ *
+ *
+ */
+void sg_vector_draw_icon(sg_bmap_t * bmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_bounds_t * bounds);
 
 
 /*! @} */
 
 
-/*! \addtogroup ANIMATION Bitmap Animations
+/*! \addtogroup ANIMATION Animations
  * @{
  */
 
+/*! \details Executes an animation.
+ *
+ */
 int sg_animate(sg_bmap_t * bmap, sg_bmap_t * bitmap, sg_animation_t * animation);
+
+/*! \details Initializes an animation.
+ *
+ */
 int sg_animate_init(sg_animation_t * animation,
 		u8 type,
 		u8 path,
