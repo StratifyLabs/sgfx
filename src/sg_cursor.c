@@ -10,7 +10,6 @@ static sg_size_t calc_pixels_after_last_boundary(sg_size_t w, sg_size_t pixels_u
 static void copy_pixel(sg_cursor_t * dest, sg_cursor_t * src);
 static void draw_pixel(const sg_cursor_t * cursor, sg_color_t color);
 static inline sg_color_t get_pixel(const sg_cursor_t * cursor);
-static inline void inc_x(sg_cursor_t * cursor);
 
 //cursor with a single pixel
 void sg_cursor_set(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p){
@@ -36,10 +35,6 @@ void sg_cursor_dec_x(sg_cursor_t * cursor){
 	}
 }
 
-void sg_cursor_inc_x(sg_cursor_t * cursor){
-	inc_x(cursor);
-}
-
 void sg_cursor_dec_y(sg_cursor_t * cursor){
 	cursor->target -= cursor->bmap->columns;
 }
@@ -60,7 +55,7 @@ void sg_cursor_draw_hline(sg_cursor_t * cursor, sg_size_t width){
 
 	pattern = 0;
 	for(i=0; i < SG_BITS_PER_WORD; i+=SG_BITS_PER_PIXEL){
-		pattern |= cursor->bmap->pen.color << i;
+		pattern |= ((cursor->bmap->pen.color & SG_PIXEL_MASK) << i);
 	}
 
 	sg_cursor_draw_pattern(cursor, width, pattern);
@@ -75,13 +70,14 @@ void sg_cursor_draw_pattern(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_
 	sg_size_t pixels_after_last_boundary;
 	sg_size_t aligned_words;
 	sg_size_t i;
-	sg_color_t color;
+	sg_bmap_data_t color;
 
 	//calculate the pixels around the boundaries
 	pixels_until_first_boundary = calc_pixels_until_first_boundary(width, cursor->shift);
 	aligned_words = calc_aligned_words(width, pixels_until_first_boundary);
 	pixels_after_last_boundary = calc_pixels_after_last_boundary(width, pixels_until_first_boundary, aligned_words);
 
+	//this loop could be done in one operation
 	for(i=0; i < pixels_until_first_boundary; i++){
 		color = (pattern >> cursor->shift);
 		draw_pixel(cursor, color);
@@ -90,9 +86,9 @@ void sg_cursor_draw_pattern(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_
 
 	for(i=0; i < aligned_words; i++){
 		*(cursor->target++) = pattern; //assignment of new value
-		//cursor->p.x += SG_PIXELS_PER_WORD;
 	}
 
+	//this loop could also be done in one operation
 	for(i=0; i < pixels_after_last_boundary; i++){
 		color = (pattern >> cursor->shift);
 		draw_pixel(cursor, color);
@@ -170,8 +166,6 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 
 		dest_cursor->target++;
 		shift_cursor.target++;
-		//dest_cursor->p.x += SG_PIXELS_PER_WORD;
-		//shift_cursor.p.x += SG_PIXELS_PER_WORD;
 	}
 
 	//copy the pixels past the boundary
@@ -273,7 +267,7 @@ sg_color_t get_pixel(const sg_cursor_t * cursor){
 	return color;
 }
 
-void inc_x(sg_cursor_t * cursor){
+void sg_cursor_inc_x(sg_cursor_t * cursor){
 	cursor->shift += SG_BITS_PER_PIXEL;
 	if( cursor->shift == SG_BITS_PER_WORD ){
 		cursor->target++; //go to the next word
@@ -291,9 +285,9 @@ void copy_pixel(sg_cursor_t * dest, sg_cursor_t * src){
 sg_size_t calc_pixels_until_first_boundary(sg_size_t w, sg_size_t shift){
 	sg_size_t pixels_until_first_boundary;
 
-	pixels_until_first_boundary = (SG_BITS_PER_WORD - shift);
+	pixels_until_first_boundary = (SG_BITS_PER_WORD - shift)/SG_BITS_PER_PIXEL;
 
-	if( pixels_until_first_boundary == SG_BITS_PER_WORD ){
+	if( pixels_until_first_boundary == SG_PIXELS_PER_WORD ){
 		pixels_until_first_boundary = 0;
 	}
 
