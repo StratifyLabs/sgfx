@@ -59,14 +59,14 @@ size_t sg_calc_bmap_size(sg_dim_t dim);
 void sg_bmap_show(const sg_bmap_t * bmap);
 static inline void sg_bmap_copy(sg_bmap_t * dest, const sg_bmap_t * src){ memcpy(dest, src, sizeof(sg_bmap_t)); }
 
-static inline sg_size_t sg_bmap_margin_left(const sg_bmap_t * bmap){ return bmap->margin_top_left.w; }
-static inline sg_size_t sg_bmap_margin_right(const sg_bmap_t * bmap){ return bmap->margin_bottom_right.w; }
-static inline sg_size_t sg_bmap_margin_top(const sg_bmap_t * bmap){ return bmap->margin_top_left.h; }
-static inline sg_size_t sg_bmap_margin_bottom(const sg_bmap_t * bmap){ return bmap->margin_bottom_right.h; }
-static inline sg_int_t sg_bmap_x_max(const sg_bmap_t * bmap){ return bmap->dim.w -1; }
-static inline sg_int_t sg_bmap_y_max(const sg_bmap_t * bmap){ return bmap->dim.h -1; }
-static inline sg_size_t sg_bmap_h(const sg_bmap_t * bmap){ return bmap->dim.h; }
-static inline sg_size_t sg_bmap_w(const sg_bmap_t * bmap){ return bmap->dim.w; }
+static inline sg_size_t sg_bmap_margin_left(const sg_bmap_t * bmap){ return bmap->margin_top_left.width; }
+static inline sg_size_t sg_bmap_margin_right(const sg_bmap_t * bmap){ return bmap->margin_bottom_right.width; }
+static inline sg_size_t sg_bmap_margin_top(const sg_bmap_t * bmap){ return bmap->margin_top_left.height; }
+static inline sg_size_t sg_bmap_margin_bottom(const sg_bmap_t * bmap){ return bmap->margin_bottom_right.height; }
+static inline sg_int_t sg_bmap_x_max(const sg_bmap_t * bmap){ return bmap->dim.width -1; }
+static inline sg_int_t sg_bmap_y_max(const sg_bmap_t * bmap){ return bmap->dim.height -1; }
+static inline sg_size_t sg_bmap_h(const sg_bmap_t * bmap){ return bmap->dim.height; }
+static inline sg_size_t sg_bmap_w(const sg_bmap_t * bmap){ return bmap->dim.width; }
 static inline sg_size_t sg_bmap_cols(const sg_bmap_t * bmap){ return bmap->columns; }
 
 
@@ -113,8 +113,8 @@ enum Rotation {
 
 static inline sg_dim_t sg_point_bounds_dim(const sg_bounds_t * bounds){
 	sg_dim_t d;
-	d.w = bounds->bottom_right.x - bounds->top_left.x;
-	d.h = bounds->bottom_right.y - bounds->top_left.y;
+	d.width = bounds->bottom_right.x - bounds->top_left.x;
+	d.height = bounds->bottom_right.y - bounds->top_left.y;
 	return d;
 }
 
@@ -127,21 +127,21 @@ static inline sg_point_t sg_point_bounds_center(const sg_bounds_t * bounds){
 
 static inline u8 sg_y_visible(const sg_bmap_t * bmap, sg_int_t y){
 	if( y < 0  ) return 0;
-	if( y >= bmap->dim.h) return 0;
+	if( y >= bmap->dim.height) return 0;
 	return 1;
 }
 
 static inline u8 sg_x_visible(const sg_bmap_t * bmap, sg_int_t x){
 	if( x < 0  ) return 0;
-	if( x >= bmap->dim.w) return 0;
+	if( x >= bmap->dim.width) return 0;
 	return 1;
 }
 
 static inline u8 sg_point_visible(const sg_bmap_t * bmap, sg_point_t p){
 	if( p.x < 0 ) return 0;
 	if( p.y < 0 ) return 0;
-	if( p.x >= bmap->dim.w ) return 0;
-	if( p.y >= bmap->dim.h ) return 0;
+	if( p.x >= bmap->dim.width ) return 0;
+	if( p.y >= bmap->dim.height ) return 0;
 	return 1;
 }
 
@@ -156,8 +156,8 @@ static inline sg_point_t sg_point(sg_int_t x, sg_int_t y){
 
 static inline sg_dim_t sg_dim(sg_size_t w, sg_size_t h){
 	sg_dim_t d;
-	d.w = w;
-	d.h = h;
+	d.width = w;
+	d.height = h;
 	return d;
 }
 
@@ -169,8 +169,8 @@ void sg_point_map(sg_point_t * d, const sg_vector_map_t * m);
 sg_size_t sg_point_map_pixel_size(const sg_vector_map_t * m);
 void sg_point_add(sg_point_t * d, const sg_point_t * a);
 void sg_point_subtract(sg_point_t * d, const sg_point_t * a);
-void sg_point_arc(sg_point_t * d, sg_size_t rx, sg_size_t ry, i16 angle);
-void sg_point_rotate(sg_point_t * d, i16 angle);
+void sg_point_arc(sg_point_t * d, sg_size_t rx, sg_size_t ry, s16 angle);
+void sg_point_rotate(sg_point_t * d, s16 angle);
 void sg_point_scale(sg_point_t * d, u16 a);
 void sg_point_shift(sg_point_t * d, sg_point_t p);
 void sg_point_shift_x(sg_point_t * d, sg_int_t a);
@@ -608,8 +608,8 @@ typedef struct MCU_PACK {
 	sg_size_t (*point_map_pixel_size)(const sg_vector_map_t * m);
 	void (*point_add)(sg_point_t * d, const sg_point_t * a);
 	void (*point_subtract)(sg_point_t * d, const sg_point_t * a);
-	void (*point_arc)(sg_point_t * d, sg_size_t rx, sg_size_t ry, i16 angle);
-	void (*point_rotate)(sg_point_t * d, i16 angle);
+	void (*point_arc)(sg_point_t * d, sg_size_t rx, sg_size_t ry, s16 angle);
+	void (*point_rotate)(sg_point_t * d, s16 angle);
 	void (*point_scale)(sg_point_t * d, u16 a);
 	void (*point_shift)(sg_point_t * d, sg_point_t p);
 	void (*point_shift_x)(sg_point_t * d, sg_int_t a);

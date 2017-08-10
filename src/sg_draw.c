@@ -122,9 +122,9 @@ void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
 	sg_size_t i;
 	sg_cursor_set(&y_cursor, bmap, p);
 
-	for(i=0; i < d.h; i++){
+	for(i=0; i < d.height; i++){
 		sg_cursor_copy(&x_cursor, &y_cursor);
-		sg_cursor_draw_hline(&x_cursor, d.w);
+		sg_cursor_draw_hline(&x_cursor, d.width);
 		sg_cursor_inc_y(&y_cursor);
 	}
 }
@@ -135,9 +135,9 @@ void sg_invert_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
 	sg_size_t i;
 	sg_cursor_set(&y_cursor, bmap, p);
 
-	for(i=0; i < d.h; i++){
+	for(i=0; i < d.height; i++){
 		sg_cursor_copy(&x_cursor, &y_cursor);
-		sg_cursor_invert_hline(&x_cursor, d.w);
+		sg_cursor_invert_hline(&x_cursor, d.width);
 		sg_cursor_inc_y(&y_cursor);
 	}
 }
@@ -148,9 +148,9 @@ void sg_clear_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
 	sg_size_t i;
 	sg_cursor_set(&y_cursor, bmap, p);
 
-	for(i=0; i < d.h; i++){
+	for(i=0; i < d.height; i++){
 		sg_cursor_copy(&x_cursor, &y_cursor);
-		sg_cursor_clear_hline(&x_cursor, d.w);
+		sg_cursor_clear_hline(&x_cursor, d.width);
 		sg_cursor_inc_y(&y_cursor);
 	}
 }
@@ -213,14 +213,14 @@ void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_d
 		}
 	}
 
-	for(i=0; i < d.h; i++){
+	for(i=0; i < d.height; i++){
 		sg_cursor_copy(&x_cursor, &y_cursor);
 		if( (i/pattern_height) % 2 ){
 			pattern = even_pattern_color;
 		} else {
 			pattern = odd_pattern_color;
 		}
-		sg_cursor_draw_pattern(&x_cursor, d.w, pattern);
+		sg_cursor_draw_pattern(&x_cursor, d.width, pattern);
 		sg_cursor_inc_y(&y_cursor);
 	}
 
@@ -239,8 +239,8 @@ void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bma
 	p_src = sg_point(0,0);
 
 	//check to see if p_dest values are negative and adjust source accordingly
-	w = bmap_src->dim.w;
-	h = bmap_src->dim.h;
+	w = bmap_src->dim.width;
+	h = bmap_src->dim.height;
 	if( p_dest.x < 0 ){
 		p_src.x = -1*p_dest.x;
 		p_dest.x = 0;
@@ -256,12 +256,12 @@ void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bma
 	sg_cursor_set(&y_dest_cursor, bmap_dest, p_dest);
 	sg_cursor_set(&y_src_cursor, bmap_src, p_src);
 
-	if( p_dest.y + h > bmap_dest->dim.h ){
-		h = bmap_dest->dim.h - p_dest.y;
+	if( p_dest.y + h > bmap_dest->dim.height ){
+		h = bmap_dest->dim.height - p_dest.y;
 	}
 
-	if( p_dest.x + w > bmap_dest->dim.w ){
-		w = bmap_dest->dim.w - p_dest.x;
+	if( p_dest.x + w > bmap_dest->dim.width ){
+		w = bmap_dest->dim.width - p_dest.x;
 	}
 
 	if( w < 0 ){

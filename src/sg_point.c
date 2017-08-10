@@ -4,8 +4,8 @@
 #include "sg.h"
 
 typedef struct {
-	i16 cosine;
-	i16 sine;
+	s16 cosine;
+	s16 sine;
 } trig_t;
 
 static const trig_t trig_table[SG_TRIG_POINTS] = {
@@ -534,15 +534,15 @@ void sg_point_map(sg_point_t * d, const sg_vector_map_t * m){
 	sg_point_rotate(d, m->rotation);
 	//map to the space
 	int32_t tmp;
-	tmp = ((d->x + SG_MAX) * m->size.w + SG_MAX) / (SG_MAX-SG_MIN);
-	d->x = tmp - (m->size.w>>1) + m->shift.x;
-	tmp = ((d->y + SG_MAX) * m->size.h + SG_MAX) / (SG_MAX-SG_MIN);
-	d->y = tmp - (m->size.h>>1) + m->shift.y;
+	tmp = ((d->x + SG_MAX) * m->size.width + SG_MAX) / (SG_MAX-SG_MIN);
+	d->x = tmp - (m->size.width>>1) + m->shift.x;
+	tmp = ((d->y + SG_MAX) * m->size.height + SG_MAX) / (SG_MAX-SG_MIN);
+	d->y = tmp - (m->size.height>>1) + m->shift.y;
 }
 
 sg_size_t sg_point_map_pixel_size(const sg_vector_map_t * m){
 	sg_size_t p;
-	sg_size_t max = m->size.w > m->size.h ? m->size.w : m->size.h;
+	sg_size_t max = m->size.width > m->size.height ? m->size.width : m->size.height;
 	int32_t tmp;
 	//how many map space units maps to one pixel
 	tmp = ((SG_MAX-SG_MIN) + (max>>1)) / max;
@@ -560,7 +560,7 @@ void sg_point_subtract(sg_point_t * d, const sg_point_t * a){
 	sg_point_shift_y(d, -1*a->y);
 }
 
-void sg_point_arc(sg_point_t * d, sg_size_t rx, sg_size_t ry, i16 angle){
+void sg_point_arc(sg_point_t * d, sg_size_t rx, sg_size_t ry, s16 angle){
 	int x, y;
 	int rc, rs;
 	angle = angle % SG_TRIG_POINTS;
@@ -572,7 +572,7 @@ void sg_point_arc(sg_point_t * d, sg_size_t rx, sg_size_t ry, i16 angle){
 	d->y = y;
 }
 
-void sg_point_rotate(sg_point_t * d, i16 angle){
+void sg_point_rotate(sg_point_t * d, s16 angle){
 	int x, y;
 	int rc, rs;
 	if( angle < 0 ){
@@ -616,8 +616,8 @@ void sg_point_bound_x(const sg_bmap_t * bmap, sg_int_t * x){
 		t = 0;
 	}
 
-	if( t >= bmap->dim.w ){
-		t = bmap->dim.w - 1 ;
+	if( t >= bmap->dim.width ){
+		t = bmap->dim.width - 1 ;
 	}
 
 	*x = t;
@@ -629,8 +629,8 @@ void sg_point_bound_y(const sg_bmap_t * bmap, sg_int_t * y){
 		t = 0;
 	}
 
-	if( t >= bmap->dim.h ){
-		t = bmap->dim.h - 1 ;
+	if( t >= bmap->dim.height ){
+		t = bmap->dim.height - 1 ;
 	}
 
 	*y = t;

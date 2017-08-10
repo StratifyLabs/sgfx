@@ -1,5 +1,5 @@
 /*
- * sg_config.h
+ * sg_config.height
  *
  *  Created on: Jun 8, 2017
  *      Author: tgil

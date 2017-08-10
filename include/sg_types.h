@@ -72,8 +72,8 @@ typedef union MCU_PACK {
 
 typedef union MCU_PACK {
 	struct {
-		sg_size_t w;
-		sg_size_t h;
+		sg_size_t width;
+		sg_size_t height;
 	};
 	sg_unified_t dim;
 } sg_dim_t;

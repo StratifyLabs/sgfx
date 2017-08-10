@@ -1,5 +1,5 @@
 /*
- * mbfont.h
+ * mbfont.height
  *
  *  Created on: Nov 22, 2013
  *      Author: tgil
@@ -32,7 +32,7 @@ typedef struct MCU_PACK {
 /*! \brief Defines the header for a monochrome bitmap font */
 /*! \details A monochrome bitmap font looks like this in memory (or a file):
  *
- * sg_font_hdr_t hdr;
+ * sg_font_header_t hdr;
  * sg_font_char_t char0;
  * sg_font_char_t char1;
  * ...
@@ -54,7 +54,7 @@ typedef struct MCU_PACK {
 	u32 size /*! Number of bytes the font occupies */;
 	u16 kerning_pairs /*! Number of kerning pairs stored in the font */;
 	u16 version /*! Version of the font format */;
-} sg_font_hdr_t;
+} sg_font_header_t;
 
 
 typedef struct MCU_PACK {
@@ -64,14 +64,14 @@ typedef struct MCU_PACK {
 	u8 height;
 	u8 xadvance;
 	u8 resd;
-	i16 xoffset;
-	i16 yoffset;
+	s16 xoffset;
+	s16 yoffset;
 } sg_font_char_t;
 
 typedef struct MCU_PACK {
 	u8 first;
 	u8 second;
-	i16 kerning;
+	s16 kerning;
 } sg_font_kerning_pair_t;
 
 

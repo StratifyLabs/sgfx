@@ -116,11 +116,11 @@ int sg_animate_push_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t 
 
 		animation->path.motion += count;
 
-		src.x = start.x + animation->dim.w - animation->path.motion;
+		src.x = start.x + animation->dim.width - animation->path.motion;
 		src.y = start.y;
 
-		shift_dim.w = count;
-		shift_dim.h = d.h;
+		shift_dim.width = count;
+		shift_dim.height = d.height;
 
 		dest.x = start.x;
 		dest.y = start.y;
@@ -155,11 +155,11 @@ int sg_animate_push_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 		d = animation->dim;
 		start = animation->start;
 
-		dest.x = start.x + animation->dim.w - count;
+		dest.x = start.x + animation->dim.width - count;
 		dest.y = start.y;
 
-		shift_dim.w = count;
-		shift_dim.h = d.h;
+		shift_dim.width = count;
+		shift_dim.height = d.height;
 
 		src.x = start.x + animation->path.motion;
 		src.y = start.y;
@@ -194,11 +194,11 @@ int sg_animate_push_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * a
 		src.x = start.x;
 		src.y = start.y + animation->path.motion;
 
-		d.w = animation->dim.w;
-		d.h = count;
+		d.width = animation->dim.width;
+		d.height = count;
 
 		dest.x = start.x;
-		dest.y = start.y + animation->dim.h - d.h;
+		dest.y = start.y + animation->dim.height - d.height;
 
 		shift.y = -1*count;
 
@@ -227,10 +227,10 @@ int sg_animate_push_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 		animation->path.motion += count;
 
 		src.x = start.x;
-		src.y = start.y + animation->dim.h - animation->path.motion;
+		src.y = start.y + animation->dim.height - animation->path.motion;
 
-		d.w = animation->dim.w;
-		d.h = count;
+		d.width = animation->dim.width;
+		d.height = count;
 
 		shift.y = count;
 		sg_transform_shift(bmap, shift, start, animation->dim);
@@ -277,10 +277,10 @@ int sg_animate_slide_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * 
 		src.y = start.y;
 
 		dest.x = start.x;
-		dest.y = start.y + animation->dim.h - animation->path.motion;
+		dest.y = start.y + animation->dim.height - animation->path.motion;
 
-		d.w = animation->dim.w;
-		d.h = animation->path.motion;
+		d.width = animation->dim.width;
+		d.height = animation->path.motion;
 
 		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
@@ -311,8 +311,8 @@ int sg_animate_undo_slide_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation
 		dest.x = start.x;
 		dest.y = start.y;
 
-		d.w = animation->dim.w;
-		d.h = animation->path.motion;
+		d.width = animation->dim.width;
+		d.height = animation->path.motion;
 
 		shift.y = count;
 
@@ -339,10 +339,10 @@ int sg_animate_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t 
 		dest.y = start.y;
 
 		src.x = start.x;
-		src.y = start.y + animation->dim.h - animation->path.motion;
+		src.y = start.y + animation->dim.height - animation->path.motion;
 
-		d.w = animation->dim.w;
-		d.h = animation->path.motion;
+		d.width = animation->dim.width;
+		d.height = animation->path.motion;
 
 		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 		return 1;
@@ -367,17 +367,17 @@ int sg_animate_undo_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animati
 		animation->path.motion += count;
 
 		src.x = start.x;
-		src.y = start.y + animation->dim.h - animation->path.motion;
+		src.y = start.y + animation->dim.height - animation->path.motion;
 
 		dest = src;
 
-		d.w = animation->dim.w;
-		d.h = animation->dim.h - animation->path.motion + count;
+		d.width = animation->dim.width;
+		d.height = animation->dim.height - animation->path.motion + count;
 
 		shift.y = -1*count;
 		sg_transform_shift(bmap, shift, start, d);
 
-		d.h = count;
+		d.height = count;
 
 		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
@@ -418,8 +418,8 @@ int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 			dest.x = animation->start.x;
 			dest.y = animation->start.y + animation->path.motion_total - animation->path.motion;
 
-			d.w = animation->dim.w;
-			d.h = animation->dim.h - animation->path.motion_total + animation->path.motion;
+			d.width = animation->dim.width;
+			d.height = animation->dim.height - animation->path.motion_total + animation->path.motion;
 
 			sg_draw_sub_bitmap(bmap, dest, scratch, start, d);
 
@@ -432,8 +432,8 @@ int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 			src.x = start.x;
 			src.y = start.y + animation->path.motion;
 
-			d.w = animation->dim.w;
-			d.h = animation->dim.h - animation->path.motion;
+			d.width = animation->dim.width;
+			d.height = animation->dim.height - animation->path.motion;
 
 			dest.x = start.x;
 			dest.y = start.y;
@@ -441,7 +441,7 @@ int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 			shift.y = count;
 			sg_transform_shift(bmap, shift, src, d);
 
-			d.h = animation->path.motion + count;
+			d.height = animation->path.motion + count;
 
 			//! \todo CHECKERBOARD AREA
 			//sg_set_area(bmap, dest, d, 0xAA);
@@ -485,8 +485,8 @@ static int sg_animate_bounce_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 			dest.x = animation->start.x;
 			dest.y = animation->start.y;
 
-			d.w = animation->dim.w;
-			d.h = animation->dim.h - animation->path.motion_total + animation->path.motion;
+			d.width = animation->dim.width;
+			d.height = animation->dim.height - animation->path.motion_total + animation->path.motion;
 
 			sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
@@ -501,15 +501,15 @@ static int sg_animate_bounce_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 			src.x = start.x;
 			src.y = start.y;
 
-			d.w = animation->dim.w;
-			d.h = animation->dim.h - animation->path.motion;
+			d.width = animation->dim.width;
+			d.height = animation->dim.height - animation->path.motion;
 
 			shift.y = count;
 			sg_transform_shift(bmap, shift, src, d);
 
-			d.h = animation->path.motion + count;
+			d.height = animation->path.motion + count;
 			dest.x = start.x;
-			dest.y = start.y + animation->dim.h - d.h;
+			dest.y = start.y + animation->dim.height - d.height;
 
 			//! \todo Checkboard background
 			//sg_set_area(bmap, dest, d, 0xAA);
@@ -551,8 +551,8 @@ static int sg_animate_bounce_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 			dest.x = animation->start.x + animation->path.motion_total - animation->path.motion;
 			dest.y = animation->start.y;
 
-			d.w = animation->dim.w - animation->path.motion_total + animation->path.motion;
-			d.h = animation->dim.h;
+			d.width = animation->dim.width - animation->path.motion_total + animation->path.motion;
+			d.height = animation->dim.height;
 
 			sg_draw_sub_bitmap(bmap, dest, scratch, start, d);
 
@@ -565,8 +565,8 @@ static int sg_animate_bounce_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 			src.x = start.x + animation->path.motion;
 			src.y = start.y;
 
-			d.w = animation->dim.w - animation->path.motion;
-			d.h = animation->dim.h;
+			d.width = animation->dim.width - animation->path.motion;
+			d.height = animation->dim.height;
 
 			dest.x = start.x;
 			dest.y = start.y;
@@ -574,7 +574,7 @@ static int sg_animate_bounce_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 			shift.x = count;
 			sg_transform_shift(bmap, shift, src, d);
 
-			d.w = animation->path.motion + count;
+			d.width = animation->path.motion + count;
 
 			//! \todo checkerboard area
 			//sg_set_area(bmap, dest, d, 0xAA);
@@ -617,8 +617,8 @@ static int sg_animate_bounce_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_ani
 			dest.x = animation->start.x;
 			dest.y = animation->start.y;
 
-			d.w = animation->dim.w - animation->path.motion_total + animation->path.motion;
-			d.h = animation->dim.h;
+			d.width = animation->dim.width - animation->path.motion_total + animation->path.motion;
+			d.height = animation->dim.height;
 
 			sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
 
@@ -633,14 +633,14 @@ static int sg_animate_bounce_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_ani
 			src.x = start.x;
 			src.y = start.y;
 
-			d.w = animation->dim.w - animation->path.motion;
-			d.h = animation->dim.h;
+			d.width = animation->dim.width - animation->path.motion;
+			d.height = animation->dim.height;
 
 			shift.y = -1*count;
 			sg_transform_shift(bmap, shift, src, d);
 
-			d.w = animation->path.motion + count;
-			dest.x = start.x + animation->dim.w - d.w;
+			d.width = animation->path.motion + count;
+			dest.x = start.x + animation->dim.width - d.width;
 			dest.y = start.y;
 
 			//! \todo CHECKERBOAR AREA
