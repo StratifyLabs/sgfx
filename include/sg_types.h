@@ -122,13 +122,13 @@ enum {
 };
 
 typedef struct MCU_PACK {
-	sg_size_t w;
-	sg_size_t h;
+	sg_size_t width;
+	sg_size_t height;
 	size_t size;
 	sg_size_t bits_per_pixel;
 	u16 version;
 	//this must be 4 byte aligned
-} sg_bitmap_hdr_t;
+} sg_bmap_header_t;
 
 
 
