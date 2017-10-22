@@ -34,7 +34,7 @@ void sg_vector_draw_primitive(sg_bmap_t * bitmap, const sg_vector_primitive_t * 
 
 void sg_vector_draw_icon(sg_bmap_t * bmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_bounds_t * attr){
 	unsigned int total;
-	if( bmap->pen.o_flags & SG_PEN_FLAG_FILL ){
+	if( bmap->pen.o_flags & SG_PEN_FLAG_IS_FILL ){
 		total = icon->total;
 	} else {
 		total = icon->total - icon->fill_total;
@@ -165,75 +165,11 @@ void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector
 }
 
 void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
-	int i;
-	const int steps = 1000;
-	s32 x;
-	s32 y;
-	sg_point_t pen;
-	sg_point_t p0 = sg_point(0,0);
-	sg_point_t p1 = p->quadratic_bezier.p1;
-	sg_point_t p2 = p->quadratic_bezier.p2;
-
-	//t goes from zero to one
-	for(i=0; i < steps; i++){
-		pen.point = 0;
-		//(1-t)^2*P0 + 2*(1-t)*t*P2 + t^2*P2
-
-		x = (steps - i)*(steps - i)*p0.x + 2*(steps - i)*i*p1.x + i*i*p2.x;
-		y = (steps - i)*(steps - i)*p0.y + 2*(steps - i)*i*p1.y + i*i*p2.y;
-
-		pen.x = p->shift.x + x / (steps*steps);
-		pen.y = p->shift.y + y / (steps*steps);
-
-		if( attr ){
-			if( pen.x < attr->top_left.x ){ attr->top_left.x = pen.x; }
-			if( pen.y < attr->top_left.y ){ attr->top_left.y = pen.y; }
-			if( pen.x > attr->bottom_right.x ){ attr->bottom_right.x = pen.x; }
-			if( pen.y > attr->bottom_right.y ){ attr->bottom_right.y = pen.y; }
-		}
-
-		sg_draw_pixel(bmap, pen);
-	}
 
 }
 
 void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
-	int i;
-	const int steps = 1000;
-	s32 x;
-	s32 y;
-	sg_point_t pen;
-	sg_point_t p0 = sg_point(0,0);
-	sg_point_t p1 = p->cubic_bezier.p1;
-	sg_point_t p2 = p->cubic_bezier.p2;
-	sg_point_t p3 = p->cubic_bezier.p3;
 
-	//t goes from zero to one
-	for(i=0; i < steps; i++){
-		pen.point = 0;
-		//(1-t)^2*P0 + 2*(1-t)*t*P2 + t^2*P2
-
-		x = (steps-i)*(steps-i)*p0.x +
-				3*(steps-i)*(steps-i)*i*p1.x +
-				3*(steps-i)*i*i*p1.x +
-				i*i*i*p2.x;
-		y = (steps-i)*(steps-i)*p0.y +
-				3*(steps-i)*(steps-i)*i*p1.y +
-				3*(steps-i)*i*i*p1.y +
-				i*i*i*p2.y;
-
-		pen.x = p->shift.x + x / (steps*steps*steps);
-		pen.y = p->shift.y + y / (steps*steps*steps);
-
-		if( attr ){
-			if( pen.x < attr->top_left.x ){ attr->top_left.x = pen.x; }
-			if( pen.y < attr->top_left.y ){ attr->top_left.y = pen.y; }
-			if( pen.x > attr->bottom_right.x ){ attr->bottom_right.x = pen.x; }
-			if( pen.y > attr->bottom_right.y ){ attr->bottom_right.y = pen.y; }
-		}
-
-		sg_draw_pixel(bmap, pen);
-	}
 }
 
 void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){

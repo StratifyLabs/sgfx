@@ -6,17 +6,20 @@
 
 static int calc_offset(const sg_bmap_t * bmap, sg_point_t p) { return (p.x/SG_PIXELS_PER_WORD) + p.y*(bmap->columns); }
 
-static size_t calc_word_width(sg_size_t w){ return (w + 31) >> 5; }
 
 void sg_bmap_set_data(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_dim_t dim){
 	bmap->dim = dim;
-	bmap->columns = calc_word_width(dim.width*SG_BITS_PER_PIXEL);
+	bmap->columns = sg_calc_word_width(dim.width*SG_BITS_PER_PIXEL);
 	bmap->data = mem;
+	bmap->margin_bottom_right.width = 0;
+	bmap->margin_bottom_right.height = 0;
+	bmap->margin_top_left.width = 0;
+	bmap->margin_top_left.height = 0;
 }
 
 size_t sg_calc_bmap_size(sg_dim_t dim){
 	//return the number of bytes needed to contain the dimensions (in pixels)
-	return calc_word_width(dim.width*SG_BITS_PER_PIXEL) * dim.height * SG_BYTES_PER_WORD;
+	return sg_calc_word_width(dim.width*SG_BITS_PER_PIXEL) * dim.height * SG_BYTES_PER_WORD;
 }
 
 sg_bmap_data_t * sg_bmap_data(const sg_bmap_t * bmap, sg_point_t p){

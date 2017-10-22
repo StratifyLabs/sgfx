@@ -10,6 +10,7 @@ static void draw_vline(const sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int
 static void draw_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_size_t thickness);
 static void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active);
 static u8 get_hline(const sg_bmap_t * mg, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos, u8 active);
+static u16 calc_largest_delta(sg_point_t p0, sg_point_t p1);
 
 sg_color_t sg_get_pixel(const sg_bmap_t * bmap, sg_point_t p){
 	sg_cursor_t cursor;
@@ -108,12 +109,86 @@ void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
 	}
 }
 
-void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3){
+u16 calc_largest_delta(sg_point_t p0, sg_point_t p1){
+	s16 dx; s16 dy;
+	dx = p0.x - p1.x;
+	dy = p0.y - p1.y;
+
+	dx = dx < 0 ? dx*-1 : dx;
+	dy = dy < 0 ? dy*-1 : dy;
+
+	return (dx > dy) ? dx : dy;
 
 }
 
-void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4){
+void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, sg_point_t p2){
+	u32 i;
+	s32 x;
+	s32 y;
+	u32 steps;
+	u32 steps2;
+	sg_point_t current;
+	sg_point_t last;
 
+	steps = calc_largest_delta(p0, p1);
+	steps += calc_largest_delta(p1, p2);
+	steps2 = steps*steps;
+
+
+	//t goes from zero to one
+	for(i=0; i < steps; i++){
+		//(1-t)^2*P0 + 2*(1-t)*t*P2 + t^2*P2
+
+		x = (steps - i)*(steps - i)*p0.x + 2*(steps - i)*i*p1.x + i*i*p2.x;
+		y = (steps - i)*(steps - i)*p0.y + 2*(steps - i)*i*p1.y + i*i*p2.y;
+
+		current.x = x / (steps2);
+		current.y = y / (steps2);
+
+		if( i == 0 || (current.point != last.point)){
+			last.point = current.point;
+			sg_draw_pixel(bmap, current);
+		}
+	}
+}
+
+void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, sg_point_t p2, sg_point_t p3){
+	u32 i;
+	s32 x;
+	s32 y;
+	u32 steps;
+	u32 steps3;
+	sg_point_t current;
+	sg_point_t last;
+
+	//calc distance to determine number of steps
+	steps = calc_largest_delta(p0, p1);
+	steps += calc_largest_delta(p1, p2);
+	steps += calc_largest_delta(p2, p3);
+
+	steps3 = steps*steps*steps;
+
+	//t goes from zero to one
+	for(i=0; i < steps; i++){
+		//(1-t)^2*P0 + 2*(1-t)*t*P2 + t^2*P2
+
+		x = (steps-i)*(steps-i)*p0.x +
+				3*(steps-i)*(steps-i)*i*p1.x +
+				3*(steps-i)*i*i*p1.x +
+				i*i*i*p2.x;
+		y = (steps-i)*(steps-i)*p0.y +
+				3*(steps-i)*(steps-i)*i*p1.y +
+				3*(steps-i)*i*i*p1.y +
+				i*i*i*p2.y;
+
+		current.x = x / (steps3);
+		current.y = y / (steps3);
+
+		if( i == 0 || (current.point != last.point)){
+			last.point = current.point;
+			sg_draw_pixel(bmap, current);
+		}
+	}
 }
 
 void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
@@ -280,7 +355,6 @@ void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bma
 		sg_cursor_inc_y(&y_dest_cursor);
 		sg_cursor_inc_y(&y_src_cursor);
 	}
-
 
 }
 

@@ -20,8 +20,8 @@ typedef int64_t s64;
 
 #include <sys/types.h>
 
-#define SG_STR_VERSION "2.0.0"
-#define SG_VERSION 0x0200
+#define SG_STR_VERSION "2.1"
+#define SG_VERSION 0x0201
 
 #define SG_MAX (32767)
 #define SG_MIN (-32767)
@@ -79,11 +79,18 @@ typedef union MCU_PACK {
 } sg_dim_t;
 
 enum {
-	SG_PEN_FLAG_TRANSPARENT_BACKGROUND /*! When set, the pen will not operate when the source color is zero */ = (1<<0),
-	SG_PEN_FLAG_INVERT = (1<<1),
-	SG_PEN_FLAG_BLEND = (1<<2),
-	SG_PEN_FLAG_FILL /*! When set, the icon will be drawn filled */ = (1<<3)
+	SG_PEN_FLAG_IS_SOLID /*! Assigns color when drawing (default) */ = 0,
+	SG_PEN_FLAG_IS_ASSIGN /*! Alias for SG_PEN_FLAG_IS_SOLID */ = SG_PEN_FLAG_IS_SOLID,
+	SG_PEN_FLAG_IS_BLEND /*! Blends colors using logical OR */ = (1<<0),
+	SG_PEN_FLAG_IS_OR /*! Alias for SG_PEN_FLAG_IS_BLEND */ = SG_PEN_FLAG_IS_BLEND,
+	SG_PEN_FLAG_IS_INVERT /*! Draws colors using logical XOR */ = (1<<1),
+	SG_PEN_FLAG_IS_XOR /*! Alias for SG_PEN_FLAG_IS_INVERT */ = SG_PEN_FLAG_IS_INVERT,
+	SG_PEN_FLAG_IS_ERASE /*! Erases the colors that are set in the pen (logical AND of inverse color) */ = (1<<2),
+	SG_PEN_FLAG_IS_AND /*! Alias for SG_PEN_FLAG_IS_ERASE */  = SG_PEN_FLAG_IS_ERASE,
+	SG_PEN_FLAG_IS_FILL /*! When drawing vector icons, this flag enables fill points specified by the icon */ = (1<<3)
 };
+
+#define SG_PEN_FLAG_NOT_SOLID_MASK (SG_PEN_FLAG_IS_BLEND|SG_PEN_FLAG_IS_INVERT|SG_PEN_FLAG_IS_ERASE)
 
 typedef struct MCU_PACK {
 	u16 o_flags;
@@ -124,7 +131,7 @@ enum {
 typedef struct MCU_PACK {
 	sg_size_t width;
 	sg_size_t height;
-	size_t size;
+	u32 size;
 	sg_size_t bits_per_pixel;
 	u16 version;
 	//this must be 4 byte aligned

@@ -56,6 +56,9 @@ void sg_bmap_set_data(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_dim_t dim);
 sg_bmap_data_t * sg_bmap_data(const sg_bmap_t * bmap, sg_point_t p);
 size_t sg_calc_bmap_size(sg_dim_t dim);
 
+static inline u16 sg_calc_word_width(sg_size_t w){ return (w + 31) >> 5; }
+
+
 void sg_bmap_show(const sg_bmap_t * bmap);
 static inline void sg_bmap_copy(sg_bmap_t * dest, const sg_bmap_t * src){ memcpy(dest, src, sizeof(sg_bmap_t)); }
 
