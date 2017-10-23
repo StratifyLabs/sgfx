@@ -4,6 +4,8 @@
 #include "sg_config.h"
 #include "sg.h"
 
+extern sg_color_t sg_cursor_get_pixel_no_inc(sg_cursor_t * cursor);
+
 static inline int abs_value(int x){  if( x < 0 ){ return x*-1; } return x; }
 
 static void draw_vline(const sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax);
@@ -250,6 +252,8 @@ void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p){
 
 
 	//check the pen
+	xmin = p.x;
+	xmax = p.x;
 
 	get_hedge(bmap, p, &xmin, &xmax, active); //find the bounding points xmin and xmax
 	is_above = !get_hline(bmap, xmin, xmax, p.y+1, &(above.x), active); //see if anywhere above the bounded region is blank
@@ -405,13 +409,17 @@ void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t *
 	sg_cursor_t min_cursor;
 	sg_cursor_t max_cursor;
 	sg_point_bound(bmap, &p);
+	sg_int_t min = *xmin;
+	sg_int_t max = *xmax;
 
 	sg_cursor_set(&min_cursor, bmap, p);
 	sg_cursor_set(&max_cursor, bmap, p);
 
-	while( (sg_cursor_get_pixel(&min_cursor) != 0) != active ){ sg_cursor_dec_x(&min_cursor); sg_cursor_dec_x(&min_cursor); (*xmin)--; }
-	while( (sg_cursor_get_pixel(&max_cursor) != 0) != active ){ (*xmax)++; }
-	(*xmin)++;
+	while( (sg_cursor_get_pixel_no_inc(&min_cursor) != 0) != active ){ sg_cursor_dec_x(&min_cursor); min--; }
+	//get pixel auto increments the cursor
+	while( (sg_cursor_get_pixel(&max_cursor) != 0) != active ){ max++; }
+	*xmin = min+1;
+	*xmax = max;
 	return;
 }
 

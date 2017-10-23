@@ -9,7 +9,7 @@ static sg_size_t calc_aligned_words(sg_size_t w, sg_size_t pixels_until_first_bo
 static sg_size_t calc_pixels_after_last_boundary(sg_size_t w, sg_size_t pixels_until_first_boundary, sg_size_t aligned_words);
 static void copy_pixel(sg_cursor_t * dest, sg_cursor_t * src);
 static void draw_pixel(const sg_cursor_t * cursor, sg_color_t color);
-static void draw_pixel_group(sg_bmap_data_t * word, sg_bmap_data_t pattern, u16 o_flags);
+static void draw_pixel_group(sg_bmap_data_t * word, sg_bmap_data_t pattern, sg_bmap_data_t mask, u16 o_flags);
 static inline sg_color_t get_pixel(const sg_cursor_t * cursor);
 
 //cursor with a single pixel
@@ -18,6 +18,10 @@ void sg_cursor_set(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p){
 	//cursor->p = p;
 	cursor->target = sg_bmap_data(bmap, p);
 	cursor->shift = ((p.x % SG_PIXELS_PER_WORD)*SG_BITS_PER_PIXEL);
+}
+
+sg_color_t sg_cursor_get_pixel_no_inc(sg_cursor_t * cursor){
+	return get_pixel(cursor);
 }
 
 sg_color_t sg_cursor_get_pixel(sg_cursor_t * cursor){
@@ -88,7 +92,7 @@ void sg_cursor_draw_pattern(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_
 
 	for(i=0; i < aligned_words; i++){
 		//*(cursor->target++) = pattern; //assignment of new value
-		draw_pixel_group(cursor->target++, pattern, o_flags);
+		draw_pixel_group(cursor->target++, pattern, 0, o_flags);
 	}
 
 	//this loop could also be done in one operation
@@ -96,18 +100,6 @@ void sg_cursor_draw_pattern(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_
 		color = (pattern >> cursor->shift);
 		draw_pixel(cursor, color);
 		sg_cursor_inc_x(cursor);
-	}
-}
-
-void draw_pixel_group(sg_bmap_data_t * word, sg_bmap_data_t pattern, u16 o_flags){
-	if( o_flags & SG_PEN_FLAG_IS_ERASE ){
-		*word &= ~pattern;
-	} else if( o_flags & SG_PEN_FLAG_IS_INVERT ){
-		*word ^= pattern;
-	} else if( o_flags & SG_PEN_FLAG_IS_BLEND ){
-		*word |= pattern;
-	} else {
-		*word = pattern;
 	}
 }
 
@@ -152,6 +144,8 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 	sg_bmap_data_t mask;
 	sg_cursor_t shift_cursor;
 
+	u16 o_flags = dest_cursor->bmap->pen.o_flags;
+
 	sg_cursor_copy(&shift_cursor, src_cursor);
 
 
@@ -160,7 +154,7 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 	aligned_words = calc_aligned_words(width, pixels_until_first_boundary);
 	pixels_after_last_boundary = calc_pixels_after_last_boundary(width, pixels_until_first_boundary, aligned_words);
 
-	for(i=0; i < pixels_until_first_boundary; i++){
+	while( shift_cursor.shift != 0 ){
 		copy_pixel(dest_cursor, &shift_cursor);
 	}
 
@@ -171,12 +165,16 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 
 		//shift into the dest area
 		mask = (1<<dest_cursor->shift)-1;
-		*(dest_cursor->target) &= mask; //mask the bits where dest_value will OR in
-		*(dest_cursor->target) |= ((intermediate_value) << dest_cursor->shift);
+		draw_pixel_group(dest_cursor->target,
+				((intermediate_value) << dest_cursor->shift),
+				mask,
+				o_flags);
 
-		if( mask != 0){ //if mask is zero, then this copy is aligned
-			*(dest_cursor->target+1) &= ~mask; //mask the bits where dest_value will OR in
-			*(dest_cursor->target+1) |= (intermediate_value >> (SG_BITS_PER_WORD - dest_cursor->shift));
+		if( mask != 0 ){ //if mask is zero, then this copy is aligned
+			draw_pixel_group(dest_cursor->target+1,
+					(intermediate_value >> (SG_BITS_PER_WORD - dest_cursor->shift)),
+					~mask,
+					o_flags);
 		}
 
 		dest_cursor->target++;
@@ -269,20 +267,6 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 	}
 }
 
-void draw_pixel(const sg_cursor_t * cursor, sg_color_t color){
-	u16 o_flags = cursor->bmap->pen.o_flags;
-	if( o_flags & SG_PEN_FLAG_IS_ERASE ){
-		*(cursor->target) &= ~((color & SG_PIXEL_MASK) << cursor->shift);
-	} else if( o_flags & SG_PEN_FLAG_IS_INVERT ){
-		*(cursor->target) ^= ((color & SG_PIXEL_MASK) << cursor->shift);
-	} else if( o_flags & SG_PEN_FLAG_IS_BLEND ){
-		*(cursor->target) |= ((color & SG_PIXEL_MASK) << cursor->shift);
-	} else {
-		*(cursor->target) &= ~(SG_PIXEL_MASK << cursor->shift);
-		*(cursor->target) |= ((color & SG_PIXEL_MASK) << cursor->shift);
-	}
-}
-
 sg_color_t get_pixel(const sg_cursor_t * cursor){
 	sg_color_t color;
 	sg_bmap_data_t value;
@@ -328,3 +312,33 @@ sg_size_t calc_aligned_words(sg_size_t w, sg_size_t pixels_until_first_boundary)
 sg_size_t calc_pixels_after_last_boundary(sg_size_t w, sg_size_t pixels_until_first_boundary, sg_size_t aligned_words){
 	return w - pixels_until_first_boundary - aligned_words * SG_PIXELS_PER_WORD;
 }
+
+void draw_pixel(const sg_cursor_t * cursor, sg_color_t color){
+	u16 o_flags = cursor->bmap->pen.o_flags;
+	sg_bmap_data_t data = (color & SG_PIXEL_MASK) << cursor->shift;
+	if( o_flags & SG_PEN_FLAG_IS_ERASE ){
+		*(cursor->target) &= ~data;
+	} else if( o_flags & SG_PEN_FLAG_IS_INVERT ){
+		*(cursor->target) ^= data;
+	} else if( o_flags & SG_PEN_FLAG_IS_BLEND ){
+		*(cursor->target) |= data;
+	} else {
+		*(cursor->target) &= ~(SG_PIXEL_MASK << cursor->shift);
+		*(cursor->target) |= data;
+	}
+}
+
+
+void draw_pixel_group(sg_bmap_data_t * word, sg_bmap_data_t pattern, sg_bmap_data_t mask, u16 o_flags){
+	if( o_flags & SG_PEN_FLAG_IS_ERASE ){
+		*word &= ~pattern;
+	} else if( o_flags & SG_PEN_FLAG_IS_INVERT ){
+		*word ^= pattern;
+	} else if( o_flags & SG_PEN_FLAG_IS_BLEND ){
+		*word |= pattern;
+	} else {
+		*word &= mask;
+		*word |= pattern;
+	}
+}
+
