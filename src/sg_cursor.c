@@ -207,6 +207,7 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 	shift_cursor.bmap = cursor->bmap;
 	shift_cursor.shift = 0;
 
+
 	*(shift_cursor.target) <<= (shift_distance*SG_BITS_PER_PIXEL);
 
 	for(i=0; i < aligned_words; i++){

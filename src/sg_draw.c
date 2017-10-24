@@ -306,6 +306,10 @@ void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_d
 }
 
 void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src){
+	sg_draw_sub_bitmap(bmap_dest, p_dest, bmap_src, sg_point(0,0), bmap_src->dim);
+}
+
+void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src){
 	sg_int_t i;
 	sg_cursor_t y_dest_cursor;
 	sg_cursor_t x_dest_cursor;
@@ -313,13 +317,10 @@ void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bma
 	sg_cursor_t x_src_cursor;
 	sg_int_t h;
 	sg_int_t w;
-	sg_point_t p_src;
-
-	p_src = sg_point(0,0);
 
 	//check to see if p_dest values are negative and adjust source accordingly
-	w = bmap_src->dim.width;
-	h = bmap_src->dim.height;
+	w = d_src.width;
+	h = d_src.height;
 	if( p_dest.x < 0 ){
 		p_src.x = -1*p_dest.x;
 		p_dest.x = 0;
@@ -359,12 +360,6 @@ void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bma
 		sg_cursor_inc_y(&y_dest_cursor);
 		sg_cursor_inc_y(&y_src_cursor);
 	}
-
-}
-
-
-void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src){
-
 
 }
 

@@ -647,6 +647,7 @@ typedef struct MCU_PACK {
 	void (*draw_quadtratic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3);
 	void (*draw_cubic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4);
 	void (*draw_rectangle)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+	//void (*draw_arc)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s16 end);
 	void (*invert_rectangle)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
 	void (*clear_rectangle)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
 	void (*draw_pour)(const sg_bmap_t * bmap, sg_point_t p);
