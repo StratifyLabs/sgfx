@@ -318,20 +318,19 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
 	sg_int_t h;
 	sg_int_t w;
 
-	//check to see if p_dest values are negative and adjust source accordingly
+	//check to see if p_dest values are negative and truncate source accordingly
 	w = d_src.width;
 	h = d_src.height;
 	if( p_dest.x < 0 ){
-		p_src.x = -1*p_dest.x;
+		p_src.x += p_dest.x;
+		w += p_dest.x; //reduce width
 		p_dest.x = 0;
 	}
 	if( p_dest.y < 0 ){
-		p_src.y = -1*p_dest.y;
+		p_src.y += p_dest.y;
+		h += p_dest.y; //reduce height
 		p_dest.y = 0;
 	}
-
-	w -= p_src.x;
-	h -= p_src.y;
 
 	sg_cursor_set(&y_dest_cursor, bmap_dest, p_dest);
 	sg_cursor_set(&y_src_cursor, bmap_src, p_src);

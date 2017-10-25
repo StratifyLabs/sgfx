@@ -94,54 +94,53 @@ static sg_size_t sg_animate_calc_count(sg_animation_t * animation){
 }
 
 int sg_animate_push_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
-	sg_point_t dest;
-	sg_point_t src;
+	sg_point_t draw_dest_point;
+	sg_point_t draw_src_point;
+	sg_point_t shift_point;
 	sg_dim_t shift_dim;
-	sg_size_t count;
-	sg_point_t start;
+	sg_dim_t draw_dim;
 	sg_point_t shift;
-	sg_dim_t d;
-
-	shift.y = 0;
+	sg_size_t count;
 
 	if( animation->path.step < animation->path.step_total ){
 		count = sg_animate_calc_count(animation);
-		//no work to be performed
+
 		if( count == 0 ){
 			return 1;
 		}
 
-		start = animation->start;
-		d = animation->dim;
+		//start with all points and dims with animation
+		shift_point = animation->start;
+		shift_dim = animation->dim;
+		draw_src_point = animation->start;
+		draw_dest_point = animation->start;
+		draw_dim = animation->dim;
+
+		//adjust shift values
+		shift_dim.width -= count;
+		shift.x = count;
+		shift.y = 0;
+		sg_transform_shift(bmap, shift, shift_point, shift_dim);
+
+		//adjust bitmap draw operations
+		draw_src_point.x = animation->start.x + animation->dim.width - animation->path.motion - count;
+		draw_dim.width = count;
+		sg_draw_sub_bitmap(bmap, draw_dest_point, scratch, draw_src_point, draw_dim);
 
 		animation->path.motion += count;
 
-		src.x = start.x + animation->dim.width - animation->path.motion;
-		src.y = start.y;
-
-		shift_dim.width = count;
-		shift_dim.height = d.height;
-
-		dest.x = start.x;
-		dest.y = start.y;
-
-		shift.x = count;
-		sg_transform_shift(bmap, shift, start, d);
-		sg_draw_sub_bitmap(bmap, dest, scratch, src, shift_dim);
-
 		return 1;
 	}
-
 	return 0;
 
 }
 
 int sg_animate_push_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
-	sg_point_t dest;
-	sg_point_t src;
+	sg_point_t draw_dest_point;
+	sg_point_t draw_src_point;
+	sg_point_t shift_point;
 	sg_dim_t shift_dim;
-	sg_point_t start;
-	sg_dim_t d;
+	sg_dim_t draw_dim;
 	sg_point_t shift;
 	sg_size_t count;
 
@@ -152,23 +151,25 @@ int sg_animate_push_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 			return 1;
 		}
 
-		d = animation->dim;
-		start = animation->start;
+		//start with all points and dims with animation
+		shift_point = animation->start;
+		shift_dim = animation->dim;
+		draw_src_point = animation->start;
+		draw_dest_point = animation->start;
+		draw_dim = animation->dim;
 
-		dest.x = start.x + animation->dim.width - count;
-		dest.y = start.y;
-
-		shift_dim.width = count;
-		shift_dim.height = d.height;
-
-		src.x = start.x + animation->path.motion;
-		src.y = start.y;
-
+		//adjust shift values
+		shift_point.x += count;
+		shift_dim.width -= count;
 		shift.x = -1*count;
 		shift.y = 0;
+		sg_transform_shift(bmap, shift, shift_point, shift_dim);
 
-		sg_transform_shift(bmap, shift, start, d);
-		sg_draw_sub_bitmap(bmap, dest, scratch, src, shift_dim);
+		//adjust bitmap draw operations
+		draw_src_point.x = animation->start.x + animation->path.motion;
+		draw_dest_point.x = animation->start.x + animation->dim.width - count;
+		draw_dim.width = count;
+		sg_draw_sub_bitmap(bmap, draw_dest_point, scratch, draw_src_point, draw_dim);
 
 		animation->path.motion += count;
 

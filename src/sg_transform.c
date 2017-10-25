@@ -35,60 +35,37 @@ void sg_transform_shift(const sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, 
 void shift_right(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 	sg_int_t i;
 
-	int page_size;
-	int bytes_shifted = 0;
-
 	sg_cursor_t y_cursor;
 	sg_cursor_t x_cursor;
 
 	sg_cursor_set(&y_cursor, bmap, start);
 
-	while( bytes_shifted < count ){
-
-		page_size = count - bytes_shifted;
-		if( page_size > SG_PIXELS_PER_WORD ){
-			page_size = SG_PIXELS_PER_WORD;
+	for(i=start.y; i < start.y+d.height; i++){
+		sg_cursor_copy(&x_cursor, &y_cursor);
+		if( sg_y_visible(bmap, i) ){
+			sg_cursor_shift_right(&x_cursor, d.width, count);
 		}
-
-		for(i=start.y; i < start.y+d.height; i++){
-			sg_cursor_copy(&x_cursor, &y_cursor);
-			if( sg_y_visible(bmap, i) ){
-				sg_cursor_shift_right(&x_cursor, d.width, count);
-			}
-			sg_cursor_inc_y(&y_cursor);
-		}
-
-		bytes_shifted += page_size;
+		sg_cursor_inc_y(&y_cursor);
 	}
+
 }
 
 void shift_left(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 	sg_int_t i;
-	int page_size;
-	int bytes_shifted = 0;
 
 	sg_cursor_t y_cursor;
 	sg_cursor_t x_cursor;
 
 	sg_cursor_set(&y_cursor, bmap, start);
 
-	while( bytes_shifted < count ){
-
-		page_size = count - bytes_shifted;
-		if( page_size > SG_PIXELS_PER_WORD ){
-			page_size = SG_PIXELS_PER_WORD;
+	for(i=start.y; i < start.y+d.height; i++){
+		sg_cursor_copy(&x_cursor, &y_cursor);
+		if( sg_y_visible(bmap, i) ){
+			sg_cursor_shift_left(&x_cursor, d.width, count);
 		}
-
-		for(i=start.y; i < start.y+d.height; i++){
-			sg_cursor_copy(&x_cursor, &y_cursor);
-			if( sg_y_visible(bmap, i) ){
-				sg_cursor_shift_left(&x_cursor, d.width, count);
-			}
-			sg_cursor_inc_y(&y_cursor);
-		}
-
-		bytes_shifted += page_size;
+		sg_cursor_inc_y(&y_cursor);
 	}
+
 }
 
 void shift_up(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){

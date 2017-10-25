@@ -195,39 +195,103 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 
 	sg_size_t i;
 	sg_cursor_t shift_cursor;
+	sg_cursor_t dest_cursor;
 	sg_bmap_data_t value;
 	sg_bmap_data_t mask;
+	sg_size_t operating_width;
 
 	//calculate the pixels around boundaries
 	pixels_until_first_boundary = calc_pixels_until_first_boundary(shift_width, cursor->shift);
 	aligned_words = calc_aligned_words(shift_width, pixels_until_first_boundary);
 	pixels_after_last_boundary = calc_pixels_after_last_boundary(shift_width, pixels_until_first_boundary, aligned_words);
 
-	shift_cursor.target = cursor->target + aligned_words;
-	shift_cursor.bmap = cursor->bmap;
-	shift_cursor.shift = 0;
+	sg_cursor_copy(&shift_cursor, cursor);
 
-
-	*(shift_cursor.target) <<= (shift_distance*SG_BITS_PER_PIXEL);
-
-	for(i=0; i < aligned_words; i++){
-		*(shift_cursor.target) |= (*(shift_cursor.target-1) >> (SG_BITS_PER_WORD - shift_distance*SG_BITS_PER_PIXEL));
-		shift_cursor.target--;
-		*(shift_cursor.target) <<= (shift_distance*SG_BITS_PER_PIXEL);
-	}
-
-	*(shift_cursor.target) |= (*(shift_cursor.target-1) >> (SG_BITS_PER_WORD - shift_distance*SG_BITS_PER_PIXEL));
-	shift_cursor.target--;
-
-	mask = ((1<<(SG_BITS_PER_WORD - pixels_after_last_boundary*SG_BITS_PER_PIXEL))-1);
-	value = (*(shift_cursor.target) << (shift_distance*SG_BITS_PER_PIXEL)) & mask;
-	*(shift_cursor.target) &= mask;
-	*(shift_cursor.target) |= value;
 
 	for(i=0; i < shift_distance; i++){
 		sg_cursor_inc_x(cursor);
 	}
 
+	sg_cursor_copy(&dest_cursor, cursor);
+
+	for(i=0; i < shift_width; i++){
+		sg_cursor_inc_x(&shift_cursor);
+		sg_cursor_inc_x(&dest_cursor);
+	}
+
+	shift_cursor.shift = 0;
+	for(i=0; i < pixels_after_last_boundary; i++){
+		sg_cursor_dec_x(&dest_cursor);
+	}
+
+	operating_width = pixels_after_last_boundary;
+
+	if( operating_width > shift_width ){
+		operating_width = shift_width;
+	}
+
+	mask = ((1<<operating_width*SG_BITS_PER_PIXEL) - 1);
+	value = (*shift_cursor.target) & mask;
+
+	*shift_cursor.target &= ~(mask);
+
+	//now put mask and value in dest
+	(*dest_cursor.target) &= ~(mask << dest_cursor.shift);
+	(*dest_cursor.target) |= (value << dest_cursor.shift);
+
+	if( dest_cursor.shift > 0 ){
+		*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
+		*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
+	}
+
+	shift_cursor.target--;
+	dest_cursor.target--;
+
+	for(i=0; i < aligned_words; i++){
+
+		mask = (u32)-1;
+		value = *shift_cursor.target;
+
+		*shift_cursor.target = 0;
+
+		//now put mask and value in dest
+		(*dest_cursor.target) &= ~(mask << dest_cursor.shift);
+		(*dest_cursor.target) |= (value << dest_cursor.shift);
+
+		if( dest_cursor.shift > 0 ){
+			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
+		}
+
+		dest_cursor.target--;
+		shift_cursor.target--;
+	}
+
+	if( pixels_until_first_boundary ){
+		operating_width = pixels_until_first_boundary;
+
+		dest_cursor.target++;
+		shift_cursor.target++;
+
+		for(i=0; i < pixels_until_first_boundary; i++){
+			sg_cursor_dec_x(&shift_cursor);
+			sg_cursor_dec_x(&dest_cursor);
+		}
+
+		mask = ((1<<operating_width*SG_BITS_PER_PIXEL) - 1);
+		value = (*shift_cursor.target >> shift_cursor.shift) & mask;
+
+		*shift_cursor.target &= ~(mask << shift_cursor.shift);
+
+		//now put mask and value in dest
+		(*dest_cursor.target) &= ~(mask << dest_cursor.shift);
+		(*dest_cursor.target) |= (value << dest_cursor.shift);
+
+		if( dest_cursor.shift > 0 ){
+			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
+		}
+	}
 }
 
 void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance){
@@ -265,7 +329,8 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 	mask = ((1<<operating_width*SG_BITS_PER_PIXEL) - 1);
 	value = (*shift_cursor.target >> shift_cursor.shift) & mask;
 
-	*shift_cursor.target &= ~(mask << shift_cursor.shift);
+	(*shift_cursor.target) &= ~(mask << shift_cursor.shift);
+
 
 	//now put mask and value in dest
 	(*dest_cursor.target) &= ~(mask << dest_cursor.shift);
@@ -282,7 +347,6 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 	for(i=0; i < pixels_until_first_boundary; i++){
 		sg_cursor_inc_x(&dest_cursor);
 	}
-
 
 	for(i=0; i < aligned_words; i++){
 
@@ -309,6 +373,8 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 
 		mask = ((1<<operating_width*SG_BITS_PER_PIXEL) - 1);
 		value = (*shift_cursor.target) & mask;
+
+		*shift_cursor.target &= ~(mask);
 
 		//now put mask and value in dest
 		(*dest_cursor.target) &= ~(mask << dest_cursor.shift);
