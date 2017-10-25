@@ -16,9 +16,9 @@ static void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const s
 static void (*draw_func [SG_TYPE_TOTAL])(const sg_vector_primitive_t * p, sg_bmap_t * bm, const sg_vector_map_t * map, sg_bounds_t * attr) = {
 		draw_line,
 		draw_arc,
+		draw_fill,
 		draw_quadtratic_bezier,
-		draw_cubic_bezier,
-		draw_fill
+		draw_cubic_bezier
 };
 
 
@@ -26,34 +26,34 @@ void sg_vector_draw_primitive(sg_bmap_t * bitmap, const sg_vector_primitive_t * 
 	int type;
 	type = prim->type & SG_TYPE_MASK;
 	if( prim->type & SG_ENABLE_FLAG ){
-		if( (type & SG_TYPE_MASK) < SG_TYPE_TOTAL ){
+		if( type < SG_TYPE_TOTAL ){
 			draw_func[type](prim, bitmap, map, attr);
 		}
 	}
 }
 
-void sg_vector_draw_icon(sg_bmap_t * bmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_bounds_t * attr){
+void sg_vector_draw_icon(sg_bmap_t * bmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_bounds_t * bounds){
 	unsigned int total;
 	if( bmap->pen.o_flags & SG_PEN_FLAG_IS_FILL ){
 		total = icon->total;
 	} else {
 		total = icon->total - icon->fill_total;
 	}
-	sg_vector_draw_primitive_list(bmap, icon->primitives, total, map, attr);
+	sg_vector_draw_primitive_list(bmap, icon->primitives, total, map, bounds);
 }
 
-void sg_vector_draw_primitive_list(sg_bmap_t * bitmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_bounds_t * attr){
+void sg_vector_draw_primitive_list(sg_bmap_t * bitmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_bounds_t * bounds){
 	unsigned int i;
 
-	if( attr ){
-		attr->bottom_right.x = -SG_MAX;
-		attr->bottom_right.y = -SG_MAX;
-		attr->top_left.x = SG_MAX;
-		attr->top_left.y = SG_MAX;
+	if( bounds ){
+		bounds->bottom_right.x = -SG_MAX;
+		bounds->bottom_right.y = -SG_MAX;
+		bounds->top_left.x = SG_MAX;
+		bounds->top_left.y = SG_MAX;
 	}
 
 	for(i=0; i < total; i++){
-		sg_vector_draw_primitive(bitmap, &(prim_list[i]), map, attr);
+		sg_vector_draw_primitive(bitmap, &(prim_list[i]), map, bounds);
 	}
 }
 

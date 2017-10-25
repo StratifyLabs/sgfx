@@ -57,7 +57,7 @@ typedef struct MCU_PACK {
  */
 typedef struct MCU_PACK {
 	u16 id;
-	u16 offset /*! Characters data location within the font file or memory;
+	u16 offset /*! Characters data location within the font file or memory */;
 	u8 width /*! Width of the character */;
 	u8 height /*! Height of the character */;
 	u8 xadvance;
