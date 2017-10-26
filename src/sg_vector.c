@@ -174,9 +174,17 @@ void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const 
 
 void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
 	sg_point_t center;
+	sg_bounds_t bounds;
+	if( attr ){
+		bounds = *attr;
+	} else {
+		bounds.top_left.point = 0;
+		bounds.bottom_right.x = bmap->dim.width - 1;
+		bounds.bottom_right.y = bmap->dim.height - 1;
+	}
 	center.point = p->shift.point;
 	sg_point_map(&center, map);
-	sg_draw_pour(bmap, center);
+	sg_draw_pour(bmap, center, bounds);
 }
 
 

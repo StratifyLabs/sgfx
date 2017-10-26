@@ -66,10 +66,6 @@ void sg_cursor_draw_hline(sg_cursor_t * cursor, sg_size_t width){
 	sg_cursor_draw_pattern(cursor, width, pattern);
 }
 
-void sg_cursor_clear_hline(sg_cursor_t * cursor, sg_size_t width){
-	sg_cursor_draw_pattern(cursor, width, 0);
-}
-
 void sg_cursor_draw_pattern(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_t pattern){
 	sg_size_t pixels_until_first_boundary;
 	sg_size_t pixels_after_last_boundary;
@@ -103,36 +99,6 @@ void sg_cursor_draw_pattern(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_
 	}
 }
 
-void sg_cursor_invert_hline(sg_cursor_t * cursor, sg_size_t width){
-	sg_size_t pixels_until_first_boundary;
-	sg_size_t pixels_after_last_boundary;
-	sg_size_t aligned_words;
-	sg_size_t i;
-	sg_color_t color;
-
-	//calculate the pixels around the boundaries
-	pixels_until_first_boundary = calc_pixels_until_first_boundary(width, cursor->shift);
-	aligned_words = calc_aligned_words(width, pixels_until_first_boundary);
-	pixels_after_last_boundary = calc_pixels_after_last_boundary(width, pixels_until_first_boundary, aligned_words);
-
-	for(i=0; i < pixels_until_first_boundary; i++){
-		color = get_pixel(cursor);
-		draw_pixel(cursor, ~color);
-		sg_cursor_inc_x(cursor);
-	}
-
-	for(i=0; i < aligned_words; i++){
-		*(cursor->target) = ~(*(cursor->target)); //assignment of new value
-		cursor->target++;
-		//cursor->p.x += SG_PIXELS_PER_WORD;
-	}
-
-	for(i=0; i < pixels_after_last_boundary; i++){
-		color = get_pixel(cursor);
-		draw_pixel(cursor, ~color);
-		sg_cursor_inc_x(cursor);
-	}
-}
 
 void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cursor, sg_size_t width){
 	sg_size_t pixels_until_first_boundary;

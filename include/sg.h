@@ -296,38 +296,6 @@ void sg_cursor_draw_pixel(sg_cursor_t * cursor);
  */
 void sg_cursor_draw_hline(sg_cursor_t * cursor, sg_size_t width);
 
-/*! \details Inverts a horizontal line at the cursor's location
- * and increments the cursor's position to the pixel after the
- * end of the line.
- *
- * @param cursor A pointer to the cursor
- * @param width The width of the line
- *
- * This function operates on the bmap using 32-bit words
- * so it is faster than simply drawing pixels using a loop.
- *
- * The operation is a bitwise invert (~ C operator). Using 1bpp,
- * the result is obvious. Using more than 1bpp, how the invert looks
- * will depend on how the display palette is set up to render the
- * bitmap.
- *
- */
-void sg_cursor_invert_hline(sg_cursor_t * cursor, sg_size_t width);
-
-/*! \details Clears a horizontal line at the cursor's location
- * and increments the cursor's position to the pixel after the
- * end of the line.
- *
- * @param cursor A pointer to the cursor
- * @param width The width of the line
- *
- * This function operates on the bmap using 32-bit words
- * so it is faster than simply drawing pixels using a loop.
- *
- * This operation assigns a value of 0 to the pixels.
- */
-void sg_cursor_clear_hline(sg_cursor_t * cursor, sg_size_t width);
-
 /*! \details Draws a horizontal line on \a dest_cursor by copying the values of the \a src_cursor
  * and updates the x location of the \a dest_cursor to the pixel past the end of the operation.
  *
@@ -448,38 +416,31 @@ void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, 
  */
 void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
 
-/*! \details Inverts a rectangle.
- *
- * @param bmap A pointer to the bitmap object
- * @param p The top left corner of the rectangle
- * @param d The dimensions of the rectangle
- *
- * The color of the rectangle will be a bitwise invert (~ C operator)
- * of the current color of the bitmap.
- *
- */
-void sg_invert_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
 
-/*! \details Clears a rectangle.
+/*! \details Draws an arc on the bitmap.
  *
- * @param bmap A pointer to the bitmap object
- * @param p The top left corner of the rectangle
- * @param d The dimensions of the rectangle
- *
- * The color of the rectangle will be all zeros.
+ * @param bmap A pointer to the bitmap
+ * @param p The top left corner of the area to draw the arc
+ * @param d The dimensions to draw the arc in
+ * @param start The starting angle
+ * @param end The ending angle
  *
  */
-void sg_clear_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+void sg_draw_arc(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s16 end);
+
 
 /*! \details Pours a color on the bitmap.
  *
  * @param bmap A pointer to the bitmap object
  * @param p The point where the pour should start.
+ * @param bounds The bounds for the pour.
  *
- * The pour will fill...
+ * The pour will fill in the surrounding area until it its
+ * a line or a bound. If the bmap's pen color is zero, the pour
+ * will act as an eraser pour rather than an ink pour.
  *
  */
-void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p);
+void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds);
 
 /*! \details Draws a pattern in the specified area of the bitmap.
  *
@@ -634,8 +595,6 @@ typedef struct MCU_PACK {
 	sg_color_t (*cursor_get_pixel)(sg_cursor_t * cursor);
 	void (*cursor_draw_pixel)(sg_cursor_t * cursor);
 	void (*cursor_draw_hline)(sg_cursor_t * cursor, sg_size_t width);
-	void (*cursor_invert_hline)(sg_cursor_t * cursor, sg_size_t width);
-	void (*cursor_clear_hline)(sg_cursor_t * cursor, sg_size_t width);
 	void (*cursor_draw_cursor)(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cursor, sg_size_t width);
 	void (*cursor_draw_pattern)(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_t pattern);
 	void (*cursor_shift_right)(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
@@ -647,10 +606,8 @@ typedef struct MCU_PACK {
 	void (*draw_quadtratic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3);
 	void (*draw_cubic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4);
 	void (*draw_rectangle)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
-	//void (*draw_arc)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s16 end);
-	void (*invert_rectangle)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
-	void (*clear_rectangle)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
-	void (*draw_pour)(const sg_bmap_t * bmap, sg_point_t p);
+	void (*draw_arc)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s16 end);
+	void (*draw_pour)(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds);
 	void (*draw_pattern)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height);
 	void (*draw_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src);
 	void (*draw_sub_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src);

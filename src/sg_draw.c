@@ -10,7 +10,7 @@ static inline int abs_value(int x){  if( x < 0 ){ return x*-1; } return x; }
 
 static void draw_vline(const sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax);
 static void draw_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_size_t thickness);
-static void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active);
+static void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active, sg_bounds_t bounds);
 static u8 get_hline(const sg_bmap_t * mg, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos, u8 active);
 static u16 calc_largest_delta(sg_point_t p0, sg_point_t p1);
 
@@ -123,6 +123,10 @@ u16 calc_largest_delta(sg_point_t p0, sg_point_t p1){
 
 }
 
+void sg_draw_arc(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s16 end){
+
+}
+
 void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, sg_point_t p2){
 	u32 i;
 	s32 x;
@@ -204,70 +208,6 @@ void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
 		sg_cursor_draw_hline(&x_cursor, d.width);
 		sg_cursor_inc_y(&y_cursor);
 	}
-}
-
-void sg_invert_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
-	sg_cursor_t y_cursor;
-	sg_cursor_t x_cursor;
-	sg_size_t i;
-	sg_cursor_set(&y_cursor, bmap, p);
-
-	for(i=0; i < d.height; i++){
-		sg_cursor_copy(&x_cursor, &y_cursor);
-		sg_cursor_invert_hline(&x_cursor, d.width);
-		sg_cursor_inc_y(&y_cursor);
-	}
-}
-
-void sg_clear_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
-	sg_cursor_t y_cursor;
-	sg_cursor_t x_cursor;
-	sg_size_t i;
-	sg_cursor_set(&y_cursor, bmap, p);
-
-	for(i=0; i < d.height; i++){
-		sg_cursor_copy(&x_cursor, &y_cursor);
-		sg_cursor_clear_hline(&x_cursor, d.width);
-		sg_cursor_inc_y(&y_cursor);
-	}
-}
-
-void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p){
-	sg_int_t xmin, xmax;
-	sg_point_t above;
-	sg_point_t below;
-	u8 is_above, is_below;
-	u8 active;
-
-	if( bmap->pen.color ){
-		//set the values to
-		active = 1;
-	} else {
-		active = 0;
-	}
-
-	if( !sg_x_visible(bmap, p.x) ){
-		return;
-	}
-
-
-	//check the pen
-	xmin = p.x;
-	xmax = p.x;
-
-	get_hedge(bmap, p, &xmin, &xmax, active); //find the bounding points xmin and xmax
-	is_above = !get_hline(bmap, xmin, xmax, p.y+1, &(above.x), active); //see if anywhere above the bounded region is blank
-	is_below = !get_hline(bmap, xmin, xmax, p.y-1, &(below.x), active); //see if anywhere below the bounded region is blank
-	draw_hline(bmap, xmin, xmax, p.y, 1);
-	if( is_above ){
-		above.y = p.y+1;
-		sg_draw_pour(bmap, above); //if the above line has a blank spot -- fill it
-	}
-	if( is_below ){
-		below.y = p.y-1;
-		sg_draw_pour(bmap, below); //if the below line has a blank spot -- fill it
-	}
-
 }
 
 void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height){
@@ -401,7 +341,52 @@ void draw_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y
 	}
 }
 
-void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active){
+void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds){
+	sg_int_t xmin, xmax;
+	sg_point_t above;
+	sg_point_t below;
+	u8 is_above, is_below;
+	u8 active;
+
+	if( bmap->pen.color ){
+		//set the values to
+		active = 1;
+	} else {
+		active = 0;
+	}
+
+	//check the pen
+	xmin = p.x;
+	xmax = p.x;
+
+	get_hedge(bmap, p, &xmin, &xmax, active, bounds); //find the bounding points xmin and xmax
+	if( p.y+1 <= bounds.bottom_right.y ){
+		is_below = !get_hline(bmap, xmin, xmax, p.y+1, &(above.x), active); //see if anywhere above the bounded region is blank
+	} else {
+		is_below = 0;
+	}
+
+	if( p.y-1 >= bounds.top_left.y ){
+		is_above = !get_hline(bmap, xmin, xmax, p.y-1, &(below.x), active); //see if anywhere below the bounded region is blank
+	} else {
+		is_above = 0;
+	}
+
+	draw_hline(bmap, xmin, xmax, p.y, 1);
+
+	if( is_below ){
+		above.y = p.y+1;
+		sg_draw_pour(bmap, above, bounds); //if the above line has a blank spot -- fill it
+	}
+
+	if( is_above ){
+		below.y = p.y-1;
+		sg_draw_pour(bmap, below, bounds); //if the below line has a blank spot -- fill it
+	}
+
+}
+
+void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active, sg_bounds_t bounds){
 	sg_cursor_t min_cursor;
 	sg_cursor_t max_cursor;
 	sg_point_bound(bmap, &p);
@@ -411,22 +396,26 @@ void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t *
 	sg_cursor_set(&min_cursor, bmap, p);
 	sg_cursor_set(&max_cursor, bmap, p);
 
-	while( (sg_cursor_get_pixel_no_inc(&min_cursor) != 0) != active ){ sg_cursor_dec_x(&min_cursor); min--; }
+	while( ((sg_cursor_get_pixel_no_inc(&min_cursor) != 0) != active)
+			&& (max < bounds.bottom_right.x) ){
+		sg_cursor_dec_x(&min_cursor); min--;
+	}
+
 	//get pixel auto increments the cursor
-	while( (sg_cursor_get_pixel(&max_cursor) != 0) != active ){ max++; }
+	while( ((sg_cursor_get_pixel(&max_cursor) != 0) != active)
+			&& (max < bounds.bottom_right.x) ){
+		max++;
+	}
+
 	*xmin = min+1;
 	*xmax = max;
 	return;
 }
 
+//This checks to see if anywhere along the line is an inactive hole
 u8 get_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos, u8 active){
 	sg_point_t p;
 	sg_cursor_t cursor;
-	if( !sg_y_visible(bmap, y) ){
-		return 1;
-	}
-	sg_point_bound_x(bmap, &xmin);
-	sg_point_bound_x(bmap, &xmax);
 
 	p.x = xmin;
 	p.y = y;
@@ -436,7 +425,7 @@ u8 get_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, s
 	for(p.x = xmin; p.x < xmax; p.x++){
 		if( (sg_cursor_get_pixel(&cursor) != 0) != active ){
 			*pos = p.x;
-			return false;
+			return 0;
 		}
 	}
 	return 1;

@@ -20,8 +20,8 @@ typedef int64_t s64;
 
 #include <sys/types.h>
 
-#define SG_STR_VERSION "2.1"
-#define SG_VERSION 0x0201
+#define SG_STR_VERSION "2.2"
+#define SG_VERSION 0x0202
 
 #define SG_MAX (32767)
 #define SG_MIN (-32767)
@@ -62,18 +62,26 @@ typedef u16 sg_color_t;
 typedef u32 sg_bmap_data_t;
 typedef u32 sg_unified_t;
 
+/*! \brief Graphics Point
+ * \details This is the data structure for a
+ * point on a bitmap.
+ */
 typedef union MCU_PACK {
 	struct {
-		sg_int_t x;
-		sg_int_t y;
+		sg_int_t x /*! X location */;
+		sg_int_t y /*! Y location */;
 	};
 	sg_unified_t point;
 } sg_point_t;
 
+/*! \brief Graphics Dimension
+ * \details This is the data structure for a
+ * dimension on a bitmap.
+ */
 typedef union MCU_PACK {
 	struct {
-		sg_size_t width;
-		sg_size_t height;
+		sg_size_t width /*! Width */;
+		sg_size_t height /*! Height */;
 	};
 	sg_unified_t dim;
 } sg_dim_t;
@@ -92,27 +100,30 @@ enum {
 
 #define SG_PEN_FLAG_NOT_SOLID_MASK (SG_PEN_FLAG_IS_BLEND|SG_PEN_FLAG_IS_INVERT|SG_PEN_FLAG_IS_ERASE)
 
+/*! \brief Graphics Pen
+ * \details Data structure for holding data for a pen.
+ */
 typedef struct MCU_PACK {
-	u16 o_flags;
-	u8 thickness;
+	u16 o_flags /*! Flags (SG_PEN_FLAG_...) */;
+	u8 thickness /*! Thickness in pixels */;
 	u8 resd;
-	//the following union should just be sg_color_t color;
-	sg_color_t color;
+	sg_color_t color /*! Pen color */;
 } sg_pen_t;
 
-
+/*! \brief Graphics Bitmap
+ * \details Data structure for holding data for a bitmap.
+ */
 typedef struct MCU_PACK {
-	sg_bmap_data_t * data;
-	sg_pen_t pen;
-	sg_dim_t dim;
-	sg_dim_t margin_top_left;
-	sg_dim_t margin_bottom_right;
-	sg_size_t columns;
+	sg_bmap_data_t * data /*! A pointer to the bitmap data */;
+	sg_pen_t pen /*! The bitmap pen used for drawing on the bitmap */;
+	sg_dim_t dim /*! The bitmap's dimensions */;
+	sg_dim_t margin_top_left /*! Bitmap's top/left margins */;
+	sg_dim_t margin_bottom_right /*! Bitmap's bottom/right margins */;
+	sg_size_t columns /*! The number fo columns in the bitmap (used internally) */;
 } sg_bmap_t;
 
 typedef struct MCU_PACK {
 	const sg_bmap_t * bmap;
-	//sg_point_t p;
 	sg_bmap_data_t * target;
 	sg_size_t shift;
 } sg_cursor_t;
