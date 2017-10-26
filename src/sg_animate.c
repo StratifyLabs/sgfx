@@ -577,8 +577,8 @@ static int sg_animate_bounce_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 
 			d.width = animation->path.motion + count;
 
-			//! \todo checkerboard area
-			//sg_set_area(bmap, dest, d, 0xAA);
+			//checkerboard area
+			sg_draw_pattern(bmap, dest, d, 0xAAAAAAAA, 0x55555555, 1);
 
 			if( animation->path.step == animation->path.step_total ){
 				animation->path.step = SG_ANIMATION_STEP_FLAG;
@@ -644,8 +644,8 @@ static int sg_animate_bounce_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_ani
 			dest.x = start.x + animation->dim.width - d.width;
 			dest.y = start.y;
 
-			//! \todo CHECKERBOAR AREA
-			//sg_set_area(bmap, dest, d, 0xAA);
+			//Checkboard area
+			sg_draw_pattern(bmap, dest, d, 0xAAAAAAAA, 0x55555555, 1);
 
 			if( animation->path.step == animation->path.step_total ){
 				animation->path.step = SG_ANIMATION_STEP_FLAG;
