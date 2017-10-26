@@ -280,24 +280,26 @@ void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_d
 	sg_bmap_data_t even_pattern_color;
 	sg_cursor_set(&y_cursor, bmap, p);
 
+	sg_color_t color = bmap->pen.color & ((1<<SG_BITS_PER_PIXEL)-1);
+
 	even_pattern_color = 0;
 	odd_pattern_color = 0;
 	for(i=0; i < SG_PIXELS_PER_WORD; i++){
 		if( even_pattern & (1<<i) ){
-			even_pattern_color |= (bmap->pen.color << (i*SG_BITS_PER_PIXEL));
+			even_pattern_color |= (color << (i*SG_BITS_PER_PIXEL));
 		}
 
 		if( odd_pattern & (1<<i) ){
-			odd_pattern_color |= (bmap->pen.color << (i*SG_BITS_PER_PIXEL));
+			odd_pattern_color |= (color << (i*SG_BITS_PER_PIXEL));
 		}
 	}
 
 	for(i=0; i < d.height; i++){
 		sg_cursor_copy(&x_cursor, &y_cursor);
 		if( (i/pattern_height) % 2 ){
-			pattern = even_pattern_color;
-		} else {
 			pattern = odd_pattern_color;
+		} else {
+			pattern = even_pattern_color;
 		}
 		sg_cursor_draw_pattern(&x_cursor, d.width, pattern);
 		sg_cursor_inc_y(&y_cursor);
