@@ -5,16 +5,14 @@
 #include "sg.h"
 
 extern sg_color_t sg_cursor_get_pixel_no_inc(sg_cursor_t * cursor);
+extern void sg_cursor_draw_pixel_no_inc(sg_cursor_t * cursor);
 
 static inline int abs_value(int x){  if( x < 0 ){ return x*-1; } return x; }
 
 static int is_point_visible(const sg_bmap_t * bmap, sg_point_t p);
 static int truncate_visible(const sg_bmap_t * bmap, sg_point_t * p, sg_dim_t * d);
 
-static void draw_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y);
-static void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active, sg_bounds_t bounds);
-static void draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds, u8 active);
-static u8 get_hline(const sg_bmap_t * mg, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos, u8 active);
+static int draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds);
 static u16 calc_largest_delta(sg_point_t p0, sg_point_t p1);
 
 sg_color_t sg_get_pixel(const sg_bmap_t * bmap, sg_point_t p){
@@ -344,22 +342,8 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
 
 }
 
-void draw_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y){
-	sg_cursor_t x_cursor;
-	sg_cursor_set(&x_cursor, bmap, sg_point(xmin,y));
-	sg_cursor_draw_hline(&x_cursor, xmax - xmin);
-
-}
 
 void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds){
-	u8 active;
-
-	if( bmap->pen.color ){
-		//set the values to
-		active = 1;
-	} else {
-		active = 0;
-	}
 
 	//limit bounds to inside the bmap
 	if( (bounds.bottom_right.x < 0) || (bounds.bottom_right.y < 0) ){
@@ -375,90 +359,58 @@ void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds){
 	if( bounds.bottom_right.x >= bmap->dim.width ){ bounds.bottom_right.x = bmap->dim.width-1; }
 	if( bounds.bottom_right.y >= bmap->dim.height ){ bounds.bottom_right.y = bmap->dim.height-1; }
 
-	draw_pour_recursive(bmap, p, bounds, active);
+	draw_pour_recursive(bmap, p, bounds);
 }
 
-void draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds, u8 active){
-	sg_int_t xmin, xmax;
-	sg_point_t above;
-	sg_point_t below;
-	u8 is_above, is_below;
-
-	//check the pen
-	xmin = p.x;
-	xmax = p.x;
-
-	get_hedge(bmap, p, &xmin, &xmax, active, bounds); //find the bounding points xmin and xmax
-	if( p.y+1 <= bounds.bottom_right.y ){
-		is_below = !get_hline(bmap, xmin, xmax, p.y+1, &(below.x), active); //see if anywhere above the bounded region is blank
-	} else {
-		is_below = 0;
-	}
-
-	if( p.y-1 >= bounds.top_left.y ){
-		is_above = !get_hline(bmap, xmin, xmax, p.y-1, &(above.x), active); //see if anywhere below the bounded region is blank
-	} else {
-		is_above = 0;
-	}
-
-	draw_hline(bmap, xmin, xmax, p.y);
-
-	if( is_below ){
-		below.y = p.y+1;
-		draw_pour_recursive(bmap, below, bounds, active); //if the below line has a blank spot -- fill it
-	}
-
-	if( is_above ){
-		above.y = p.y-1;
-		draw_pour_recursive(bmap, above, bounds, active); //if the above line has a blank spot -- fill it
-	}
-}
-
-void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active, sg_bounds_t bounds){
-	sg_cursor_t min_cursor;
-	sg_cursor_t max_cursor;
-	sg_point_bound(bmap, &p);
-	sg_int_t min = *xmin;
-	sg_int_t max = *xmax;
-
-	sg_cursor_set(&min_cursor, bmap, p);
-	sg_cursor_set(&max_cursor, bmap, p);
-
-	while( ((sg_cursor_get_pixel_no_inc(&min_cursor) != 0) != active)
-			&& (min > bounds.top_left.x) ){
-		sg_cursor_dec_x(&min_cursor);
-		min--;
-	}
-
-	//get pixel auto increments the cursor
-	while( ((sg_cursor_get_pixel(&max_cursor) != 0) != active)
-			&& (max < bounds.bottom_right.x) ){
-		max++;
-	}
-
-	*xmin = min+1;
-	*xmax = max;
-	return;
-}
-
-//This checks to see if anywhere along the line is an inactive hole
-u8 get_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos, u8 active){
-	sg_point_t p;
+int draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds){
 	sg_cursor_t cursor;
-
-	p.x = xmin;
-	p.y = y;
-
 	sg_cursor_set(&cursor, bmap, p);
-
-	for(p.x = xmin; p.x < xmax; p.x++){
-		if( (sg_cursor_get_pixel(&cursor) != 0) != active ){
-			*pos = p.x;
-			return 0;
+	if( sg_cursor_get_pixel_no_inc(&cursor) == 0 ){
+		sg_point_t draw_point;
+		sg_int_t xmin, xmax;
+		sg_int_t x;
+		draw_point = p;
+		xmin = p.x;
+		xmax = p.y;
+		while( (sg_cursor_get_pixel_no_inc(&cursor) == 0) && (draw_point.x < bounds.bottom_right.x) ){
+			sg_cursor_draw_pixel(&cursor);
+			draw_point.x++;
 		}
+		xmax = draw_point.x;
+
+		sg_cursor_set(&cursor, bmap, p);
+		draw_point = p;
+		sg_cursor_dec_x(&cursor);
+		draw_point.x--;
+		while( (sg_cursor_get_pixel_no_inc(&cursor) == 0) && (draw_point.x > bounds.top_left.x) ){
+			sg_cursor_draw_pixel_no_inc(&cursor);
+			sg_cursor_dec_x(&cursor);
+			draw_point.x--;
+		}
+		xmin = draw_point.x;
+
+		for(x = xmin+1; x < xmax; x++){
+			if( p.y+1 <= bounds.bottom_right.y ){
+				draw_point.x = x;
+				draw_point.y = p.y+1;
+				x = draw_pour_recursive(bmap, draw_point, bounds);
+			}
+		}
+
+		for(x = xmin+1; x < xmax; x++){
+			if( p.y-1 >= bounds.top_left.y ){
+				draw_point.x = x;
+				draw_point.y = p.y-1;
+				x = draw_pour_recursive(bmap, draw_point, bounds);
+			}
+		}
+
+		return xmax;
 	}
-	return 1;
+	return p.x;
 }
+
+
 
 int is_point_visible(const sg_bmap_t * bmap, sg_point_t p){
 	if( (p.x < 0) || (p.x >= bmap->dim.width) ){

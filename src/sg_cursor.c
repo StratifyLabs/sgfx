@@ -23,6 +23,11 @@ sg_color_t sg_cursor_get_pixel_no_inc(sg_cursor_t * cursor){
 	return get_pixel(cursor);
 }
 
+void sg_cursor_draw_pixel_no_inc(sg_cursor_t * cursor){
+	draw_pixel(cursor, cursor->bmap->pen.color);
+}
+
+
 sg_color_t sg_cursor_get_pixel(sg_cursor_t * cursor){
 	sg_color_t color = get_pixel(cursor);
 	sg_cursor_inc_x(cursor);
