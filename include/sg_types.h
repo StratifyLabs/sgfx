@@ -214,9 +214,9 @@ typedef struct MCU_PACK {
 /*! \brief Graphics Map Structure
  * \details Describes how an sg_icon_t is mapped to a sg_bitmap_t */
 typedef struct MCU_PACK {
-	sg_point_t shift; //shift within screen (absolute)
-	s16 rotation; //rotate within screen (absolute)
-	sg_dim_t size; //scaling
+	sg_point_t point; //top left corner of where icon maps to the screen
+	sg_dim_t dim; //dimensions of the map on the display
+	s16 rotation; //rotation angle of map on the display
 } sg_vector_map_t;
 
 

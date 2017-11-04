@@ -15,7 +15,6 @@ static inline sg_color_t get_pixel(const sg_cursor_t * cursor);
 //cursor with a single pixel
 void sg_cursor_set(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p){
 	cursor->bmap = bmap;
-	//cursor->p = p;
 	cursor->target = sg_bmap_data(bmap, p);
 	cursor->shift = ((p.x % SG_PIXELS_PER_WORD)*SG_BITS_PER_PIXEL);
 }

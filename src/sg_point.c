@@ -534,15 +534,15 @@ void sg_point_map(sg_point_t * d, const sg_vector_map_t * m){
 	sg_point_rotate(d, m->rotation);
 	//map to the space
 	int32_t tmp;
-	tmp = ((d->x + SG_MAX) * m->size.width + SG_MAX) / (SG_MAX-SG_MIN);
-	d->x = tmp - (m->size.width>>1) + m->shift.x;
-	tmp = ((d->y + SG_MAX) * m->size.height + SG_MAX) / (SG_MAX-SG_MIN);
-	d->y = tmp - (m->size.height>>1) + m->shift.y;
+	tmp = ((d->x + SG_MAX) * m->dim.width + SG_MAX) / (SG_MAX-SG_MIN);
+	d->x = tmp - (m->dim.width>>1) + m->point.x;
+	tmp = ((d->y + SG_MAX) * m->dim.height + SG_MAX) / (SG_MAX-SG_MIN);
+	d->y = tmp - (m->dim.height>>1) + m->point.y;
 }
 
 sg_size_t sg_point_map_pixel_size(const sg_vector_map_t * m){
 	sg_size_t p;
-	sg_size_t max = m->size.width > m->size.height ? m->size.width : m->size.height;
+	sg_size_t max = m->dim.width > m->dim.height ? m->dim.width : m->dim.height;
 	int32_t tmp;
 	//how many map space units maps to one pixel
 	tmp = ((SG_MAX-SG_MIN) + (max>>1)) / max;

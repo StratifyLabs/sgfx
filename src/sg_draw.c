@@ -8,23 +8,31 @@ extern sg_color_t sg_cursor_get_pixel_no_inc(sg_cursor_t * cursor);
 
 static inline int abs_value(int x){  if( x < 0 ){ return x*-1; } return x; }
 
-static void draw_vline(const sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax);
-static void draw_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_size_t thickness);
+static int is_point_visible(const sg_bmap_t * bmap, sg_point_t p);
+static int truncate_visible(const sg_bmap_t * bmap, sg_point_t * p, sg_dim_t * d);
+
+static void draw_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y);
 static void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active, sg_bounds_t bounds);
+static void draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds, u8 active);
 static u8 get_hline(const sg_bmap_t * mg, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_int_t * pos, u8 active);
 static u16 calc_largest_delta(sg_point_t p0, sg_point_t p1);
 
 sg_color_t sg_get_pixel(const sg_bmap_t * bmap, sg_point_t p){
 	sg_cursor_t cursor;
-	sg_cursor_set(&cursor, bmap, p);
-	return sg_cursor_get_pixel(&cursor);
+	if( is_point_visible(bmap,p) ){
+		sg_cursor_set(&cursor, bmap, p);
+		return sg_cursor_get_pixel(&cursor);
+	}
+	return (sg_color_t)-1;
 }
 
 void sg_draw_pixel(const sg_bmap_t * bmap, sg_point_t p){
 	//draw a pixel at point p
 	sg_cursor_t cursor;
-	sg_cursor_set(&cursor, bmap, p);
-	sg_cursor_draw_pixel(&cursor);
+	if( is_point_visible(bmap,p) ){
+		sg_cursor_set(&cursor, bmap, p);
+		sg_cursor_draw_pixel(&cursor);
+	}
 }
 
 
@@ -34,6 +42,7 @@ void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
 	int rise, run;
 	int i;
 	sg_point_t p;
+	sg_dim_t d;
 	sg_point_t tmp;
 	sg_size_t thickness = bmap->pen.thickness;
 	sg_size_t half_thick;
@@ -43,12 +52,33 @@ void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
 	}
 
 	if( p2.y == p1.y ){
-		draw_hline(bmap, p1.x < p2.x ? p1.x : p2.x, p1.x > p2.x ? p1.x : p2.x, p1.y, bmap->pen.thickness);
+		if( p1.x < p2.x ){
+			p.x = p1.x;
+			d.width = p2.x - p1.x;
+		} else {
+			p.x = p2.x;
+			d.width = p1.x - p2.x;
+		}
+
+		d.height = bmap->pen.thickness;
+		p.y = p2.y - d.height / 2;
+		sg_draw_rectangle(bmap, p, d);
 		return;
 	}
 
 	if( p2.x == p1.x ){
-		draw_vline(bmap, p1.x, p1.y < p2.y ? p1.y : p2.y, p1.y > p2.y ? p1.y : p2.y);
+
+		if( p1.y < p2.y ){
+			p.y = p1.y;
+			d.height = p2.y - p1.y;
+		} else {
+			p.y = p2.y;
+			d.height = p1.y - p2.y;
+		}
+
+		d.width = bmap->pen.thickness;
+		p.x = p2.x - d.width / 2;
+		sg_draw_rectangle(bmap, p, d);
 		return;
 	}
 
@@ -201,12 +231,14 @@ void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
 	sg_cursor_t y_cursor;
 	sg_cursor_t x_cursor;
 	sg_size_t i;
-	sg_cursor_set(&y_cursor, bmap, p);
 
-	for(i=0; i < d.height; i++){
-		sg_cursor_copy(&x_cursor, &y_cursor);
-		sg_cursor_draw_hline(&x_cursor, d.width);
-		sg_cursor_inc_y(&y_cursor);
+	if( truncate_visible(bmap, &p, &d) ){
+		sg_cursor_set(&y_cursor, bmap, p);
+		for(i=0; i < d.height; i++){
+			sg_cursor_copy(&x_cursor, &y_cursor);
+			sg_cursor_draw_hline(&x_cursor, d.width);
+			sg_cursor_inc_y(&y_cursor);
+		}
 	}
 }
 
@@ -218,31 +250,36 @@ void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_d
 	sg_bmap_data_t pattern;
 	sg_bmap_data_t odd_pattern_color;
 	sg_bmap_data_t even_pattern_color;
-	sg_cursor_set(&y_cursor, bmap, p);
 
-	sg_color_t color = bmap->pen.color & ((1<<SG_BITS_PER_PIXEL)-1);
 
-	even_pattern_color = 0;
-	odd_pattern_color = 0;
-	for(i=0; i < SG_PIXELS_PER_WORD; i++){
-		if( even_pattern & (1<<i) ){
-			even_pattern_color |= (color << (i*SG_BITS_PER_PIXEL));
+	if( truncate_visible(bmap, &p, &d) ){
+
+		sg_cursor_set(&y_cursor, bmap, p);
+
+		sg_color_t color = bmap->pen.color & ((1<<SG_BITS_PER_PIXEL)-1);
+
+		even_pattern_color = 0;
+		odd_pattern_color = 0;
+		for(i=0; i < SG_PIXELS_PER_WORD; i++){
+			if( even_pattern & (1<<i) ){
+				even_pattern_color |= (color << (i*SG_BITS_PER_PIXEL));
+			}
+
+			if( odd_pattern & (1<<i) ){
+				odd_pattern_color |= (color << (i*SG_BITS_PER_PIXEL));
+			}
 		}
 
-		if( odd_pattern & (1<<i) ){
-			odd_pattern_color |= (color << (i*SG_BITS_PER_PIXEL));
+		for(i=0; i < d.height; i++){
+			sg_cursor_copy(&x_cursor, &y_cursor);
+			if( (i/pattern_height) % 2 ){
+				pattern = odd_pattern_color;
+			} else {
+				pattern = even_pattern_color;
+			}
+			sg_cursor_draw_pattern(&x_cursor, d.width, pattern);
+			sg_cursor_inc_y(&y_cursor);
 		}
-	}
-
-	for(i=0; i < d.height; i++){
-		sg_cursor_copy(&x_cursor, &y_cursor);
-		if( (i/pattern_height) % 2 ){
-			pattern = odd_pattern_color;
-		} else {
-			pattern = even_pattern_color;
-		}
-		sg_cursor_draw_pattern(&x_cursor, d.width, pattern);
-		sg_cursor_inc_y(&y_cursor);
 	}
 
 }
@@ -260,92 +297,61 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
 	sg_int_t h;
 	sg_int_t w;
 
-	//check to see if p_dest values are negative and truncate source accordingly
-	w = d_src.width;
-	h = d_src.height;
-	if( p_dest.x < 0 ){
-		p_src.x += p_dest.x;
-		w += p_dest.x; //reduce width
-		p_dest.x = 0;
-	}
-	if( p_dest.y < 0 ){
-		p_src.y += p_dest.y;
-		h += p_dest.y; //reduce height
-		p_dest.y = 0;
-	}
+	if( truncate_visible(bmap_src, &p_src, &d_src) && truncate_visible(bmap_dest, &p_dest, &d_src) ){
 
-	sg_cursor_set(&y_dest_cursor, bmap_dest, p_dest);
-	sg_cursor_set(&y_src_cursor, bmap_src, p_src);
+		//check to see if p_dest values are negative and truncate source accordingly
+		w = d_src.width;
+		h = d_src.height;
+		if( p_dest.x < 0 ){
+			p_src.x += p_dest.x;
+			w += p_dest.x; //reduce width
+			p_dest.x = 0;
+		}
+		if( p_dest.y < 0 ){
+			p_src.y += p_dest.y;
+			h += p_dest.y; //reduce height
+			p_dest.y = 0;
+		}
 
-	if( p_dest.y + h > bmap_dest->dim.height ){
-		h = bmap_dest->dim.height - p_dest.y;
-	}
+		sg_cursor_set(&y_dest_cursor, bmap_dest, p_dest);
+		sg_cursor_set(&y_src_cursor, bmap_src, p_src);
 
-	if( p_dest.x + w > bmap_dest->dim.width ){
-		w = bmap_dest->dim.width - p_dest.x;
-	}
+		if( p_dest.y + h > bmap_dest->dim.height ){
+			h = bmap_dest->dim.height - p_dest.y;
+		}
 
-	if( w < 0 ){
-		return;
-	}
+		if( p_dest.x + w > bmap_dest->dim.width ){
+			w = bmap_dest->dim.width - p_dest.x;
+		}
 
-	//take bitmap and draw it on bmap
-	for(i=0; i < h; i++){
+		if( w < 0 ){
+			return;
+		}
 
-		sg_cursor_copy(&x_dest_cursor, &y_dest_cursor);
-		sg_cursor_copy(&x_src_cursor, &y_src_cursor);
+		//take bitmap and draw it on bmap
+		for(i=0; i < h; i++){
 
-		//copy the src cursor to the dest cursor over the source width
-		sg_cursor_draw_cursor(&x_dest_cursor, &x_src_cursor, w);
+			sg_cursor_copy(&x_dest_cursor, &y_dest_cursor);
+			sg_cursor_copy(&x_src_cursor, &y_src_cursor);
 
-		sg_cursor_inc_y(&y_dest_cursor);
-		sg_cursor_inc_y(&y_src_cursor);
+			//copy the src cursor to the dest cursor over the source width
+			sg_cursor_draw_cursor(&x_dest_cursor, &x_src_cursor, w);
+
+			sg_cursor_inc_y(&y_dest_cursor);
+			sg_cursor_inc_y(&y_src_cursor);
+		}
 	}
 
 }
 
-
-void draw_vline(const sg_bmap_t * bmap, sg_int_t x, sg_int_t ymin, sg_int_t ymax){
-	sg_point_t p;
-	sg_size_t thickness = bmap->pen.thickness;
-	sg_size_t half_thick = thickness/2;
+void draw_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y){
 	sg_cursor_t x_cursor;
-	sg_cursor_t y_cursor;
-	p.x = x - half_thick;
-	p.y = ymin;
-	sg_cursor_set(&y_cursor, bmap, p);
+	sg_cursor_set(&x_cursor, bmap, sg_point(xmin,y));
+	sg_cursor_draw_hline(&x_cursor, xmax - xmin);
 
-	//for(i=ymin-half_thick; i <= ymax+half_thick; i++){
-	for(p.y=ymin; p.y <= ymax; p.y++){
-		sg_cursor_copy(&x_cursor, &y_cursor);
-		sg_cursor_draw_hline(&x_cursor, thickness);
-		sg_cursor_inc_y(&y_cursor);
-
-	}
-}
-
-void draw_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, sg_size_t thickness){
-	sg_point_t p;
-	sg_size_t half_thick = thickness/2;
-	sg_size_t it;
-	sg_cursor_t x_cursor;
-	sg_cursor_t y_cursor;
-	p.y = y - half_thick;
-	p.x = xmin;
-	sg_cursor_set(&y_cursor, bmap, p);
-
-	for(it=0; it < thickness; it++){
-		sg_cursor_copy(&x_cursor, &y_cursor);
-		sg_cursor_draw_hline(&x_cursor, xmax - xmin);
-		sg_cursor_inc_y(&y_cursor);
-	}
 }
 
 void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds){
-	sg_int_t xmin, xmax;
-	sg_point_t above;
-	sg_point_t below;
-	u8 is_above, is_below;
 	u8 active;
 
 	if( bmap->pen.color ){
@@ -355,35 +361,57 @@ void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds){
 		active = 0;
 	}
 
+	//limit bounds to inside the bmap
+	if( (bounds.bottom_right.x < 0) || (bounds.bottom_right.y < 0) ){
+		return;
+	}
+
+	if( (bounds.top_left.x >= bmap->dim.width) || (bounds.top_left.y >= bmap->dim.height) ){
+		return;
+	}
+
+	if( bounds.top_left.x < 0 ){ bounds.top_left.x = 0; }
+	if( bounds.top_left.y < 0 ){ bounds.top_left.y = 0; }
+	if( bounds.bottom_right.x >= bmap->dim.width ){ bounds.bottom_right.x = bmap->dim.width-1; }
+	if( bounds.bottom_right.y >= bmap->dim.height ){ bounds.bottom_right.y = bmap->dim.height-1; }
+
+	draw_pour_recursive(bmap, p, bounds, active);
+}
+
+void draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds, u8 active){
+	sg_int_t xmin, xmax;
+	sg_point_t above;
+	sg_point_t below;
+	u8 is_above, is_below;
+
 	//check the pen
 	xmin = p.x;
 	xmax = p.x;
 
 	get_hedge(bmap, p, &xmin, &xmax, active, bounds); //find the bounding points xmin and xmax
 	if( p.y+1 <= bounds.bottom_right.y ){
-		is_below = !get_hline(bmap, xmin, xmax, p.y+1, &(above.x), active); //see if anywhere above the bounded region is blank
+		is_below = !get_hline(bmap, xmin, xmax, p.y+1, &(below.x), active); //see if anywhere above the bounded region is blank
 	} else {
 		is_below = 0;
 	}
 
 	if( p.y-1 >= bounds.top_left.y ){
-		is_above = !get_hline(bmap, xmin, xmax, p.y-1, &(below.x), active); //see if anywhere below the bounded region is blank
+		is_above = !get_hline(bmap, xmin, xmax, p.y-1, &(above.x), active); //see if anywhere below the bounded region is blank
 	} else {
 		is_above = 0;
 	}
 
-	draw_hline(bmap, xmin, xmax, p.y, 1);
+	draw_hline(bmap, xmin, xmax, p.y);
 
 	if( is_below ){
-		above.y = p.y+1;
-		sg_draw_pour(bmap, above, bounds); //if the above line has a blank spot -- fill it
+		below.y = p.y+1;
+		draw_pour_recursive(bmap, below, bounds, active); //if the below line has a blank spot -- fill it
 	}
 
 	if( is_above ){
-		below.y = p.y-1;
-		sg_draw_pour(bmap, below, bounds); //if the below line has a blank spot -- fill it
+		above.y = p.y-1;
+		draw_pour_recursive(bmap, above, bounds, active); //if the above line has a blank spot -- fill it
 	}
-
 }
 
 void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t * xmax, u8 active, sg_bounds_t bounds){
@@ -397,8 +425,9 @@ void get_hedge(const sg_bmap_t * bmap, sg_point_t p, sg_int_t * xmin, sg_int_t *
 	sg_cursor_set(&max_cursor, bmap, p);
 
 	while( ((sg_cursor_get_pixel_no_inc(&min_cursor) != 0) != active)
-			&& (max < bounds.bottom_right.x) ){
-		sg_cursor_dec_x(&min_cursor); min--;
+			&& (min > bounds.top_left.x) ){
+		sg_cursor_dec_x(&min_cursor);
+		min--;
 	}
 
 	//get pixel auto increments the cursor
@@ -431,3 +460,48 @@ u8 get_hline(const sg_bmap_t * bmap, sg_int_t xmin, sg_int_t xmax, sg_int_t y, s
 	return 1;
 }
 
+int is_point_visible(const sg_bmap_t * bmap, sg_point_t p){
+	if( (p.x < 0) || (p.x >= bmap->dim.width) ){
+		return 0;
+	}
+
+	if( (p.y < 0) || (p.y >= bmap->dim.height) ){
+		return 0;
+	}
+
+	return 1;
+}
+
+int truncate_visible(const sg_bmap_t * bmap, sg_point_t * p, sg_dim_t * d){
+	if( p->x < 0 ){
+		if( p->x + d->width >= 0 ){
+			d->width += p->x;
+			p->x = 0;
+		} else {
+			return 0;
+		}
+	}
+
+	if( p->y < 0 ){
+		if( p->y + bmap->dim.height >= 0 ){
+			d->height += p->y;
+			p->y = 0;
+		} else {
+			return 0;
+		}
+	}
+
+	if( p->x >= bmap->dim.width ){
+		return 0;
+	} else if( p->x + d->width >= bmap->dim.width ){
+		d->width = bmap->dim.width - p->x;
+	}
+
+	if( p->y >= bmap->dim.height ){
+		return 0;
+	} else if( p->y + d->height >= bmap->dim.height ){
+		d->height = bmap->dim.height - p->y;
+	}
+
+	return 1;
+}

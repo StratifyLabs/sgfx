@@ -7,11 +7,11 @@
 #include "sg.h"
 
 
-static void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr);
-static void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr);
-static void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr);
+static void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds);
+static void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds);
+static void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds);
 static void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr);
-static void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr);
+static void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds);
 
 static void (*draw_func [SG_TYPE_TOTAL])(const sg_vector_primitive_t * p, sg_bmap_t * bm, const sg_vector_map_t * map, sg_bounds_t * attr) = {
 		draw_line,
@@ -58,7 +58,7 @@ void sg_vector_draw_primitive_list(sg_bmap_t * bitmap, const sg_vector_primitive
 }
 
 
-void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
+void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds){
 	//draw a line from bottom left to top right
 	sg_point_t p1;
 	sg_point_t p2;
@@ -70,23 +70,23 @@ void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vecto
 	sg_point_map(&p1, map);
 	sg_point_map(&p2, map);
 
-	if( attr ){
-		if( p1.x < attr->top_left.x ){ attr->top_left.x = p1.x; }
-		if( p1.y < attr->top_left.y ){ attr->top_left.y = p1.y; }
-		if( p2.x < attr->top_left.x ){ attr->top_left.x = p2.x; }
-		if( p2.y < attr->top_left.y ){ attr->top_left.y = p2.y; }
+	if( bounds ){
+		if( p1.x < bounds->top_left.x ){ bounds->top_left.x = p1.x; }
+		if( p1.y < bounds->top_left.y ){ bounds->top_left.y = p1.y; }
+		if( p2.x < bounds->top_left.x ){ bounds->top_left.x = p2.x; }
+		if( p2.y < bounds->top_left.y ){ bounds->top_left.y = p2.y; }
 
-		if( p1.x > attr->bottom_right.x ){ attr->bottom_right.x = p1.x; }
-		if( p1.y > attr->bottom_right.y ){ attr->bottom_right.y = p1.y; }
-		if( p2.x > attr->bottom_right.x ){ attr->bottom_right.x = p2.x; }
-		if( p2.y > attr->bottom_right.y ){ attr->bottom_right.y = p2.y; }
+		if( p1.x > bounds->bottom_right.x ){ bounds->bottom_right.x = p1.x; }
+		if( p1.y > bounds->bottom_right.y ){ bounds->bottom_right.y = p1.y; }
+		if( p2.x > bounds->bottom_right.x ){ bounds->bottom_right.x = p2.x; }
+		if( p2.y > bounds->bottom_right.y ){ bounds->bottom_right.y = p2.y; }
 	}
 
 	//add the option to invert the line
 	sg_draw_line(bmap, p1, p2);
 }
 
-void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
+void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds){
 	int i;
 	int points;
 	int step;
@@ -124,7 +124,7 @@ void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector
 	sg_point_shift_x(&circum, r);
 	sg_point_map(&circum, map);
 
-	points = ((circum.x - map->shift.x) * 2 * 320) / 100 * (radians) / SG_TRIG_POINTS;
+	points = ((circum.x - map->point.x) * 2 * 320) / 100 * (radians) / SG_TRIG_POINTS;
 	if( points > SG_TRIG_POINTS ){
 		points = SG_TRIG_POINTS;
 	}
@@ -152,11 +152,11 @@ void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector
 			sg_point_shift(&pen, p->shift);
 			sg_point_map(&pen, map);
 
-			if( attr ){
-				if( pen.x < attr->top_left.x ){ attr->top_left.x = pen.x; }
-				if( pen.y < attr->top_left.y ){ attr->top_left.y = pen.y; }
-				if( pen.x > attr->bottom_right.x ){ attr->bottom_right.x = pen.x; }
-				if( pen.y > attr->bottom_right.y ){ attr->bottom_right.y = pen.y; }
+			if( bounds ){
+				if( pen.x < bounds->top_left.x ){ bounds->top_left.x = pen.x; }
+				if( pen.y < bounds->top_left.y ){ bounds->top_left.y = pen.y; }
+				if( pen.x > bounds->bottom_right.x ){ bounds->bottom_right.x = pen.x; }
+				if( pen.y > bounds->bottom_right.y ){ bounds->bottom_right.y = pen.y; }
 			}
 
 			sg_draw_pixel(bmap, pen);
@@ -164,27 +164,27 @@ void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector
 	}
 }
 
-void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
+void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds){
 
 }
 
-void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
+void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds){
 
 }
 
-void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * attr){
+void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds){
 	sg_point_t center;
-	sg_bounds_t bounds;
-	if( attr ){
-		bounds = *attr;
+	sg_bounds_t bounds_data;
+	if( bounds ){
+		bounds_data = *bounds;
 	} else {
-		bounds.top_left.point = 0;
-		bounds.bottom_right.x = bmap->dim.width - 1;
-		bounds.bottom_right.y = bmap->dim.height - 1;
+		bounds_data.top_left.point = 0;
+		bounds_data.bottom_right.x = bmap->dim.width - 1;
+		bounds_data.bottom_right.y = bmap->dim.height - 1;
 	}
 	center.point = p->shift.point;
 	sg_point_map(&center, map);
-	sg_draw_pour(bmap, center, bounds);
+	sg_draw_pour(bmap, center, bounds_data);
 }
 
 
