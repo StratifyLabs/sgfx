@@ -637,7 +637,7 @@ static int sg_animate_bounce_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_ani
 			d.width = animation->dim.width - animation->path.motion;
 			d.height = animation->dim.height;
 
-			shift.y = -1*count;
+			shift.x = -1*count;
 			sg_transform_shift(bmap, shift, src, d);
 
 			d.width = animation->path.motion + count;
