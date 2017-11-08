@@ -179,32 +179,36 @@ int sg_animate_push_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 }
 
 int sg_animate_push_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
-	sg_point_t dest;
-	sg_point_t src;
-	sg_dim_t d;
+	sg_point_t dest_point;
+	sg_point_t src_point;
+	sg_dim_t draw_dim;
 	sg_size_t count;
 	sg_point_t shift;
-	sg_point_t start;
+	sg_point_t shift_point;
+	sg_dim_t shift_dim;
 
-	shift.x = 0;
 
 	if( animation->path.step < animation->path.step_total ){
-		start = animation->start;
 		count = sg_animate_calc_count(animation);
 
-		src.x = start.x;
-		src.y = start.y + animation->path.motion;
+		if( count ){
+			shift.x = 0;
+			shift.y = -1*count;
 
-		d.width = animation->dim.width;
-		d.height = count;
+			shift_point.x = animation->start.x;
+			shift_point.y = animation->start.y + count;
+			shift_dim.width = animation->dim.width;
+			shift_dim.height = animation->dim.height - count;
+			sg_transform_shift(bmap, shift, shift_point, shift_dim);
 
-		dest.x = start.x;
-		dest.y = start.y + animation->dim.height - d.height;
-
-		shift.y = -1*count;
-
-		sg_transform_shift(bmap, shift, start, animation->dim);
-		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
+			draw_dim.width = animation->dim.width;
+			draw_dim.height = count;
+			src_point.x = animation->start.x;
+			src_point.y = animation->start.y + animation->path.motion;
+			dest_point.x = animation->start.x;
+			dest_point.y = animation->start.y + animation->dim.height - count;
+			sg_draw_sub_bitmap(bmap, dest_point, scratch, src_point, draw_dim);
+		}
 
 		animation->path.motion += count;
 
@@ -214,28 +218,39 @@ int sg_animate_push_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * a
 }
 
 int sg_animate_push_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
-	sg_point_t src;
-	sg_dim_t d;
+	sg_point_t dest_point;
+	sg_point_t src_point;
+	sg_dim_t draw_dim;
 	sg_size_t count;
 	sg_point_t shift;
-	sg_point_t start;
+	sg_point_t shift_point;
+	sg_dim_t shift_dim;
 
-	shift.x = 0;
 
 	if( animation->path.step < animation->path.step_total ){
-		start = animation->start;
 		count = sg_animate_calc_count(animation);
-		animation->path.motion += count;
 
-		src.x = start.x;
-		src.y = start.y + animation->dim.height - animation->path.motion;
+		if( count ){
+			shift.x = 0;
+			shift.y = count;
 
-		d.width = animation->dim.width;
-		d.height = count;
+			shift_point.x = animation->start.x;
+			shift_point.y = animation->start.y;
+			shift_dim.width = animation->dim.width;
+			shift_dim.height = animation->dim.height - count;
+			sg_transform_shift(bmap, shift, shift_point, shift_dim);
 
-		shift.y = count;
-		sg_transform_shift(bmap, shift, start, animation->dim);
-		sg_draw_sub_bitmap(bmap, start, scratch, src, d);
+
+			animation->path.motion += count;
+
+			draw_dim.width = animation->dim.width;
+			draw_dim.height = count;
+			src_point.x = animation->start.x;
+			src_point.y = animation->start.y + animation->dim.height - animation->path.motion;
+			dest_point.x = animation->start.x;
+			dest_point.y = animation->start.y;
+			sg_draw_sub_bitmap(bmap, dest_point, scratch, src_point, draw_dim);
+		}
 
 
 		return 1;
@@ -434,7 +449,7 @@ int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 			src.y = start.y + animation->path.motion;
 
 			d.width = animation->dim.width;
-			d.height = animation->dim.height - animation->path.motion;
+			d.height = animation->dim.height - animation->path.motion - count;
 
 			dest.x = start.x;
 			dest.y = start.y;
@@ -503,7 +518,7 @@ static int sg_animate_bounce_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 			src.y = start.y;
 
 			d.width = animation->dim.width;
-			d.height = animation->dim.height - animation->path.motion;
+			d.height = animation->dim.height - animation->path.motion - count;
 
 			shift.y = -1*count;
 			sg_transform_shift(bmap, shift, src, d);
