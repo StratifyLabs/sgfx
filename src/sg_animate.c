@@ -307,34 +307,37 @@ int sg_animate_slide_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * 
 }
 
 int sg_animate_undo_slide_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
-	sg_point_t dest;
-	sg_point_t src;
-	sg_dim_t d;
+	sg_point_t draw_point;
+	sg_dim_t draw_dim;
 	sg_size_t count;
-	sg_point_t shift;
-	sg_point_t start;
-
-	shift.x = 0;
+	sg_point_t shift_point;
+	sg_point_t shift_start;
+	sg_dim_t shift_dim;
 
 	if( animation->path.step < animation->path.step_total ){
-		start = animation->start;
 		count = sg_animate_calc_count(animation);
-		animation->path.motion += count;
 
-		src.x = start.x;
-		src.y = start.y;
+		if( count ){
 
-		dest.x = start.x;
-		dest.y = start.y;
+			shift_start.x = animation->start.x;
+			shift_start.y = animation->start.y + animation->path.motion;
+			shift_point.x = 0;
+			shift_point.y = count;
 
-		d.width = animation->dim.width;
-		d.height = animation->path.motion;
+			shift_dim.width = animation->dim.width;
+			shift_dim.height = animation->dim.height - (animation->path.motion + count);
+			sg_transform_shift(bmap, shift_point, shift_start, shift_dim);
 
-		shift.y = count;
+			draw_point.x = animation->start.x;
+			draw_point.y = animation->start.y + animation->path.motion;
 
-		sg_transform_shift(bmap, shift, start, animation->dim);
+			draw_dim.width = animation->dim.width;
+			draw_dim.height = count;
+			sg_draw_sub_bitmap(bmap, draw_point, scratch, draw_point, draw_dim);
 
-		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
+			animation->path.motion += count;
+
+		}
 
 		return 1;
 	}
@@ -367,6 +370,7 @@ int sg_animate_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t 
 }
 
 int sg_animate_undo_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * animation){
+#if 0
 	sg_point_t dest;
 	sg_point_t src;
 	sg_dim_t d;
@@ -396,6 +400,44 @@ int sg_animate_undo_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animati
 		d.height = count;
 
 		sg_draw_sub_bitmap(bmap, dest, scratch, src, d);
+
+		return 1;
+	}
+	return 0;
+#endif
+
+	sg_point_t draw_point;
+	sg_dim_t draw_dim;
+	sg_size_t count;
+	sg_point_t shift_point;
+	sg_point_t shift_start;
+	sg_dim_t shift_dim;
+
+	if( animation->path.step < animation->path.step_total ){
+		count = sg_animate_calc_count(animation);
+
+		if( count ){
+
+			animation->path.motion += count;
+
+			shift_start.x = animation->start.x;
+			shift_start.y = animation->start.y + count;
+			shift_point.x = 0;
+			shift_point.y = -1*count;
+
+			shift_dim.width = animation->dim.width;
+			shift_dim.height = animation->dim.height - (animation->path.motion);
+			sg_transform_shift(bmap, shift_point, shift_start, shift_dim);
+
+			draw_point.x = animation->start.x;
+			draw_point.y = animation->start.y + animation->dim.height - animation->path.motion;
+
+			draw_dim.width = animation->dim.width;
+			draw_dim.height = count;
+			sg_draw_sub_bitmap(bmap, draw_point, scratch, draw_point, draw_dim);
+
+
+		}
 
 		return 1;
 	}
