@@ -151,8 +151,38 @@ u16 calc_largest_delta(sg_point_t p0, sg_point_t p1){
 
 }
 
-void sg_draw_arc(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s16 end){
+void sg_draw_arc(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s16 end, s16 rotation){
+	sg_size_t half_thick;
+	sg_size_t thickness;
+	sg_point_t pen;
+	sg_size_t t;
+	sg_int_t thick;
+	int i;
+	sg_point_t center;
+	sg_point_t last_point;
 
+	center.x = p.x + d.width/2;
+	center.y = p.y + d.height/2;
+
+	thickness = bmap->pen.thickness;
+	if( thickness == 0 ){
+		thickness = 1;
+	}
+
+	last_point.point = 0;
+	half_thick = thickness/2;
+	for(t=0; t < thickness; t++){
+		thick =  t - half_thick;
+		for(i=start; i < end; i++){
+			sg_point_arc(&pen, d.width/2 + thick, d.height/2 + thick, i);
+			if( i == 0 || (pen.point != last_point.point) ){
+				last_point.point = pen.point;
+				sg_point_rotate(&pen, rotation);
+				sg_point_shift(&pen, center);
+				sg_draw_pixel(bmap, pen);
+			}
+		}
+	}
 }
 
 void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, sg_point_t p2){

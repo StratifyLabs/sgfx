@@ -533,7 +533,7 @@ void sg_point_set(sg_point_t * d, sg_point_t p){
 void sg_point_map(sg_point_t * d, const sg_vector_map_t * m){
 	sg_point_rotate(d, m->rotation);
 	//map to the space
-	int32_t tmp;
+	s32 tmp;
 	tmp = ((d->x + SG_MAX) * m->dim.width + SG_MAX) / (SG_MAX-SG_MIN);
 	d->x = tmp - (m->dim.width>>1) + m->point.x;
 	tmp = ((d->y + SG_MAX) * m->dim.height + SG_MAX) / (SG_MAX-SG_MIN);
@@ -543,7 +543,7 @@ void sg_point_map(sg_point_t * d, const sg_vector_map_t * m){
 sg_size_t sg_point_map_pixel_size(const sg_vector_map_t * m){
 	sg_size_t p;
 	sg_size_t max = m->dim.width > m->dim.height ? m->dim.width : m->dim.height;
-	int32_t tmp;
+	s32 tmp;
 	//how many map space units maps to one pixel
 	tmp = ((SG_MAX-SG_MIN) + (max>>1)) / max;
 	p = tmp;
@@ -579,6 +579,9 @@ void sg_point_rotate(sg_point_t * d, s16 angle){
 		angle += SG_TRIG_POINTS;
 	}
 	angle = angle % SG_TRIG_POINTS;
+	if( angle == 0 ){
+		return; //nothing to rotate
+	}
 	rc = trig_table[angle].cosine;
 	rs = trig_table[angle].sine;
 	x = ((int)d->x * rc - (int)d->y * rs) / SG_MAX;
