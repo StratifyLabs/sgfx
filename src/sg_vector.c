@@ -63,8 +63,8 @@ void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vecto
 	sg_point_t p1;
 	sg_point_t p2;
 
-	p1 = p->shift;
-	p2 = p->line.p;
+	p1 = p->line.p1;
+	p2 = p->line.p2;
 
 	//apply bitmap space rotation
 	sg_point_map(&p1, map);
@@ -148,8 +148,8 @@ void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector
 		for(i=p->arc.start; i < p->arc.stop; i+=step){
 			pen.point = 0;
 			sg_point_arc(&pen, p->arc.rx + thick, p->arc.ry + thick, i);
-			sg_point_rotate(&pen, p->rotation);
-			sg_point_shift(&pen, p->shift);
+			sg_point_rotate(&pen, p->arc.rotation);
+			sg_point_shift(&pen, p->arc.center);
 			sg_point_map(&pen, map);
 
 			if( bounds ){
@@ -165,11 +165,50 @@ void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector
 }
 
 void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds){
+	int i;
+	sg_point_t points[3];
 
+	//maps the points to the bmap
+	points[0] = p->quadratic_bezier.p1;
+	points[1] = p->quadratic_bezier.p2;
+	points[2] = p->quadratic_bezier.p3;
+
+	for(i=0; i < 3; i++){
+		sg_point_map(points + i, map);
+
+		if( bounds ){
+			if( points[i].x < bounds->top_left.x ){ bounds->top_left.x = points[i].x; }
+			if( points[i].y < bounds->top_left.y ){ bounds->top_left.y = points[i].y; }
+			if( points[i].x > bounds->bottom_right.x ){ bounds->bottom_right.x = points[i].x; }
+			if( points[i].y > bounds->bottom_right.y ){ bounds->bottom_right.y = points[i].y; }
+		}
+	}
+
+	sg_draw_quadtratic_bezier(bmap, points[0], points[1], points[2]);
 }
 
 void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds){
+	int i;
+	sg_point_t points[4];
 
+	//maps the points to the bmap
+	points[0] = p->cubic_bezier.p1;
+	points[1] = p->cubic_bezier.p2;
+	points[2] = p->cubic_bezier.p3;
+	points[3] = p->cubic_bezier.p4;
+
+	for(i=0; i < 4; i++){
+		sg_point_map(points + i, map);
+
+		if( bounds ){
+			if( points[i].x < bounds->top_left.x ){ bounds->top_left.x = points[i].x; }
+			if( points[i].y < bounds->top_left.y ){ bounds->top_left.y = points[i].y; }
+			if( points[i].x > bounds->bottom_right.x ){ bounds->bottom_right.x = points[i].x; }
+			if( points[i].y > bounds->bottom_right.y ){ bounds->bottom_right.y = points[i].y; }
+		}
+	}
+
+	sg_draw_cubic_bezier(bmap, points[0], points[1], points[2], points[3]);
 }
 
 void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_bounds_t * bounds){
@@ -182,7 +221,7 @@ void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vecto
 		bounds_data.bottom_right.x = bmap->dim.width - 1;
 		bounds_data.bottom_right.y = bmap->dim.height - 1;
 	}
-	center.point = p->shift.point;
+	center = p->fill.center;
 	sg_point_map(&center, map);
 	sg_draw_pour(bmap, center, bounds_data);
 }

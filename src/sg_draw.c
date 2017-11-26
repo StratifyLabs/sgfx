@@ -234,16 +234,16 @@ void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, 
 
 	//t goes from zero to one
 	for(i=0; i < steps; i++){
-		//(1-t)^2*P0 + 2*(1-t)*t*P2 + t^2*P2
 
-		x = (steps-i)*(steps-i)*p0.x +
+		x = (steps-i)*(steps-i)*(steps-i)*p0.x +
 				3*(steps-i)*(steps-i)*i*p1.x +
-				3*(steps-i)*i*i*p1.x +
-				i*i*i*p2.x;
-		y = (steps-i)*(steps-i)*p0.y +
+				3*(steps-i)*i*i*p2.x +
+				i*i*i*p3.x;
+
+		y = (steps-i)*(steps-i)*(steps-i)*p0.y +
 				3*(steps-i)*(steps-i)*i*p1.y +
-				3*(steps-i)*i*i*p1.y +
-				i*i*i*p2.y;
+				3*(steps-i)*i*i*p2.y +
+				i*i*i*p3.y;
 
 		current.x = x / (steps3);
 		current.y = y / (steps3);

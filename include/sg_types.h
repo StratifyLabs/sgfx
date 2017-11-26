@@ -167,38 +167,46 @@ typedef struct MCU_PACK {
 
 
 typedef struct MCU_PACK {
-	sg_point_t p;
+	sg_point_t p1;
+	sg_point_t p2;
 } sg_vector_line_t;
 
 typedef struct MCU_PACK {
+	sg_point_t center /*! Arc center */;
 	sg_size_t rx /*! X radius */;
 	sg_size_t ry /*! Y radius */;
 	s16 start /*! Start angle */;
 	s16 stop /*!  Stop angle */;
+	s16 rotation /*! Arc Rotation */;
 } sg_vector_arc_t;
 
 typedef struct MCU_PACK {
 	sg_point_t p1;
 	sg_point_t p2;
+	sg_point_t p3;
 } sg_vector_quadtratic_bezier_t;
 
 typedef struct MCU_PACK {
 	sg_point_t p1;
 	sg_point_t p2;
 	sg_point_t p3;
+	sg_point_t p4;
 } sg_vector_cubic_bezier_t;
+
+typedef struct MCU_PACK {
+	sg_point_t center;
+} sg_vector_fill_t;
 
 /*! \brief Icon Primitive Structure
  * \details Describes an icon primitive */
 typedef struct MCU_PACK {
 	u16 type /*! type of primitive object (e.g. SG_LINE) */;
-	s16 rotation /*! Primitive rotation within the map */;
-	sg_point_t shift /*! Primitive offset within the map */;
 	union {
 		sg_vector_arc_t arc /*! Primitive data for SG_ARC */;
 		sg_vector_line_t line /*! Primitive data for SG_LINE */;
 		sg_vector_quadtratic_bezier_t quadratic_bezier /*! Primitive data for SG_QUADRATIC_BEZIER */;
 		sg_vector_cubic_bezier_t cubic_bezier /*! Primitive data for SG_CUBIC_BEZIER */;
+		sg_vector_fill_t fill /*! Primitive data for SG_FILL */;
 	};
 } sg_vector_primitive_t;
 

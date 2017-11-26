@@ -556,8 +556,8 @@ void sg_point_add(sg_point_t * d, const sg_point_t * a){
 }
 
 void sg_point_subtract(sg_point_t * d, const sg_point_t * a){
-	sg_point_shift_x(d, -1*a->x);
-	sg_point_shift_y(d, -1*a->y);
+	d->x -= a->x;
+	d->y -= a->y;
 }
 
 void sg_point_arc(sg_point_t * d, sg_size_t rx, sg_size_t ry, s16 angle){
