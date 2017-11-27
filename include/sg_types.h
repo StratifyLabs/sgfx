@@ -27,7 +27,8 @@ typedef int64_t s64;
 #define SG_MIN (-32767)
 #define SG_TRIG_POINTS 512
 
-#define SG_MAP_MAX (SG_MAX/2)
+//MAP max is approximately SG_MAX/sqrt(2) -- this allow icons to be rotated and still fit in the virtual space
+#define SG_MAP_MAX (23160)
 
 #define SG_CENTER 0
 #define SG_LEFT (-SG_MAP_MAX)
@@ -132,10 +133,9 @@ typedef struct MCU_PACK {
 enum {
 	SG_LINE /*! A line */,
 	SG_ARC /*! An Arc */,
-	SG_FILL,
-	SG_POUR /*! Pour in the area */ = SG_FILL,
-	SG_QUADRATIC_BEZIER,
-	SG_CUBIC_BEZIER,
+	SG_POUR /*! Pour in the area */,
+	SG_QUADRATIC_BEZIER /*! Quadratic Bezier */,
+	SG_CUBIC_BEZIER /*! Cubic Bezier */,
 	SG_TYPE_TOTAL
 };
 
@@ -147,15 +147,6 @@ typedef struct MCU_PACK {
 	u16 version;
 	//this must be 4 byte aligned
 } sg_bmap_header_t;
-
-
-
-/*! \brief Graphics Bounds Structure
- * \details Describes an area using two points */
-typedef struct MCU_PACK {
-	sg_point_t top_left /*! Top left corner of the bounded area */;
-	sg_point_t bottom_right /*! Bottom right corner of the bounded area */;
-} sg_bounds_t;
 
 
 /*! \brief Graphics Region Structure
@@ -195,7 +186,7 @@ typedef struct MCU_PACK {
 
 typedef struct MCU_PACK {
 	sg_point_t center;
-} sg_vector_fill_t;
+} sg_vector_pour_t;
 
 /*! \brief Icon Primitive Structure
  * \details Describes an icon primitive */
@@ -206,7 +197,7 @@ typedef struct MCU_PACK {
 		sg_vector_line_t line /*! Primitive data for SG_LINE */;
 		sg_vector_quadtratic_bezier_t quadratic_bezier /*! Primitive data for SG_QUADRATIC_BEZIER */;
 		sg_vector_cubic_bezier_t cubic_bezier /*! Primitive data for SG_CUBIC_BEZIER */;
-		sg_vector_fill_t fill /*! Primitive data for SG_FILL */;
+		sg_vector_pour_t pour /*! Primitive data for pour */;
 	};
 } sg_vector_primitive_t;
 
@@ -222,8 +213,7 @@ typedef struct MCU_PACK {
 /*! \brief Graphics Map Structure
  * \details Describes how an sg_icon_t is mapped to a sg_bitmap_t */
 typedef struct MCU_PACK {
-	sg_point_t point; //top left corner of where icon maps to the screen
-	sg_dim_t dim; //dimensions of the map on the display
+	sg_region_t region;
 	s16 rotation; //rotation angle of map on the display
 } sg_vector_map_t;
 
@@ -267,8 +257,7 @@ typedef struct MCU_PACK {
 
 typedef struct MCU_PACK {
 	u8 type /*! \brief Animation type */;
-	sg_point_t start /*! \brief Animation start point */;
-	sg_dim_t dim /*! \brief Animate within these dimensions with start in the top left corner */;
+	sg_region_t region /*! Animation region (start point and dimensions) */;
 	sg_animation_path_t path;
 } sg_animation_t;
 

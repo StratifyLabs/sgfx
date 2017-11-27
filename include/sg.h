@@ -94,7 +94,7 @@ void sg_transform_flip_xy(const sg_bmap_t * bmap);
  * @param d The dimensions of \a bmap to shift
  *
  */
-void sg_transform_shift(const sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d);
+void sg_transform_shift(const sg_bmap_t * bmap, sg_point_t shift, const sg_region_t * region);
 
 
 
@@ -114,17 +114,10 @@ enum Rotation {
 	SG_ROT_SCALE = 65536
 };
 
-static inline sg_dim_t sg_point_bounds_dim(const sg_bounds_t * bounds){
-	sg_dim_t d;
-	d.width = bounds->bottom_right.x - bounds->top_left.x;
-	d.height = bounds->bottom_right.y - bounds->top_left.y;
-	return d;
-}
-
-static inline sg_point_t sg_point_bounds_center(const sg_bounds_t * bounds){
+static inline sg_point_t sg_point_region_center(const sg_region_t * region){
 	sg_point_t p;
-	p.x = (bounds->bottom_right.x + bounds->top_left.x)/2;
-	p.y = (bounds->bottom_right.y + bounds->top_left.y)/2;
+	p.x = region->point.x + region->dim.width/2;
+	p.y = region->point.y + region->dim.height/2;
 	return p;
 }
 
@@ -155,6 +148,13 @@ static inline sg_point_t sg_point(sg_int_t x, sg_int_t y){
 	p.x = x;
 	p.y = y;
 	return p;
+}
+
+static inline sg_region_t sg_region(sg_point_t point, sg_dim_t dim){
+	sg_region_t region;
+	region.point = point;
+	region.dim = dim;
+	return region;
 }
 
 static inline sg_dim_t sg_dim(sg_size_t w, sg_size_t h){
@@ -414,7 +414,7 @@ void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, 
  * object.
  *
  */
-void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
+void sg_draw_rectangle(const sg_bmap_t * bmap, const sg_region_t * region);
 
 
 /*! \details Draws an arc on the bitmap.
@@ -426,7 +426,7 @@ void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
  * @param end The ending angle
  *
  */
-void sg_draw_arc(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s16 end, s16 rotation);
+void sg_draw_arc(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation);
 
 
 /*! \details Pours a color on the bitmap.
@@ -440,7 +440,7 @@ void sg_draw_arc(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s1
  * will act as an eraser pour rather than an ink pour.
  *
  */
-void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds);
+void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, const sg_region_t * region);
 
 /*! \details Draws a pattern in the specified area of the bitmap.
  *
@@ -456,7 +456,7 @@ void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds);
  * zero value will be drawn as color zero.
  *
  */
-void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height);
+void sg_draw_pattern(const sg_bmap_t * bmap, const sg_region_t * region, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height);
 
 /*! \details Draws a bitmap on the bitmap.
  * based on the pixels of the source bitmap
@@ -478,7 +478,7 @@ void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bma
  * @param d_src The dimensions of the area to copy
  * @return Zero on success
  */
-void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src);
+void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, const sg_region_t * region_src);
 
 /*! @} */
 
@@ -493,7 +493,7 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
  * @param bmap A pointer to the bitmap object
  * @param prim A pointer to the primitive to draw
  * @param map A pointer to the map
- * @param bounds A pointer to the bounds object that will be populate on return if not null
+ * @param bounds A pointer to the bounding region object that will be populate on return if not null
  *
  * The vector primitive can be one of the following types:
  * - Line (SG_LINE)
@@ -514,24 +514,24 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
  * be written to hold the top left and bottom right corners of the primitive
  * in the bitmap.
  */
-void sg_vector_draw_primitive(sg_bmap_t * bmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_bounds_t * bounds);
+void sg_vector_draw_primitive(sg_bmap_t * bmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_region_t * bounds);
 
 /*! \details Draw a list of primitives.
  *
  * \sa sg_vector_draw_primitive()
  */
-void sg_vector_draw_primitive_list(sg_bmap_t * bmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_bounds_t * bounds);
+void sg_vector_draw_primitive_list(sg_bmap_t * bmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_region_t * bounds);
 
 /*! \details Draw an icon (collection of primitives).
  *
  * @param bmap The bitmap to draw on
  * @param icon A pointer to the icon object
  * @param map A pointer to the map object
- * @param bounds If not null, will be written with the bounds of the icon drawn on the bitmap
+ * @param bounds If not null, will be written with the bounding region of the icon drawn on the bitmap
  *
  *
  */
-void sg_vector_draw_icon(sg_bmap_t * bmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_bounds_t * bounds);
+void sg_vector_draw_icon(sg_bmap_t * bmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_region_t * bounds);
 
 
 /*! @} */
@@ -585,7 +585,7 @@ typedef struct MCU_PACK {
 	void (*transform_flip_x)(const sg_bmap_t * bmap);
 	void (*transform_flip_y)(const sg_bmap_t * bmap);
 	void (*transform_flip_xy)(const sg_bmap_t * bmap);
-	void (*transform_shift)(const sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d);
+	void (*transform_shift)(const sg_bmap_t * bmap, sg_point_t shift, const sg_region_t * region);
 
 	void (*cursor_set)(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p);
 	void (*cursor_inc_x)(sg_cursor_t * cursor);
@@ -605,16 +605,16 @@ typedef struct MCU_PACK {
 	void (*draw_line)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
 	void (*draw_quadtratic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3);
 	void (*draw_cubic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4);
-	void (*draw_rectangle)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d);
-	void (*draw_arc)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s16 end, s16 rotation);
-	void (*draw_pour)(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds);
-	void (*draw_pattern)(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height);
+	void (*draw_rectangle)(const sg_bmap_t * bmap, const sg_region_t * region);
+	void (*draw_arc)(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation);
+	void (*draw_pour)(const sg_bmap_t * bmap, sg_point_t p, const sg_region_t * region);
+	void (*draw_pattern)(const sg_bmap_t * bmap, const sg_region_t * region, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height);
 	void (*draw_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src);
-	void (*draw_sub_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src);
+	void (*draw_sub_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, const sg_region_t * src_region);
 
-	void (*vector_draw_primitive)(sg_bmap_t * bitmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_bounds_t * bounds);
-	void (*vector_draw_primitive_list)(sg_bmap_t * bitmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_bounds_t * bounds);
-	void (*vector_draw_icon)(sg_bmap_t * bitmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_bounds_t * bounds);
+	void (*vector_draw_primitive)(sg_bmap_t * bitmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_region_t * region);
+	void (*vector_draw_primitive_list)(sg_bmap_t * bitmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_region_t * region);
+	void (*vector_draw_icon)(sg_bmap_t * bitmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_region_t * region);
 
 	int (*animate)(sg_bmap_t * bmap, sg_bmap_t * bitmap, sg_animation_t * animation);
 	int (*animate_init)(sg_animation_t * animation, u8 type, u8 path, u8 step_total, sg_size_t motion_total, sg_point_t start, sg_dim_t dim);

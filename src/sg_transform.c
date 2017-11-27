@@ -16,8 +16,9 @@ void sg_transform_flip_x(const sg_bmap_t * bmap){}
 
 void sg_transform_flip_y(const sg_bmap_t * bmap){}
 
-void sg_transform_shift(const sg_bmap_t * bmap, sg_point_t shift, sg_point_t p, sg_dim_t d){
-
+void sg_transform_shift(const sg_bmap_t * bmap, sg_point_t shift, const sg_region_t * region){
+	sg_point_t p = region->point;
+	sg_dim_t d = region->dim;
 	if( shift.x < 0 ){
 		shift_left(bmap, shift.x*-1, p, d);
 	} else {
@@ -70,9 +71,8 @@ void shift_left(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d)
 
 void shift_up(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 	sg_point_t dest;
-	sg_point_t src;
 	sg_size_t rows_shifted;
-	sg_dim_t shift_dim;
+	sg_region_t region;
 
 	if( count > bmap->dim.height ){
 		count = bmap->dim.height;
@@ -88,8 +88,8 @@ void shift_up(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 
 	//clear the top area
 	dest.x = start.x;
-	src.x = start.x;
-	shift_dim.width = d.width;
+	region.point.x = start.x;
+	region.dim.width = d.width;
 
 	rows_shifted = 0;
 
@@ -98,24 +98,23 @@ void shift_up(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 		dest.y = start.y + rows_shifted - count;
 
 		if( d.height - rows_shifted > count ){
-			shift_dim.height = count;
+			region.dim.height = count;
 		} else {
-			shift_dim.height = d.height - rows_shifted;
+			region.dim.height = d.height - rows_shifted;
 		}
 
-		src.y = dest.y + count;
+		region.point.y = dest.y + count;
 
-		sg_draw_sub_bitmap(bmap, dest, bmap, src, shift_dim);
+		sg_draw_sub_bitmap(bmap, dest, bmap, &region);
 
-		rows_shifted += shift_dim.height;
+		rows_shifted += region.dim.height;
 	}
 }
 
 void shift_down(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d){
 	sg_point_t dest;
-	sg_point_t src;
-	sg_dim_t shift_dim;
 	sg_size_t rows_shifted;
+	sg_region_t region;
 
 	if( count > bmap->dim.height ){
 		count = bmap->dim.height;
@@ -130,8 +129,8 @@ void shift_down(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d)
 	}
 
 	dest.x = start.x;
-	shift_dim.width = d.width;
-	src.x = start.x;
+	region.dim.width = d.width;
+	region.point.x = start.x;
 	rows_shifted = 0;
 
 	while( rows_shifted < d.height ){
@@ -139,17 +138,17 @@ void shift_down(const sg_bmap_t * bmap, int count, sg_point_t start, sg_dim_t d)
 		dest.y = start.y + d.height - rows_shifted;
 
 		if( d.height - rows_shifted > count ){
-			shift_dim.height = count;
+			region.dim.height = count;
 		} else {
-			shift_dim.height = d.height - rows_shifted;
-			dest.y += (count - shift_dim.height);
+			region.dim.height = d.height - rows_shifted;
+			dest.y += (count - region.dim.height);
 		}
 
-		src.y = dest.y - count;
+		region.point.y = dest.y - count;
 
-		sg_draw_sub_bitmap(bmap, dest, bmap, src, shift_dim);
+		sg_draw_sub_bitmap(bmap, dest, bmap, &region);
 
-		rows_shifted += shift_dim.height;
+		rows_shifted += region.dim.height;
 
 	}
 }

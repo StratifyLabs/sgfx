@@ -12,7 +12,7 @@ static inline int abs_value(int x){  if( x < 0 ){ return x*-1; } return x; }
 static int is_point_visible(const sg_bmap_t * bmap, sg_point_t p);
 static int truncate_visible(const sg_bmap_t * bmap, sg_point_t * p, sg_dim_t * d);
 
-static int draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds, sg_color_t active_color);
+static int draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, const sg_region_t * region, sg_color_t active_color);
 static u16 calc_largest_delta(sg_point_t p0, sg_point_t p1);
 
 sg_color_t sg_get_pixel(const sg_bmap_t * bmap, sg_point_t p){
@@ -39,8 +39,7 @@ void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
 	int adx, ady;
 	int rise, run;
 	int i;
-	sg_point_t p;
-	sg_dim_t d;
+	sg_region_t region;
 	sg_point_t tmp;
 	sg_size_t thickness = bmap->pen.thickness;
 	sg_size_t half_thick;
@@ -51,32 +50,32 @@ void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
 
 	if( p2.y == p1.y ){
 		if( p1.x < p2.x ){
-			p.x = p1.x;
-			d.width = p2.x - p1.x;
+			region.point.x = p1.x;
+			region.dim.width = p2.x - p1.x;
 		} else {
-			p.x = p2.x;
-			d.width = p1.x - p2.x;
+			region.point.x = p2.x;
+			region.dim.width = p1.x - p2.x;
 		}
 
-		d.height = bmap->pen.thickness;
-		p.y = p2.y - d.height / 2;
-		sg_draw_rectangle(bmap, p, d);
+		region.dim.height = bmap->pen.thickness;
+		region.point.y = p2.y - region.dim.height / 2;
+		sg_draw_rectangle(bmap, &region);
 		return;
 	}
 
 	if( p2.x == p1.x ){
 
 		if( p1.y < p2.y ){
-			p.y = p1.y;
-			d.height = p2.y - p1.y;
+			region.point.y = p1.y;
+			region.dim.height = p2.y - p1.y;
 		} else {
-			p.y = p2.y;
-			d.height = p1.y - p2.y;
+			region.point.y = p2.y;
+			region.dim.height = p1.y - p2.y;
 		}
 
-		d.width = bmap->pen.thickness;
-		p.x = p2.x - d.width / 2;
-		sg_draw_rectangle(bmap, p, d);
+		region.dim.width = bmap->pen.thickness;
+		region.point.x = p2.x - region.dim.width / 2;
+		sg_draw_rectangle(bmap, &region);
 		return;
 	}
 
@@ -99,28 +98,28 @@ void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
 	rise = (p2.y - p1.y);
 	run = (p2.x - p1.x);
 
-	p.x = p1.x;
-	p.y = p1.y;
+	region.point.x = p1.x;
+	region.point.y = p1.y;
 	if( adx > ady ){
 
-		while(p.x != p2.x ){
+		while(region.point.x != p2.x ){
 			for(i=0; i < thickness; i++){
-				tmp.point = p.point;
-				tmp.y = p.y - half_thick + i;
+				tmp.point = region.point.point;
+				tmp.y = region.point.y - half_thick + i;
 				sg_draw_pixel(bmap, tmp);
 			}
-			p.x += dx;
-			p.y = ((p.x - p1.x) * rise + dy*run/2) / run + p1.y;
+			region.point.x += dx;
+			region.point.y = ((region.point.x - p1.x) * rise + dy*run/2) / run + p1.y;
 		}
 	} else {
-		while(p.y != p2.y ){
+		while(region.point.y != p2.y ){
 			for(i=0; i < thickness; i++){
-				tmp.point = p.point;
-				tmp.x = p.x - half_thick + i;
+				tmp.point = region.point.point;
+				tmp.x = region.point.x - half_thick + i;
 				sg_draw_pixel(bmap, tmp);
 			}
-			p.y += dy;
-			p.x = ((p.y - p1.y) * run + dx*rise/2) / rise + p1.x;
+			region.point.y += dy;
+			region.point.x = ((region.point.y - p1.y) * run + dx*rise/2) / rise + p1.x;
 		}
 	}
 
@@ -151,7 +150,7 @@ u16 calc_largest_delta(sg_point_t p0, sg_point_t p1){
 
 }
 
-void sg_draw_arc(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s16 end, s16 rotation){
+void sg_draw_arc(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation){
 	sg_size_t half_thick;
 	sg_size_t thickness;
 	sg_point_t pen;
@@ -160,6 +159,11 @@ void sg_draw_arc(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, s16 start, s1
 	int i;
 	sg_point_t center;
 	sg_point_t last_point;
+	sg_point_t p;
+	sg_dim_t d;
+
+	p = region->point;
+	d = region->dim;
 
 	center.x = p.x + d.width/2;
 	center.y = p.y + d.height/2;
@@ -209,11 +213,14 @@ void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t
 		current.x = x / (steps2);
 		current.y = y / (steps2);
 
-		if( i == 0 || (current.point != last.point)){
-			last.point = current.point;
-			sg_draw_pixel(bmap, current);
+		if( i != 0 ){
+			sg_draw_line(bmap, current, last);
 		}
+		last.point = current.point;
 	}
+
+	sg_draw_line(bmap, last, p2);
+
 }
 
 void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, sg_point_t p2, sg_point_t p3){
@@ -248,17 +255,26 @@ void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, 
 		current.x = x / (steps3);
 		current.y = y / (steps3);
 
-		if( i == 0 || (current.point != last.point)){
-			last.point = current.point;
-			sg_draw_pixel(bmap, current);
+		if( i != 0 ){
+			sg_draw_line(bmap, current, last);
 		}
+
+		last.point = current.point;
 	}
+
+	sg_draw_line(bmap, last, p3);
+
 }
 
-void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
+void sg_draw_rectangle(const sg_bmap_t * bmap, const sg_region_t * region){
 	sg_cursor_t y_cursor;
 	sg_cursor_t x_cursor;
+	sg_point_t p;
+	sg_dim_t d;
 	sg_size_t i;
+
+	p = region->point;
+	d = region->dim;
 
 	if( truncate_visible(bmap, &p, &d) ){
 		sg_cursor_set(&y_cursor, bmap, p);
@@ -270,7 +286,7 @@ void sg_draw_rectangle(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d){
 	}
 }
 
-void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height){
+void sg_draw_pattern(const sg_bmap_t * bmap, const sg_region_t * region, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height){
 	//fill the specified region with the specified patterns
 	sg_size_t i;
 	sg_cursor_t y_cursor;
@@ -278,7 +294,11 @@ void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_d
 	sg_bmap_data_t pattern;
 	sg_bmap_data_t odd_pattern_color;
 	sg_bmap_data_t even_pattern_color;
+	sg_point_t p;
+	sg_dim_t d;
 
+	p = region->point;
+	d = region->dim;
 
 	if( truncate_visible(bmap, &p, &d) ){
 
@@ -313,17 +333,25 @@ void sg_draw_pattern(const sg_bmap_t * bmap, sg_point_t p, sg_dim_t d, sg_bmap_d
 }
 
 void sg_draw_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src){
-	sg_draw_sub_bitmap(bmap_dest, p_dest, bmap_src, sg_point(0,0), bmap_src->dim);
+	sg_region_t region;
+	region.point.point = 0;
+	region.dim = bmap_src->dim;
+	sg_draw_sub_bitmap(bmap_dest, p_dest, bmap_src, &region);
 }
 
-void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, sg_point_t p_src, sg_dim_t d_src){
+void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, const sg_region_t * region_src){
 	sg_int_t i;
+	sg_point_t p_src;
+	sg_dim_t d_src;
 	sg_cursor_t y_dest_cursor;
 	sg_cursor_t x_dest_cursor;
 	sg_cursor_t y_src_cursor;
 	sg_cursor_t x_src_cursor;
 	sg_int_t h;
 	sg_int_t w;
+
+	p_src = region_src->point;
+	d_src = region_src->dim;
 
 	if( truncate_visible(bmap_src, &p_src, &d_src) && truncate_visible(bmap_dest, &p_dest, &d_src) ){
 
@@ -373,9 +401,10 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
 }
 
 
-void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds){
+void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, const sg_region_t * region){
 
 	sg_color_t active;
+	sg_region_t tmp_region;
 
 	if( (bmap->pen.color == 0) || (bmap->pen.o_flags & SG_PEN_FLAG_IS_ERASE) ){
 		active = 0;
@@ -384,37 +413,41 @@ void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds){
 	}
 
 	//limit bounds to inside the bmap
-	if( (bounds.bottom_right.x < 0) || (bounds.bottom_right.y < 0) ){
+	if( (region->point.x + region->dim.width < 0) || (region->point.y + region->dim.height < 0) ){
 		return;
 	}
 
-	if( (bounds.top_left.x >= bmap->dim.width) || (bounds.top_left.y >= bmap->dim.height) ){
+	if( (region->point.x >= bmap->dim.width) || (region->point.y >= bmap->dim.height) ){
 		return;
 	}
 
-	if( bounds.top_left.x < 0 ){ bounds.top_left.x = 0; }
-	if( bounds.top_left.y < 0 ){ bounds.top_left.y = 0; }
-	if( bounds.bottom_right.x >= bmap->dim.width ){ bounds.bottom_right.x = bmap->dim.width-1; }
-	if( bounds.bottom_right.y >= bmap->dim.height ){ bounds.bottom_right.y = bmap->dim.height-1; }
+	tmp_region = *region;
 
-	draw_pour_recursive(bmap, p, bounds, active);
+	if( tmp_region.point.x < 0 ){ tmp_region.point.x = 0; }
+	if( tmp_region.point.y < 0 ){ tmp_region.point.y = 0; }
+	if( tmp_region.point.x + tmp_region.dim.width >= bmap->dim.width ){ tmp_region.dim.width = bmap->dim.width - tmp_region.point.x; }
+	if( tmp_region.point.y + tmp_region.dim.height >= bmap->dim.height ){ tmp_region.dim.height = bmap->dim.height - tmp_region.point.y; }
+
+	draw_pour_recursive(bmap, p, &tmp_region, active);
 }
 
 static int is_active_color(sg_color_t color, sg_color_t active_color){
 	return (color == 0) == active_color;
 }
 
-int draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds, sg_color_t active){
+int draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, const sg_region_t * region, sg_color_t active){
 	sg_cursor_t cursor;
 	sg_cursor_set(&cursor, bmap, p);
 	if( is_active_color(sg_cursor_get_pixel_no_inc(&cursor), active) ){
 		sg_point_t draw_point;
 		sg_int_t xmin, xmax;
 		sg_int_t x;
+		sg_int_t x_max_bound = region->point.x + region->dim.width;
+		sg_int_t y_max_bound = region->point.y + region->dim.height;
 		draw_point = p;
 		xmin = p.x;
 		xmax = p.y;
-		while( is_active_color(sg_cursor_get_pixel_no_inc(&cursor), active) && (draw_point.x < bounds.bottom_right.x) ){
+		while( is_active_color(sg_cursor_get_pixel_no_inc(&cursor), active) && (draw_point.x < x_max_bound) ){
 			sg_cursor_draw_pixel(&cursor);
 			draw_point.x++;
 		}
@@ -424,7 +457,7 @@ int draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds
 		draw_point = p;
 		sg_cursor_dec_x(&cursor);
 		draw_point.x--;
-		while( is_active_color(sg_cursor_get_pixel_no_inc(&cursor), active) && (draw_point.x > bounds.top_left.x) ){
+		while( is_active_color(sg_cursor_get_pixel_no_inc(&cursor), active) && (draw_point.x > region->point.x) ){
 			sg_cursor_draw_pixel_no_inc(&cursor);
 			sg_cursor_dec_x(&cursor);
 			draw_point.x--;
@@ -432,18 +465,18 @@ int draw_pour_recursive(const sg_bmap_t * bmap, sg_point_t p, sg_bounds_t bounds
 		xmin = draw_point.x;
 
 		for(x = xmin+1; x < xmax; x++){
-			if( p.y+1 <= bounds.bottom_right.y ){
+			if( p.y+1 < y_max_bound ){
 				draw_point.x = x;
 				draw_point.y = p.y+1;
-				x = draw_pour_recursive(bmap, draw_point, bounds, active);
+				x = draw_pour_recursive(bmap, draw_point, region, active);
 			}
 		}
 
 		for(x = xmin+1; x < xmax; x++){
-			if( p.y-1 >= bounds.top_left.y ){
+			if( p.y-1 >= region->point.y ){
 				draw_point.x = x;
 				draw_point.y = p.y-1;
-				x = draw_pour_recursive(bmap, draw_point, bounds, active);
+				x = draw_pour_recursive(bmap, draw_point, region, active);
 			}
 		}
 
