@@ -51,10 +51,10 @@ void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
 	if( p2.y == p1.y ){
 		if( p1.x < p2.x ){
 			region.point.x = p1.x;
-			region.dim.width = p2.x - p1.x;
+			region.dim.width = p2.x - p1.x + 1;
 		} else {
 			region.point.x = p2.x;
-			region.dim.width = p1.x - p2.x;
+			region.dim.width = p1.x - p2.x + 1;
 		}
 
 		region.dim.height = bmap->pen.thickness;
@@ -67,10 +67,10 @@ void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2){
 
 		if( p1.y < p2.y ){
 			region.point.y = p1.y;
-			region.dim.height = p2.y - p1.y;
+			region.dim.height = p2.y - p1.y + 1;
 		} else {
 			region.point.y = p2.y;
-			region.dim.height = p1.y - p2.y;
+			region.dim.height = p1.y - p2.y + 1;
 		}
 
 		region.dim.width = bmap->pen.thickness;

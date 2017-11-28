@@ -394,7 +394,6 @@ int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 	sg_size_t count;
 	u16 step;
 	sg_point_t shift;
-	sg_point_t start;
 	sg_region_t region;
 
 
@@ -427,8 +426,7 @@ int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 			region.dim.width = animation->region.dim.width;
 			region.dim.height = animation->region.dim.height - animation->path.motion - count;
 
-			dest.x = start.x;
-			dest.y = start.y;
+			dest = animation->region.point;
 
 			shift.x = 0;
 			shift.y = count;

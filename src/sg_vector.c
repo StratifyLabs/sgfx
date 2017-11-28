@@ -95,28 +95,26 @@ void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector
 	s32 tmp;
 
 	sg_region_t arc_region;
-	sg_point_t radius;
 
 	arc_region.point = p->arc.center;
 
 	//scale radii to bitmap dimension
-	tmp = ((p->arc.rx) * map->region.dim.width + SG_MAX) / (SG_MAX-SG_MIN);
-	radius.x = tmp;
+	tmp = ((p->arc.rx*2) * map->region.dim.width + SG_MAX) / (SG_MAX-SG_MIN);
+	arc_region.dim.width = tmp;
 
-	tmp = ((p->arc.ry) * map->region.dim.height + SG_MAX) / (SG_MAX-SG_MIN);
-	radius.y = tmp;
+	tmp = ((p->arc.ry*2) * map->region.dim.height + SG_MAX) / (SG_MAX-SG_MIN);
+	arc_region.dim.height = tmp;
 
 	sg_point_map(&arc_region.point, map);
 
 	//make dim a bounding box
-	arc_region.dim.width = radius.x*2 + 1;
-	arc_region.dim.height = radius.y*2 + 1;
 
 	//move point to upper left corner
-	arc_region.point.x -= radius.x;
-	arc_region.point.y -= radius.y;
+	arc_region.point.x -= arc_region.dim.width/2;
+	arc_region.point.y -= arc_region.dim.height/2;
 
 	sg_draw_arc(bmap, &arc_region, p->arc.start, p->arc.stop, p->arc.rotation, corners);
+
 	if( region ){
 		update_bounds(corners[0], corners[1], region);
 	}
