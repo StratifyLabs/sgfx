@@ -383,12 +383,13 @@ void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
  * @param p1 First point of the bezier function
  * @param p2 Second point of the bezier function
  * @param p3 Third point of the bezier function
+ * @param corners If non-zero, corners[0] will be the top left corner and corners[1] will be the bottom right corner enclosing the curve
  *
  * The color and thickness of the curve are determined by
  * the bmap->pen object.
  *
  */
-void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3);
+void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t * corners);
 
 /*! \details Draws a cubic bezier curve on the bitmap.
  *
@@ -397,12 +398,13 @@ void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t
  * @param p2 Second point of the bezier function
  * @param p3 Third point of the bezier function
  * @param p4 Third point of the bezier function
+ * @param corners If non-zero, corners[0] will be the top left corner and corners[1] will be the bottom right corner enclosing the curve
  *
  * The color and thickness of the curve are determined by
  * the bmap->pen object.
  *
  */
-void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4);
+void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4, sg_point_t * corners);
 
 /*! \details Draws a rectangle.
  *
@@ -420,13 +422,14 @@ void sg_draw_rectangle(const sg_bmap_t * bmap, const sg_region_t * region);
 /*! \details Draws an arc on the bitmap.
  *
  * @param bmap A pointer to the bitmap
- * @param p The top left corner of the area to draw the arc
- * @param d The dimensions to draw the arc in
+ * @param region Specifies the region to draw the ellipse in assuming the rotation is zero
  * @param start The starting angle
  * @param end The ending angle
+ * @param rotation A rotation angle that is applied to every point in the arc
+ * @param corners If non-zero, corners[0] will be the top left corner and corners[1] will be the bottom right corner enclosing the curve
  *
  */
-void sg_draw_arc(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation);
+void sg_draw_arc(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation, sg_point_t * corners);
 
 
 /*! \details Pours a color on the bitmap.
@@ -603,10 +606,10 @@ typedef struct MCU_PACK {
 	sg_color_t (*get_pixel)(const sg_bmap_t * bmap, sg_point_t p);
 	void (*draw_pixel)(const sg_bmap_t * bmap, sg_point_t p);
 	void (*draw_line)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
-	void (*draw_quadtratic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3);
-	void (*draw_cubic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4);
+	void (*draw_quadtratic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t * corners);
+	void (*draw_cubic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4, sg_point_t * corners);
 	void (*draw_rectangle)(const sg_bmap_t * bmap, const sg_region_t * region);
-	void (*draw_arc)(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation);
+	void (*draw_arc)(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation, sg_point_t * corners);
 	void (*draw_pour)(const sg_bmap_t * bmap, sg_point_t p, const sg_region_t * region);
 	void (*draw_pattern)(const sg_bmap_t * bmap, const sg_region_t * region, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height);
 	void (*draw_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src);

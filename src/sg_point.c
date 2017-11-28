@@ -523,6 +523,9 @@ static const trig_t trig_table[SG_TRIG_POINTS] = {
 		{ 32764, -402 }
 };
 
+static int sign_value(int value){
+	return (value > 0) - (value < 0);
+}
 
 
 void sg_point_set(sg_point_t * d, sg_point_t p){
@@ -535,9 +538,9 @@ void sg_point_map(sg_point_t * d, const sg_vector_map_t * m){
 	//map to the space
 	s32 tmp;
 	tmp = ((d->x + SG_MAX) * m->region.dim.width + SG_MAX) / (SG_MAX-SG_MIN);
-	d->x = tmp - (m->region.dim.width>>1) + m->region.point.x;
+	d->x = m->region.point.x + tmp;
 	tmp = ((d->y + SG_MAX) * m->region.dim.height + SG_MAX) / (SG_MAX-SG_MIN);
-	d->y = tmp - (m->region.dim.height>>1) + m->region.point.y;
+	d->y = m->region.point.y + tmp;
 }
 
 sg_size_t sg_point_map_pixel_size(const sg_vector_map_t * m){
@@ -563,11 +566,14 @@ void sg_point_subtract(sg_point_t * d, const sg_point_t * a){
 void sg_point_arc(sg_point_t * d, sg_size_t rx, sg_size_t ry, s16 angle){
 	int x, y;
 	int rc, rs;
+	int tmp;
 	angle = angle % SG_TRIG_POINTS;
 	rc = trig_table[angle].cosine;
 	rs = trig_table[angle].sine;
-	x = (rx*rc + SG_MAX/2)/SG_MAX;
-	y = (ry*rs + SG_MAX/2)/SG_MAX;
+	tmp = rx*rc;
+	x = (tmp + sign_value(tmp)*SG_MAX/2)/SG_MAX;
+	tmp = ry*rs;
+	y = (tmp + sign_value(tmp)*SG_MAX/2)/SG_MAX;
 	d->x = x;
 	d->y = y;
 }
@@ -575,6 +581,7 @@ void sg_point_arc(sg_point_t * d, sg_size_t rx, sg_size_t ry, s16 angle){
 void sg_point_rotate(sg_point_t * d, s16 angle){
 	int x, y;
 	int rc, rs;
+	int tmp;
 	if( angle < 0 ){
 		angle += SG_TRIG_POINTS;
 	}
@@ -584,8 +591,10 @@ void sg_point_rotate(sg_point_t * d, s16 angle){
 	}
 	rc = trig_table[angle].cosine;
 	rs = trig_table[angle].sine;
-	x = ((int)d->x * rc - (int)d->y * rs) / SG_MAX;
-	y = ((int)d->x * rs + (int)d->y * rc) / SG_MAX;
+	tmp = (int)d->x * rc - (int)d->y * rs;
+	x = (tmp + sign_value(tmp)*SG_MAX/2) / SG_MAX;
+	tmp = (int)d->x * rs + (int)d->y * rc;
+	y = (tmp + sign_value(tmp)*SG_MAX/2) / SG_MAX;
 	d->x = x;
 	d->y = y;
 }

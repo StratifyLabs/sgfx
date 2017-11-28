@@ -150,7 +150,7 @@ u16 calc_largest_delta(sg_point_t p0, sg_point_t p1){
 
 }
 
-void sg_draw_arc(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation){
+void sg_draw_arc(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation, sg_point_t * corners){
 	sg_size_t half_thick;
 	sg_size_t thickness;
 	sg_point_t pen;
@@ -161,16 +161,28 @@ void sg_draw_arc(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, 
 	sg_point_t last_point;
 	sg_point_t p;
 	sg_dim_t d;
+	sg_point_t min, max;
+	sg_size_t rx;
+	sg_size_t ry;
 
 	p = region->point;
 	d = region->dim;
 
-	center.x = p.x + d.width/2;
-	center.y = p.y + d.height/2;
-
 	thickness = bmap->pen.thickness;
 	if( thickness == 0 ){
 		thickness = 1;
+	}
+
+	rx = d.width/2 - thickness/2;
+	ry = d.height/2 - thickness/2;
+	center.x = p.x + d.width/2;
+	center.y = p.y + d.height/2;
+
+	if( corners ){
+		min.x = SG_MAX;
+		min.y = SG_MAX;
+		max.x = SG_MIN;
+		max.y = SG_MIN;
 	}
 
 	last_point.point = 0;
@@ -178,18 +190,31 @@ void sg_draw_arc(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, 
 	for(t=0; t < thickness; t++){
 		thick =  t - half_thick;
 		for(i=start; i < end; i++){
-			sg_point_arc(&pen, d.width/2 + thick, d.height/2 + thick, i);
+			sg_point_arc(&pen, rx + thick, ry + thick, i);
 			if( i == 0 || (pen.point != last_point.point) ){
 				last_point.point = pen.point;
 				sg_point_rotate(&pen, rotation);
 				sg_point_shift(&pen, center);
 				sg_draw_pixel(bmap, pen);
+				if( corners ){
+					if( pen.x < min.x ){ min.x = pen.x; }
+					if( pen.y < min.y ){ min.y = pen.y; }
+					if( pen.x > max.x ){ max.x = pen.x; }
+					if( pen.y > max.y ){ max.y = pen.y; }
+				}
 			}
 		}
 	}
+
+	if( corners ){
+		//update corners with min/max values
+		corners[0] = min;
+		corners[1] = max;
+	}
+
 }
 
-void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, sg_point_t p2){
+void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, sg_point_t p2, sg_point_t * corners){
 	u32 i;
 	s32 x;
 	s32 y;
@@ -197,21 +222,39 @@ void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t
 	u32 steps2;
 	sg_point_t current;
 	sg_point_t last;
+	sg_point_t min, max;
 
 	steps = calc_largest_delta(p0, p1);
 	steps += calc_largest_delta(p1, p2);
 	steps2 = steps*steps;
 
+	if( corners ){
+		min.x = SG_MAX;
+		min.y = SG_MAX;
+		max.x = SG_MIN;
+		max.y = SG_MIN;
+	}
 
 	//t goes from zero to one
-	for(i=0; i < steps; i++){
+	for(i=0; i <= steps; i++){
 		//(1-t)^2*P0 + 2*(1-t)*t*P2 + t^2*P2
 
-		x = (steps - i)*(steps - i)*p0.x + 2*(steps - i)*i*p1.x + i*i*p2.x;
-		y = (steps - i)*(steps - i)*p0.y + 2*(steps - i)*i*p1.y + i*i*p2.y;
+		if( i < steps ){
+			x = (steps - i)*(steps - i)*p0.x + 2*(steps - i)*i*p1.x + i*i*p2.x;
+			y = (steps - i)*(steps - i)*p0.y + 2*(steps - i)*i*p1.y + i*i*p2.y;
 
-		current.x = x / (steps2);
-		current.y = y / (steps2);
+			current.x = x / (steps2);
+			current.y = y / (steps2);
+		} else {
+			current = p2;
+		}
+
+		if( corners ){
+			if( current.x < min.x ){ min.x = current.x; }
+			if( current.y < min.y ){ min.y = current.y; }
+			if( current.x > max.x ){ max.x = current.x; }
+			if( current.y > max.y ){ max.y = current.y; }
+		}
 
 		if( i != 0 ){
 			sg_draw_line(bmap, current, last);
@@ -219,11 +262,18 @@ void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t
 		last.point = current.point;
 	}
 
-	sg_draw_line(bmap, last, p2);
+	//sg_draw_line(bmap, last, p2);
+
+	if( corners ){
+		//update corners with min/max values
+		corners[0] = min;
+		corners[1] = max;
+	}
+
 
 }
 
-void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, sg_point_t p2, sg_point_t p3){
+void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t * corners){
 	u32 i;
 	s32 x;
 	s32 y;
@@ -231,6 +281,7 @@ void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, 
 	u32 steps3;
 	sg_point_t current;
 	sg_point_t last;
+	sg_point_t min, max;
 
 	//calc distance to determine number of steps
 	steps = calc_largest_delta(p0, p1);
@@ -239,21 +290,39 @@ void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, 
 
 	steps3 = steps*steps*steps;
 
+	if( corners ){
+		min.x = SG_MAX;
+		min.y = SG_MAX;
+		max.x = SG_MIN;
+		max.y = SG_MIN;
+	}
+
 	//t goes from zero to one
-	for(i=0; i < steps; i++){
+	for(i=0; i <= steps; i++){
 
-		x = (steps-i)*(steps-i)*(steps-i)*p0.x +
-				3*(steps-i)*(steps-i)*i*p1.x +
-				3*(steps-i)*i*i*p2.x +
-				i*i*i*p3.x;
+		if( i < steps ){
+			x = (steps-i)*(steps-i)*(steps-i)*p0.x +
+					3*(steps-i)*(steps-i)*i*p1.x +
+					3*(steps-i)*i*i*p2.x +
+					i*i*i*p3.x;
 
-		y = (steps-i)*(steps-i)*(steps-i)*p0.y +
-				3*(steps-i)*(steps-i)*i*p1.y +
-				3*(steps-i)*i*i*p2.y +
-				i*i*i*p3.y;
+			y = (steps-i)*(steps-i)*(steps-i)*p0.y +
+					3*(steps-i)*(steps-i)*i*p1.y +
+					3*(steps-i)*i*i*p2.y +
+					i*i*i*p3.y;
 
-		current.x = x / (steps3);
-		current.y = y / (steps3);
+			current.x = x / (steps3);
+			current.y = y / (steps3);
+		} else {
+			current = p3;
+		}
+
+		if( corners ){
+			if( current.x < min.x ){ min.x = current.x; }
+			if( current.y < min.y ){ min.y = current.y; }
+			if( current.x > max.x ){ max.x = current.x; }
+			if( current.y > max.y ){ max.y = current.y; }
+		}
 
 		if( i != 0 ){
 			sg_draw_line(bmap, current, last);
@@ -262,7 +331,11 @@ void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, 
 		last.point = current.point;
 	}
 
-	sg_draw_line(bmap, last, p3);
+	if( corners ){
+		//update corners with min/max values
+		corners[0] = min;
+		corners[1] = max;
+	}
 
 }
 

@@ -7,6 +7,8 @@
 #include "sg.h"
 
 
+static void update_bounds(sg_point_t min, sg_point_t max, sg_region_t * region);
+
 static void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region);
 static void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region);
 static void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region);
@@ -62,8 +64,6 @@ void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vecto
 	//draw a line from bottom left to top right
 	sg_point_t p1;
 	sg_point_t p2;
-	sg_int_t x_max;
-	sg_int_t y_max;
 
 	p1 = p->line.p1;
 	p2 = p->line.p2;
@@ -73,18 +73,17 @@ void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vecto
 	sg_point_map(&p2, map);
 
 	if( region ){
-		region->point.x = p1.x;
-		region->point.y = p1.y;
-		if( p2.x < region->point.x ){ region->point.x = p2.x; }
-		if( p2.y < region->point.y ){ region->point.y = p2.y; }
+		sg_point_t min, max;
 
-		x_max = p1.x;
-		y_max = p1.y;
-		if( p2.x > x_max ){ x_max = p2.x; }
-		if( p2.y > y_max ){ y_max = p2.y; }
+		min = p1;
+		max = p1;
+		if( p2.x < min.x ){ min.x = p2.x; }
+		if( p2.y < min.y ){ min.y = p2.y; }
 
-		region->dim.width = x_max - region->point.x;
-		region->dim.height = y_max - region->point.y;
+		if( p2.x > max.x ){ max.x = p2.x; }
+		if( p2.y > max.y ){ max.y = p2.y; }
+
+		update_bounds(min, max, region);
 	}
 
 	//add the option to invert the line
@@ -92,89 +91,34 @@ void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vecto
 }
 
 void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region){
-	int i;
-	int points;
-	int step;
-	int radians = p->arc.stop - p->arc.start;
-	sg_int_t t;
-	sg_int_t r;
-	sg_size_t unit;
-	sg_int_t thick;
-	sg_int_t x_max, y_max;
+	sg_point_t corners[2];
+	s32 tmp;
 
-	sg_size_t half_thick;
-	sg_size_t thickness;
+	sg_region_t arc_region;
+	sg_point_t radius;
 
+	arc_region.point = p->arc.center;
 
-	thickness = bmap->pen.thickness;
-	if( thickness == 0 ){
-		thickness = 1;
-	}
+	//scale radii to bitmap dimension
+	tmp = ((p->arc.rx) * map->region.dim.width + SG_MAX) / (SG_MAX-SG_MIN);
+	radius.x = tmp;
 
-	half_thick = thickness/2;
+	tmp = ((p->arc.ry) * map->region.dim.height + SG_MAX) / (SG_MAX-SG_MIN);
+	radius.y = tmp;
 
-	sg_point_t pen;
-	sg_point_t circum;
-	circum.point = 0;
+	sg_point_map(&arc_region.point, map);
 
-	unit = sg_point_map_pixel_size(map);
+	//make dim a bounding box
+	arc_region.dim.width = radius.x*2 + 1;
+	arc_region.dim.height = radius.y*2 + 1;
 
-	if( p->arc.rx < p->arc.ry ){
-		r = p->arc.ry;
-	} else {
-		r = p->arc.rx;
-	}
+	//move point to upper left corner
+	arc_region.point.x -= radius.x;
+	arc_region.point.y -= radius.y;
 
-	r += (thickness-1)*unit;
-
-	sg_point_shift_x(&circum, r);
-	sg_point_map(&circum, map);
-
-	points = ((circum.x - map->region.point.x) * 2 * 320) / 100 * (radians) / SG_TRIG_POINTS;
-	if( points > SG_TRIG_POINTS ){
-		points = SG_TRIG_POINTS;
-	}
-
-	if( points == 0 ){
-		points = 1;
-	}
-
-	if( radians == 0 ){
-		step = 1;
-	} else {
-		step = points / (radians);
-	}
-
-	if( step == 0 ){
-		step = 1;
-	}
-
-	x_max = 0;
-	y_max = 0;
-
-	for(t=0; t < thickness; t++){
-		thick = unit * (t - half_thick);
-		for(i=p->arc.start; i < p->arc.stop; i+=step){
-			pen.point = 0;
-			sg_point_arc(&pen, p->arc.rx + thick, p->arc.ry + thick, i);
-			sg_point_rotate(&pen, p->arc.rotation);
-			sg_point_shift(&pen, p->arc.center);
-			sg_point_map(&pen, map);
-
-			if( region ){
-				if( pen.x < region->point.x ){ region->point.x = pen.x; }
-				if( pen.y < region->point.y ){ region->point.y = pen.y; }
-				if( pen.x > x_max ){ x_max = pen.x; }
-				if( pen.y > y_max ){ y_max = pen.y; }
-			}
-
-			sg_draw_pixel(bmap, pen);
-		}
-	}
-
+	sg_draw_arc(bmap, &arc_region, p->arc.start, p->arc.stop, p->arc.rotation, corners);
 	if( region ){
-		region->dim.width = x_max - region->point.x;
-		region->dim.height = y_max - region->point.y;
+		update_bounds(corners[0], corners[1], region);
 	}
 
 }
@@ -182,39 +126,27 @@ void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector
 void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region){
 	int i;
 	sg_point_t points[3];
-	sg_int_t x_max, y_max;
+	sg_point_t corners[2];
 
 	//maps the points to the bmap
 	points[0] = p->quadratic_bezier.p1;
 	points[1] = p->quadratic_bezier.p2;
 	points[2] = p->quadratic_bezier.p3;
 
-	x_max = 0;
-	y_max = 0;
-
 	for(i=0; i < 3; i++){
 		sg_point_map(points + i, map);
-
-		if( region ){
-			if( points[i].x < region->point.x ){ region->point.x = points[i].x; }
-			if( points[i].y < region->point.y ){ region->point.y = points[i].y; }
-			if( points[i].x > x_max ){ x_max = points[i].x; }
-			if( points[i].y > y_max ){ y_max = points[i].y; }
-		}
 	}
 
+	sg_draw_quadtratic_bezier(bmap, points[0], points[1], points[2], corners);
 	if( region ){
-		region->dim.width = x_max - region->point.x;
-		region->dim.height = y_max - region->point.y;
+		update_bounds(corners[0], corners[1], region);
 	}
-
-	sg_draw_quadtratic_bezier(bmap, points[0], points[1], points[2]);
 }
 
 void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region){
 	int i;
 	sg_point_t points[4];
-	sg_int_t x_max, y_max;
+	sg_point_t corners[2];
 
 	//maps the points to the bmap
 	points[0] = p->cubic_bezier.p1;
@@ -222,40 +154,47 @@ void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const 
 	points[2] = p->cubic_bezier.p3;
 	points[3] = p->cubic_bezier.p4;
 
-	x_max = 0;
-	y_max = 0;
-
 	for(i=0; i < 4; i++){
 		sg_point_map(points + i, map);
-
-		if( region ){
-			if( points[i].x < region->point.x ){ region->point.x = points[i].x; }
-			if( points[i].y < region->point.y ){ region->point.y = points[i].y; }
-			if( points[i].x > x_max ){ x_max = points[i].x; }
-			if( points[i].y > y_max ){ y_max = points[i].y; }
-		}
 	}
+
+	sg_draw_cubic_bezier(bmap, points[0], points[1], points[2], points[3], corners);
 
 	if( region ){
-		region->dim.width = x_max - region->point.x;
-		region->dim.height = y_max - region->point.y;
+		update_bounds(corners[0], corners[1], region);
 	}
-
-	sg_draw_cubic_bezier(bmap, points[0], points[1], points[2], points[3]);
 }
 
 void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region){
 	sg_point_t center;
-	sg_region_t region_data;
-	if( region ){
-		region_data = *region;
-	} else {
-		region_data.point.point = 0;
-		region_data.dim = bmap->dim;
-	}
 	center = p->pour.center;
 	sg_point_map(&center, map);
-	sg_draw_pour(bmap, center, &region_data);
+	sg_draw_pour(bmap, center, &map->region);
+}
+
+void update_bounds(sg_point_t min, sg_point_t max, sg_region_t * region){
+	if( min.x < region->point.x ){
+		if( region->dim.width ){
+			region->dim.width += (region->point.x - min.x);
+		}
+		region->point.x = min.x;
+
+	}
+
+	if( (max.x >= region->point.x + region->dim.width) || (region->dim.width == 0) ){
+		region->dim.width = max.x - region->point.x + 1;
+	}
+
+	if( min.y < region->point.y ){
+		if( region->dim.height ){
+			region->dim.height += (region->point.y - min.y);
+		}
+		region->point.y = min.y;
+	}
+
+	if( (max.y >= region->point.y + region->dim.height) || (region->dim.width == 0) ){
+		region->dim.height = max.y - region->point.y + 1;
+	}
 }
 
 
