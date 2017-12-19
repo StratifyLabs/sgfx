@@ -47,6 +47,9 @@ const sg_api_t m_sg_api = {
 		.cursor_draw_pattern = sg_cursor_draw_pattern,
 		.cursor_shift_right = sg_cursor_shift_right,
 		.cursor_shift_left = sg_cursor_shift_left,
+		.cursor_find_positive_edge = sg_cursor_find_positive_edge,
+		.cursor_find_negative_edge = sg_cursor_find_negative_edge,
+
 
 		//drawing
 		.get_pixel = sg_get_pixel,
@@ -57,6 +60,7 @@ const sg_api_t m_sg_api = {
 		.draw_rectangle = sg_draw_rectangle,
 		.draw_arc = sg_draw_arc,
 		.draw_pour = sg_draw_pour,
+		.draw_fill = sg_draw_fill,
 		.draw_pattern = sg_draw_pattern,
 		.draw_bitmap = sg_draw_bitmap,
 		.draw_sub_bitmap = sg_draw_sub_bitmap,
@@ -65,6 +69,7 @@ const sg_api_t m_sg_api = {
 		.vector_draw_primitive = sg_vector_draw_primitive,
 		.vector_draw_primitive_list = sg_vector_draw_primitive_list,
 		.vector_draw_icon = sg_vector_draw_icon,
+		.vector_draw_path = sg_vector_draw_path,
 
 		//animations
 		.animate = sg_animate,

@@ -459,7 +459,6 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
 
 		//take bitmap and draw it on bmap
 		for(i=0; i < h; i++){
-
 			sg_cursor_copy(&x_dest_cursor, &y_dest_cursor);
 			sg_cursor_copy(&x_src_cursor, &y_src_cursor);
 
@@ -470,7 +469,47 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
 			sg_cursor_inc_y(&y_src_cursor);
 		}
 	}
+}
 
+void sg_draw_fill(const sg_bmap_t * bmap, const sg_region_t * region){
+	sg_point_t start;
+	sg_dim_t dim;
+
+	start = region->point;
+	dim = region->dim;
+
+	if( truncate_visible(bmap, &start, &dim) ){
+		sg_cursor_t x_cursor;
+		sg_cursor_t y_cursor;
+		sg_cursor_t line_cursor;
+		sg_size_t line_start;
+		sg_int_t h;
+		sg_size_t distance;
+
+		sg_cursor_set(&y_cursor, bmap, start);
+		for(h=start.y; h < start.y + dim.height; h++){
+			sg_cursor_copy(&x_cursor, &y_cursor);
+
+			distance = 0;
+
+			while( distance < dim.width ){
+				distance += sg_cursor_find_positive_edge(&x_cursor, dim.width - distance);
+				distance += sg_cursor_find_negative_edge(&x_cursor, dim.width - distance);
+
+				line_start = distance;
+				sg_cursor_copy(&line_cursor, &x_cursor);
+
+				distance += sg_cursor_find_positive_edge(&x_cursor, dim.width - distance);
+
+				if( distance < dim.width ){
+					sg_cursor_draw_hline(&line_cursor, distance-line_start);
+					distance += sg_cursor_find_negative_edge(&x_cursor, dim.width - distance);
+				}
+
+			}
+			sg_cursor_inc_y(&y_cursor);
+		}
+	}
 }
 
 
@@ -572,6 +611,7 @@ int is_point_visible(const sg_bmap_t * bmap, sg_point_t p){
 	return 1;
 }
 
+//TODO this needs to account for margins
 int truncate_visible(const sg_bmap_t * bmap, sg_point_t * p, sg_dim_t * d){
 	if( p->x < 0 ){
 		if( p->x + d->width >= 0 ){

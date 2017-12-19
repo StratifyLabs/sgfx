@@ -337,6 +337,11 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
  */
 void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
 
+
+
+sg_size_t sg_cursor_find_positive_edge(sg_cursor_t * cursor, sg_size_t max_distance);
+sg_size_t sg_cursor_find_negative_edge(sg_cursor_t * cursor, sg_size_t max_distance);
+
 /*! @} */
 
 
@@ -445,6 +450,23 @@ void sg_draw_arc(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, 
  */
 void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, const sg_region_t * region);
 
+
+/*! \details Fills a region using an even-odd algorithm.
+ *
+ * @param bmap A pointer to the bitmap object
+ * @param p The point where the pour should start
+ * @param bounds The bounds for the pour
+ *
+ * On each line, the alrogithm starts on the left and searches
+ * for a non-zero value, after crossing the non-zero barrier, the algorithm
+ * starts filling until it hits another barrier. All shapes should be
+ * enclosed.
+ *
+ *
+ */
+void sg_draw_fill(const sg_bmap_t * bmap, const sg_region_t * region);
+
+
 /*! \details Draws a pattern in the specified area of the bitmap.
  *
  * @param bmap A pointer to the bitmap
@@ -536,6 +558,15 @@ void sg_vector_draw_primitive_list(sg_bmap_t * bmap, const sg_vector_primitive_t
  */
 void sg_vector_draw_icon(sg_bmap_t * bmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_region_t * bounds);
 
+/*! \details Draws a vector path icon on the bitmap.
+ *
+ * @param bmap The bitmap to draw on
+ * @param path The path to draw
+ * @param map The map that describes how the path will be drawn on the bitmap
+ *
+ */
+void sg_vector_draw_path(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map);
+
 
 /*! @} */
 
@@ -602,6 +633,8 @@ typedef struct MCU_PACK {
 	void (*cursor_draw_pattern)(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_t pattern);
 	void (*cursor_shift_right)(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
 	void (*cursor_shift_left)(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
+	sg_size_t (*cursor_find_positive_edge)(sg_cursor_t * cursor, sg_size_t max_distance);
+	sg_size_t (*cursor_find_negative_edge)(sg_cursor_t * cursor, sg_size_t max_distance);
 
 	sg_color_t (*get_pixel)(const sg_bmap_t * bmap, sg_point_t p);
 	void (*draw_pixel)(const sg_bmap_t * bmap, sg_point_t p);
@@ -611,6 +644,7 @@ typedef struct MCU_PACK {
 	void (*draw_rectangle)(const sg_bmap_t * bmap, const sg_region_t * region);
 	void (*draw_arc)(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation, sg_point_t * corners);
 	void (*draw_pour)(const sg_bmap_t * bmap, sg_point_t p, const sg_region_t * region);
+	void (*draw_fill)(const sg_bmap_t * bmap, const sg_region_t * region);
 	void (*draw_pattern)(const sg_bmap_t * bmap, const sg_region_t * region, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height);
 	void (*draw_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src);
 	void (*draw_sub_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, const sg_region_t * src_region);
@@ -618,6 +652,7 @@ typedef struct MCU_PACK {
 	void (*vector_draw_primitive)(sg_bmap_t * bitmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_region_t * region);
 	void (*vector_draw_primitive_list)(sg_bmap_t * bitmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_region_t * region);
 	void (*vector_draw_icon)(sg_bmap_t * bitmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_region_t * region);
+	void (*vector_draw_path)(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map);
 
 	int (*animate)(sg_bmap_t * bmap, sg_bmap_t * bitmap, sg_animation_t * animation);
 	int (*animate_init)(sg_animation_t * animation, u8 type, u8 path, u8 step_total, sg_size_t motion_total, sg_point_t start, sg_dim_t dim);

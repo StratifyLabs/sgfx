@@ -153,7 +153,7 @@ typedef struct MCU_PACK {
  * \details Describes an area using a point and a dimension */
 typedef struct MCU_PACK {
 	sg_point_t point /*! Top left corner of the region */;
-	sg_dim_t dim /*! Dimesions of the region */;
+	sg_dim_t dim /*! Dimensions of the region */;
 } sg_region_t;
 
 
@@ -201,6 +201,57 @@ typedef struct MCU_PACK {
 	};
 } sg_vector_primitive_t;
 
+enum {
+	SG_VECTOR_PATH_FLAG_CLOSE_PATH = (1<<0),
+	SG_VECTOR_PATH_FLAG_IS_FILL_ODD_EVEN = (1<<1),
+};
+
+enum {
+	SG_VECTOR_PATH_NONE = 0,
+	SG_VECTOR_PATH_MOVE /*! A line */,
+	SG_VECTOR_PATH_LINE /*! An Arc */,
+	SG_VECTOR_PATH_QUADRATIC_BEZIER /*! Quadratic Bezier */,
+	SG_VECTOR_PATH_CUBIC_BEZIER /*! Cubic Bezier */,
+	SG_VECTOR_PATH_CLOSE /*! Close the path using a line */,
+	SG_VECTOR_PATH_FILL_ODD_EVEN /*! Fill the region using the odd even algorithm */,
+	SG_VECTOR_PATH_TOTAL
+};
+
+typedef struct MCU_PACK {
+	sg_point_t point;
+} sg_vector_path_move_t;
+
+typedef struct MCU_PACK {
+	sg_point_t point;
+} sg_vector_path_line_t;
+
+typedef struct MCU_PACK {
+	sg_point_t point;
+	sg_point_t control;
+} sg_vector_path_quadtratic_bezier_t;
+
+typedef struct MCU_PACK {
+	sg_point_t point;
+	sg_point_t control[2];
+} sg_vector_path_cubic_bezier_t;
+
+/*! \brief Icon Path Structure
+ * \details Describes a vector path */
+typedef struct MCU_PACK {
+	u16 type /*! type of primitive object (e.g. SG_LINE) */;
+	union {
+		sg_vector_path_move_t move /*! Move to a point */;
+		sg_vector_path_line_t line /*! Line to a point */;
+		sg_vector_path_quadtratic_bezier_t quadratic_bezier /*! Path for quadratic bezier */;
+		sg_vector_path_cubic_bezier_t cubic_bezier /*! Path for cubic bezier*/;
+	};
+} sg_vector_path_description_t;
+
+typedef struct MCU_PACK {
+	u32 count; /*! The number of objects in \a path_description */
+	const sg_vector_path_description_t * list;
+} sg_vector_path_icon_t;
+
 /*! \brief Graphics Icon Structure
  * \details Describes a scalable graphic that can be drawn on a bitmap */
 typedef struct MCU_PACK {
@@ -209,13 +260,23 @@ typedef struct MCU_PACK {
 	const sg_vector_primitive_t * primitives;
 } sg_vector_icon_t;
 
-
 /*! \brief Graphics Map Structure
  * \details Describes how an sg_icon_t is mapped to a sg_bitmap_t */
 typedef struct MCU_PACK {
 	sg_region_t region;
 	s16 rotation; //rotation angle of map on the display
 } sg_vector_map_t;
+
+
+/*! \brief Data for drawing vectors using paths
+ * \sa sg_draw_vector_path()
+ */
+typedef struct MCU_PACK {
+	sg_vector_path_icon_t icon /*! The icon to draw */;
+	sg_point_t start /*! Internal use */ ;
+	sg_point_t current /*! Internal use */;
+	sg_region_t region /*! Destination for region specifications */;
+} sg_vector_path_t;
 
 
 enum {
