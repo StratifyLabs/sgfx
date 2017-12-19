@@ -4,8 +4,6 @@
 #include "sg_config.h"
 #include "sg.h"
 
-extern sg_color_t sg_cursor_get_pixel_no_inc(sg_cursor_t * cursor);
-extern void sg_cursor_draw_pixel_no_inc(sg_cursor_t * cursor);
 
 static inline int abs_value(int x){  if( x < 0 ){ return x*-1; } return x; }
 
@@ -236,7 +234,7 @@ void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t
 	}
 
 	//t goes from zero to one
-	for(i=0; i <= steps; i++){
+	for(i=0; i < steps; i++){
 		//(1-t)^2*P0 + 2*(1-t)*t*P2 + t^2*P2
 
 		if( i < steps ){
@@ -245,8 +243,6 @@ void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t
 
 			current.x = x / (steps2);
 			current.y = y / (steps2);
-		} else {
-			current = p2;
 		}
 
 		if( corners ){
@@ -262,7 +258,7 @@ void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t
 		last.point = current.point;
 	}
 
-	//sg_draw_line(bmap, last, p2);
+	sg_draw_line(bmap, last, p2);
 
 	if( corners ){
 		//update corners with min/max values
@@ -298,7 +294,7 @@ void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, 
 	}
 
 	//t goes from zero to one
-	for(i=0; i <= steps; i++){
+	for(i=0; i < steps; i++){
 
 		if( i < steps ){
 			x = (steps-i)*(steps-i)*(steps-i)*p0.x +
@@ -313,8 +309,6 @@ void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, 
 
 			current.x = x / (steps3);
 			current.y = y / (steps3);
-		} else {
-			current = p3;
 		}
 
 		if( corners ){
@@ -330,6 +324,8 @@ void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, 
 
 		last.point = current.point;
 	}
+
+	sg_draw_line(bmap, last, p3);
 
 	if( corners ){
 		//update corners with min/max values
@@ -467,47 +463,6 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
 
 			sg_cursor_inc_y(&y_dest_cursor);
 			sg_cursor_inc_y(&y_src_cursor);
-		}
-	}
-}
-
-void sg_draw_fill(const sg_bmap_t * bmap, const sg_region_t * region){
-	sg_point_t start;
-	sg_dim_t dim;
-
-	start = region->point;
-	dim = region->dim;
-
-	if( truncate_visible(bmap, &start, &dim) ){
-		sg_cursor_t x_cursor;
-		sg_cursor_t y_cursor;
-		sg_cursor_t line_cursor;
-		sg_size_t line_start;
-		sg_int_t h;
-		sg_size_t distance;
-
-		sg_cursor_set(&y_cursor, bmap, start);
-		for(h=start.y; h < start.y + dim.height; h++){
-			sg_cursor_copy(&x_cursor, &y_cursor);
-
-			distance = 0;
-
-			while( distance < dim.width ){
-				distance += sg_cursor_find_positive_edge(&x_cursor, dim.width - distance);
-				distance += sg_cursor_find_negative_edge(&x_cursor, dim.width - distance);
-
-				line_start = distance;
-				sg_cursor_copy(&line_cursor, &x_cursor);
-
-				distance += sg_cursor_find_positive_edge(&x_cursor, dim.width - distance);
-
-				if( distance < dim.width ){
-					sg_cursor_draw_hline(&line_cursor, distance-line_start);
-					distance += sg_cursor_find_negative_edge(&x_cursor, dim.width - distance);
-				}
-
-			}
-			sg_cursor_inc_y(&y_cursor);
 		}
 	}
 }

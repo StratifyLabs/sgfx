@@ -364,50 +364,6 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 	}
 }
 
-
-sg_size_t sg_cursor_find_positive_edge(sg_cursor_t * cursor, sg_size_t max_distance){
-	//move the cursor until a non-zero color is found
-	sg_size_t distance = 0;
-	sg_size_t word_distance;
-	sg_size_t max_word_distance;
-
-	//search pixels until first boundary
-	while( (cursor->shift != 0 ) && (distance < max_distance) && (get_pixel(cursor) == 0) ){
-		sg_cursor_inc_x(cursor);
-		distance++;
-	}
-
-	//search words
-	max_word_distance = max_distance - distance;
-	word_distance = 0;
-	while( (word_distance + SG_PIXELS_PER_WORD < max_word_distance) && (*cursor->target == 0) ){
-		cursor->target++;
-		word_distance += SG_PIXELS_PER_WORD;
-	}
-	distance += word_distance;
-
-	//search pixels until last boundary
-	while( (distance < max_distance) && (get_pixel(cursor) == 0) ){
-		sg_cursor_inc_x(cursor);
-		distance++;
-	}
-
-	return distance;
-}
-
-sg_size_t sg_cursor_find_negative_edge(sg_cursor_t * cursor, sg_size_t max_distance){
-	//move the cursor until a non-zero color is found
-	sg_size_t distance = 0;
-
-	//search pixels until first boundary
-	while( (distance < max_distance) && (get_pixel(cursor) != 0) ){
-		sg_cursor_inc_x(cursor);
-		distance++;
-	}
-
-	return distance;
-}
-
 sg_color_t get_pixel(const sg_cursor_t * cursor){
 	sg_color_t color;
 	sg_bmap_data_t value;

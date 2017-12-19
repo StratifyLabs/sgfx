@@ -213,7 +213,7 @@ enum {
 	SG_VECTOR_PATH_QUADRATIC_BEZIER /*! Quadratic Bezier */,
 	SG_VECTOR_PATH_CUBIC_BEZIER /*! Cubic Bezier */,
 	SG_VECTOR_PATH_CLOSE /*! Close the path using a line */,
-	SG_VECTOR_PATH_FILL_ODD_EVEN /*! Fill the region using the odd even algorithm */,
+	SG_VECTOR_PATH_POUR /*! Pour at the point specified */,
 	SG_VECTOR_PATH_TOTAL
 };
 
@@ -235,6 +235,10 @@ typedef struct MCU_PACK {
 	sg_point_t control[2];
 } sg_vector_path_cubic_bezier_t;
 
+typedef struct MCU_PACK {
+	sg_point_t point;
+} sg_vector_path_pour_t;
+
 /*! \brief Icon Path Structure
  * \details Describes a vector path */
 typedef struct MCU_PACK {
@@ -244,6 +248,7 @@ typedef struct MCU_PACK {
 		sg_vector_path_line_t line /*! Line to a point */;
 		sg_vector_path_quadtratic_bezier_t quadratic_bezier /*! Path for quadratic bezier */;
 		sg_vector_path_cubic_bezier_t cubic_bezier /*! Path for cubic bezier*/;
+		sg_vector_path_pour_t pour /*! Pour at the specified point (cursor is not affected) */;
 	};
 } sg_vector_path_description_t;
 

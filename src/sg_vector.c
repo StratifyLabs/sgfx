@@ -19,7 +19,7 @@ static void draw_path_line(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_v
 static void draw_path_quadtratic_bezier(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map, const sg_vector_path_description_t * description);
 static void draw_path_cubic_bezier(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map, const sg_vector_path_description_t * description);
 static void draw_path_close(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map, const sg_vector_path_description_t * description);
-static void draw_path_fill_odd_even(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map, const sg_vector_path_description_t * description);
+static void draw_path_pour(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map, const sg_vector_path_description_t * description);
 
 static void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region);
 static void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region);
@@ -42,7 +42,7 @@ static void (*draw_path_func [SG_VECTOR_PATH_TOTAL])(sg_bmap_t * bmap, sg_vector
 		draw_path_quadtratic_bezier,
 		draw_path_cubic_bezier,
 		draw_path_close,
-		draw_path_fill_odd_even
+		draw_path_pour
 };
 
 
@@ -213,8 +213,10 @@ void draw_path_close(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_
 	path->current = path->start;
 }
 
-void draw_path_fill_odd_even(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map, const sg_vector_path_description_t * description){
-
+void draw_path_pour(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map, const sg_vector_path_description_t * description){
+	sg_point_t point = description->pour.point;
+	sg_point_map(&point, map);
+	sg_draw_pour(bmap, point, &(path->region));
 }
 
 

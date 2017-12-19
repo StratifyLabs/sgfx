@@ -451,22 +451,6 @@ void sg_draw_arc(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, 
 void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, const sg_region_t * region);
 
 
-/*! \details Fills a region using an even-odd algorithm.
- *
- * @param bmap A pointer to the bitmap object
- * @param p The point where the pour should start
- * @param bounds The bounds for the pour
- *
- * On each line, the alrogithm starts on the left and searches
- * for a non-zero value, after crossing the non-zero barrier, the algorithm
- * starts filling until it hits another barrier. All shapes should be
- * enclosed.
- *
- *
- */
-void sg_draw_fill(const sg_bmap_t * bmap, const sg_region_t * region);
-
-
 /*! \details Draws a pattern in the specified area of the bitmap.
  *
  * @param bmap A pointer to the bitmap
@@ -633,8 +617,6 @@ typedef struct MCU_PACK {
 	void (*cursor_draw_pattern)(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_t pattern);
 	void (*cursor_shift_right)(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
 	void (*cursor_shift_left)(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
-	sg_size_t (*cursor_find_positive_edge)(sg_cursor_t * cursor, sg_size_t max_distance);
-	sg_size_t (*cursor_find_negative_edge)(sg_cursor_t * cursor, sg_size_t max_distance);
 
 	sg_color_t (*get_pixel)(const sg_bmap_t * bmap, sg_point_t p);
 	void (*draw_pixel)(const sg_bmap_t * bmap, sg_point_t p);
@@ -644,7 +626,6 @@ typedef struct MCU_PACK {
 	void (*draw_rectangle)(const sg_bmap_t * bmap, const sg_region_t * region);
 	void (*draw_arc)(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation, sg_point_t * corners);
 	void (*draw_pour)(const sg_bmap_t * bmap, sg_point_t p, const sg_region_t * region);
-	void (*draw_fill)(const sg_bmap_t * bmap, const sg_region_t * region);
 	void (*draw_pattern)(const sg_bmap_t * bmap, const sg_region_t * region, sg_bmap_data_t odd_pattern, sg_bmap_data_t even_pattern, sg_size_t pattern_height);
 	void (*draw_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src);
 	void (*draw_sub_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, const sg_region_t * src_region);
