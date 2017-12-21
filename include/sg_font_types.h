@@ -7,12 +7,21 @@
 
 #include <mcu/types.h>
 
+#define SG_FONT_VERSION 0x0301
 
-#define SG_FONT_TYPE_NONE 0
-#define SG_FONT_MEMORY 1
-#define SG_FONT_FILE 2
+enum {
+	SG_FONT_TYPE_NONE,
+	SG_FONT_MEMORY,
+	SG_FONT_FILE,
+	SG_FONT_VECTOR_MEMORY,
+	SG_FONT_VECTOR_FILE,
+	SG_FONT_TOTAL
+};
 
-#define SG_FONT_FLAG_BOLD (1<<0)
+enum {
+	SG_FONT_FLAG_IS_BOLD = (1<<0)
+};
+#define SG_FONT_FLAG_BOLD SG_FONT_FLAG_IS_BOLD
 
 typedef struct MCU_PACK {
 	u8 type;
@@ -47,9 +56,11 @@ typedef struct MCU_PACK {
 	u8 max_word_width /*! Max number of bytes per line of a font */;
 	u8 max_height /*! Maximum height of a character */;
 	u8 bits_per_pixel /*! Number of bits in each pixel of the font bitmap */;
-	u32 size /*! Number of bytes the font occupies */;
+	u32 size /*! Number of bytes the header occupies (header, character desc, and kerning info) */;
 	u16 kerning_pairs /*! Number of kerning pairs stored in the font */;
 	u16 version /*! Version of the font format */;
+	u16 canvas_width /*! Width of the canvas in pixels */;
+	u16 canvas_height /*! Height of the canvas in pixels */;
 } sg_font_header_t;
 
 /*! \brief Font Character Data
@@ -57,13 +68,14 @@ typedef struct MCU_PACK {
  */
 typedef struct MCU_PACK {
 	u16 id;
-	u16 offset /*! Characters data location within the font file or memory */;
+	s16 canvas_x /*! X location of the character on the canvas */;
+	s16 canvas_y /*! Y location of the character on the canvas */;
+	u8 canvas_idx /*! The offset of the canvas */;
 	u8 width /*! Width of the character */;
 	u8 height /*! Height of the character */;
-	u8 xadvance;
-	u8 resd;
-	s16 xoffset /*! Character's x offset */;
-	s16 yoffset /*! Character's y offset */;
+	u8 xadvance /*! How far to advance the cursor for this letter*/;
+	s8 xoffset /*! Character's x offset */;
+	s8 yoffset /*! Character's y offset */;
 } sg_font_char_t;
 
 typedef struct MCU_PACK {

@@ -124,7 +124,7 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 	aligned_words = calc_aligned_words(width, pixels_until_first_boundary);
 	pixels_after_last_boundary = calc_pixels_after_last_boundary(width, pixels_until_first_boundary, aligned_words);
 
-	while( shift_cursor.shift != 0 ){
+	for(i=0; i < pixels_until_first_boundary; i++){
 		copy_pixel(dest_cursor, &shift_cursor);
 	}
 
@@ -140,7 +140,7 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 				mask,
 				o_flags);
 
-		if( mask != 0 ){ //if mask is zero, then this copy is aligned
+		if( mask != 0 ){ //if mask is zero, then this copy is aligned -- no need for a second operation
 			draw_pixel_group(dest_cursor->target+1,
 					(intermediate_value >> (SG_BITS_PER_WORD - dest_cursor->shift)),
 					~mask,
