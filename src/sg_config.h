@@ -1,9 +1,4 @@
-/*
- * sg_config.height
- *
- *  Created on: Jun 8, 2017
- *      Author: tgil
- */
+//Copyright 2011-2018 Tyler Gilbert; All Rights Reserved
 
 #ifndef SG_CONFIG_H_
 #define SG_CONFIG_H_
