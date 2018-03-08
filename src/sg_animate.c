@@ -1,21 +1,11 @@
 //Copyright 2011-2016 Tyler Gilbert; All Rights Reserved
 
 
+#include <mcu/arch.h>
 #include <mcu/mcu.h>
 #include <unistd.h>
 
-#if defined __armv7em
-#define __FPU_PRESENT 1
-#define SysTick_IRQn 0
-#define __NVIC_PRIO_BITS 4
-typedef int IRQn_Type;
-#include <mcu/arch/cmsis/core_cm4.h>
-#elif defined __armv7m
-#define SysTick_IRQn 0
-#define __NVIC_PRIO_BITS 4
-typedef int IRQn_Type;
-#include <mcu/arch/cmsis/core_cm3.h>
-#endif
+
 
 #include "sg_config.h"
 #include "sg.h"

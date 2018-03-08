@@ -21,40 +21,21 @@ set(SOS_LIB_INCLUDE_DIRECTORIES include)
 
 set(SOS_LIB_TYPE release)
 
-# ARMv7-m ----------------------------------------------
-set(SOS_LIB_ARCH armv7-m)
 set(SOS_LIB_TYPE release)
 set(SOS_LIB_OPTION kernel_1bpp)
 set(SOS_LIB_DEFINITIONS SG_BITS_PER_PIXEL=1)
-include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib.cmake)
+include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib-std.cmake)
 
 set(SOS_LIB_OPTION kernel_2bpp)
 set(SOS_LIB_DEFINITIONS SG_BITS_PER_PIXEL=2)
-include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib.cmake)
+include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib-std.cmake)
 
 set(SOS_LIB_OPTION kernel_4bpp)
 set(SOS_LIB_DEFINITIONS SG_BITS_PER_PIXEL=4)
-include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib.cmake)
+include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib-std.cmake)
 
 set(SOS_LIB_OPTION kernel_8bpp)
 set(SOS_LIB_DEFINITIONS SG_BITS_PER_PIXEL=8)
-include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib.cmake)
+include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib-std.cmake)
 
-# ARMv7e-m (FPU) ----------------------------------------------
-set(SOS_LIB_ARCH armv7e-m)
 
-set(SOS_LIB_OPTION kernel_1bpp)
-set(SOS_LIB_DEFINITIONS SG_BITS_PER_PIXEL=1)
-include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib.cmake)
-
-set(SOS_LIB_OPTION kernel_2bpp)
-set(SOS_LIB_DEFINITIONS SG_BITS_PER_PIXEL=2)
-include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib.cmake)
-
-set(SOS_LIB_OPTION kernel_4bpp)
-set(SOS_LIB_DEFINITIONS SG_BITS_PER_PIXEL=4)
-include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib.cmake)
-
-set(SOS_LIB_OPTION kernel_8bpp)
-set(SOS_LIB_DEFINITIONS SG_BITS_PER_PIXEL=8)
-include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib.cmake)

@@ -1,2 +1,3 @@
 /build_*
 cmake_*
+*.user
