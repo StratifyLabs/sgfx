@@ -581,6 +581,7 @@ int sg_animate_init(sg_animation_t * animation,
 typedef struct MCU_PACK {
 	u32 version;
 	sg_size_t bits_per_pixel;
+    const char * git_hash;
 	void (*bmap_set_data)(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_dim_t dim);
 	sg_bmap_data_t * (*bmap_data)(const sg_bmap_t * bmap, sg_point_t p);
 	size_t (*calc_bmap_size)(sg_dim_t dim);
