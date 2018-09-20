@@ -4,6 +4,10 @@
 
 #include "sg_config.h"
 
+#if !defined SOS_GIT_HASH
+#define SOS_GIT_HASH "??"
+#endif
+
 
 const sg_api_t m_sg_api = {
     .version = SG_VERSION,
