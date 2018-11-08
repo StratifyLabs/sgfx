@@ -9,7 +9,7 @@
 #endif
 
 
-const sg_api_t m_sg_api = {
+const sg_api_t sg_api = {
     .version = SG_VERSION,
     .bits_per_pixel = SG_BITS_PER_PIXEL,
     .git_hash = SOS_GIT_HASH,
@@ -78,8 +78,4 @@ const sg_api_t m_sg_api = {
     .animate_init = sg_animate_init,
 
 };
-
-
-
-const sg_api_t * sg_api(){ return &m_sg_api; }
 

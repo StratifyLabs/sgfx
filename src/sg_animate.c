@@ -1,8 +1,12 @@
 //Copyright 2011-2016 Tyler Gilbert; All Rights Reserved
 
 
+#include <mcu/types.h>
+#if !defined __link
 #include <mcu/arch.h>
 #include <mcu/mcu.h>
+#endif
+
 #include <unistd.h>
 
 

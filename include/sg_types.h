@@ -3,7 +3,7 @@
 #ifndef SG_TYPES_H_
 #define SG_TYPES_H_
 
-#if defined __StratifyOS__
+#if defined __StratifyOS__ || defined __link
 #include <mcu/types.h>
 #else
 //need to define u32, s32, u16, s16, etc
@@ -12,7 +12,7 @@ typedef uint8_t u8;
 typedef int8_t s8;
 typedef uint16_t u16;
 typedef int16_t s16;
-typedef u32 u32;
+typedef uint32_t u32;
 typedef int32_t s32;
 typedef uint64_t u64;
 typedef int64_t s64;
@@ -20,8 +20,8 @@ typedef int64_t s64;
 
 #include <sys/types.h>
 
-#define SG_STR_VERSION "2.2"
-#define SG_VERSION 0x0202
+#define SG_STR_VERSION "2.3"
+#define SG_VERSION 0x0203
 
 #define SG_MAX (32767)
 #define SG_MIN (-32767)

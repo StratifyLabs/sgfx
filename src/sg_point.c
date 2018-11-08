@@ -618,8 +618,33 @@ void sg_point_shift_y(sg_point_t * d, sg_int_t a){
 }
 
 void sg_point_bound(const sg_bmap_t * bmap, sg_point_t * p){
+#if defined __link
+	sg_int_t t = p->x;
+	if( t < 0 ){
+		t = 0;
+	}
+
+	if( t >= bmap->dim.width ){
+		t = bmap->dim.width - 1 ;
+	}
+
+	p->x = t;
+
+	t = p->y;
+	if( t < 0 ){
+		t = 0;
+	}
+
+	if( t >= bmap->dim.height ){
+		t = bmap->dim.height - 1 ;
+	}
+
+	p->y = t;
+
+#else
 	sg_point_bound_x(bmap, &(p->x));
 	sg_point_bound_y(bmap, &(p->y));
+#endif
 }
 
 void sg_point_bound_x(const sg_bmap_t * bmap, sg_int_t * x){

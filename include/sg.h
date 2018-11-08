@@ -641,7 +641,7 @@ typedef struct MCU_PACK {
 
 } sg_api_t;
 
-const sg_api_t * sg_api();
+extern const sg_api_t sg_api;
 
 
 
