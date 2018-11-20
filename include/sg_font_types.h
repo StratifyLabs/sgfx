@@ -52,12 +52,12 @@ typedef struct MCU_PACK {
  *
  */
 typedef struct MCU_PACK {
-	u8 num_chars /*! Number of characters in a font */;
+	u8 character_count /*! Number of characters in a font */;
 	u8 max_word_width /*! Max number of bytes per line of a font */;
 	u8 max_height /*! Maximum height of a character */;
 	u8 bits_per_pixel /*! Number of bits in each pixel of the font bitmap */;
 	u32 size /*! Number of bytes the header occupies (header, character desc, and kerning info) */;
-	u16 kerning_pairs /*! Number of kerning pairs stored in the font */;
+	u16 kerning_pair_count /*! Number of kerning pairs stored in the font */;
 	u16 version /*! Version of the font format */;
 	u16 canvas_width /*! Width of the canvas in pixels */;
 	u16 canvas_height /*! Height of the canvas in pixels */;
@@ -73,15 +73,15 @@ typedef struct MCU_PACK {
 	u8 canvas_idx /*! The offset of the canvas */;
 	u8 width /*! Width of the character */;
 	u8 height /*! Height of the character */;
-	u8 xadvance /*! How far to advance the cursor for this letter*/;
-	s8 xoffset /*! Character's x offset */;
-	s8 yoffset /*! Character's y offset */;
+	u8 advance_x /*! How far to advance the cursor for this letter*/;
+	s8 offset_x /*! Character's x offset */;
+	s8 offset_y /*! Character's y offset */;
 } sg_font_char_t;
 
 typedef struct MCU_PACK {
-	u8 first;
-	u8 second;
-	s16 kerning;
+	u16 unicode_first;
+	u16 unicode_second;
+	s16 horizontal_kerning;
 } sg_font_kerning_pair_t;
 
 
