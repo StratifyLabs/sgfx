@@ -11,7 +11,7 @@
 
 const sg_api_t sg_api = {
     .version = SG_VERSION,
-    .bits_per_pixel = SG_BITS_PER_PIXEL,
+	 .bits_per_pixel = SG_BITS_PER_PIXEL,
     .git_hash = SOS_GIT_HASH,
     .bmap_set_data = sg_bmap_set_data,
     .bmap_data = sg_bmap_data,

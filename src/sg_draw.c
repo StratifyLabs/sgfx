@@ -373,17 +373,17 @@ void sg_draw_pattern(const sg_bmap_t * bmap, const sg_region_t * region, sg_bmap
 
 		sg_cursor_set(&y_cursor, bmap, p);
 
-		sg_color_t color = bmap->pen.color & ((1<<SG_BITS_PER_PIXEL)-1);
+		sg_color_t color = bmap->pen.color & ((1<<SG_BITS_PER_PIXEL_VALUE(bmap))-1);
 
 		even_pattern_color = 0;
 		odd_pattern_color = 0;
-		for(i=0; i < SG_PIXELS_PER_WORD; i++){
+		for(i=0; i < SG_PIXELS_PER_WORD(bmap); i++){
 			if( even_pattern & (1<<i) ){
-				even_pattern_color |= (color << (i*SG_BITS_PER_PIXEL));
+				even_pattern_color |= (color << (i*SG_BITS_PER_PIXEL_VALUE(bmap)));
 			}
 
 			if( odd_pattern & (1<<i) ){
-				odd_pattern_color |= (color << (i*SG_BITS_PER_PIXEL));
+				odd_pattern_color |= (color << (i*SG_BITS_PER_PIXEL_VALUE(bmap)));
 			}
 		}
 

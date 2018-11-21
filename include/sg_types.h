@@ -120,7 +120,8 @@ typedef struct MCU_PACK {
 	sg_dim_t dim /*! The bitmap's dimensions */;
 	sg_dim_t margin_top_left /*! Bitmap's top/left margins */;
 	sg_dim_t margin_bottom_right /*! Bitmap's bottom/right margins */;
-	sg_size_t columns /*! The number fo columns in the bitmap (used internally) */;
+	sg_size_t columns /*! The number of columns in the bitmap (used internally) */;
+	u8 bits_per_pixel /*! The number of bits in each pixel */;
 } sg_bmap_t;
 
 typedef struct MCU_PACK {

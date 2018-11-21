@@ -4,9 +4,9 @@
 
 #include "sg.h"
 
-static sg_size_t calc_pixels_until_first_boundary(sg_size_t w, sg_size_t shift);
-static sg_size_t calc_aligned_words(sg_size_t w, sg_size_t pixels_until_first_boundary);
-static sg_size_t calc_pixels_after_last_boundary(sg_size_t w, sg_size_t pixels_until_first_boundary, sg_size_t aligned_words);
+static sg_size_t calc_pixels_until_first_boundary(const sg_cursor_t * cursor, sg_size_t w, sg_size_t shift);
+static sg_size_t calc_aligned_words(const sg_cursor_t * cursor, sg_size_t w, sg_size_t pixels_until_first_boundary);
+static sg_size_t calc_pixels_after_last_boundary(const sg_cursor_t * cursor, sg_size_t w, sg_size_t pixels_until_first_boundary, sg_size_t aligned_words);
 static void copy_pixel(sg_cursor_t * dest, sg_cursor_t * src);
 static void draw_pixel(const sg_cursor_t * cursor, sg_color_t color);
 static void draw_pixel_group(sg_bmap_data_t * word, sg_bmap_data_t pattern, sg_bmap_data_t mask, u16 o_flags);
@@ -16,7 +16,7 @@ static inline sg_color_t get_pixel(const sg_cursor_t * cursor);
 void sg_cursor_set(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p){
 	cursor->bmap = bmap;
 	cursor->target = sg_bmap_data(bmap, p);
-	cursor->shift = ((p.x % SG_PIXELS_PER_WORD)*SG_BITS_PER_PIXEL);
+	cursor->shift = ((p.x % SG_PIXELS_PER_WORD(bmap))*SG_BITS_PER_PIXEL_VALUE(cursor->bmap));
 }
 
 sg_color_t sg_cursor_get_pixel_no_inc(sg_cursor_t * cursor){
@@ -38,9 +38,9 @@ void sg_cursor_dec_x(sg_cursor_t * cursor){
 
 	if( cursor->shift == 0 ){
 		cursor->target--; //go to the previous word
-		cursor->shift = SG_BITS_PER_WORD - SG_BITS_PER_PIXEL;
+		cursor->shift = SG_PIXELS_PER_WORD(cursor->bmap) - SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
 	} else {
-		cursor->shift -= SG_BITS_PER_PIXEL;
+		cursor->shift -= SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
 	}
 }
 
@@ -63,8 +63,8 @@ void sg_cursor_draw_hline(sg_cursor_t * cursor, sg_size_t width){
 	sg_size_t i;
 
 	pattern = 0;
-	for(i=0; i < SG_BITS_PER_WORD; i+=SG_BITS_PER_PIXEL){
-		pattern |= ((cursor->bmap->pen.color & SG_PIXEL_MASK) << i);
+	for(i=0; i < SG_PIXELS_PER_WORD(cursor->bmap); i+=SG_BITS_PER_PIXEL_VALUE(cursor->bmap)){
+		pattern |= ((cursor->bmap->pen.color & SG_PIXEL_MASK(cursor->bmap)) << i);
 	}
 
 	sg_cursor_draw_pattern(cursor, width, pattern);
@@ -79,9 +79,9 @@ void sg_cursor_draw_pattern(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_
 	u16 o_flags = cursor->bmap->pen.o_flags;
 
 	//calculate the pixels around the boundaries
-	pixels_until_first_boundary = calc_pixels_until_first_boundary(width, cursor->shift);
-	aligned_words = calc_aligned_words(width, pixels_until_first_boundary);
-	pixels_after_last_boundary = calc_pixels_after_last_boundary(width, pixels_until_first_boundary, aligned_words);
+	pixels_until_first_boundary = calc_pixels_until_first_boundary(cursor, width, cursor->shift);
+	aligned_words = calc_aligned_words(cursor, width, pixels_until_first_boundary);
+	pixels_after_last_boundary = calc_pixels_after_last_boundary(cursor, width, pixels_until_first_boundary, aligned_words);
 
 	//this loop could be done in one operation
 	for(i=0; i < pixels_until_first_boundary; i++){
@@ -120,9 +120,9 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 
 
 	//calculate the pixels around boundaries
-	pixels_until_first_boundary = calc_pixels_until_first_boundary(width, shift_cursor.shift);
-	aligned_words = calc_aligned_words(width, pixels_until_first_boundary);
-	pixels_after_last_boundary = calc_pixels_after_last_boundary(width, pixels_until_first_boundary, aligned_words);
+	pixels_until_first_boundary = calc_pixels_until_first_boundary(src_cursor, width, shift_cursor.shift);
+	aligned_words = calc_aligned_words(src_cursor, width, pixels_until_first_boundary);
+	pixels_after_last_boundary = calc_pixels_after_last_boundary(src_cursor, width, pixels_until_first_boundary, aligned_words);
 
 	for(i=0; i < pixels_until_first_boundary; i++){
 		copy_pixel(dest_cursor, &shift_cursor);
@@ -142,7 +142,7 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 
 		if( mask != 0 ){ //if mask is zero, then this copy is aligned -- no need for a second operation
 			draw_pixel_group(dest_cursor->target+1,
-					(intermediate_value >> (SG_BITS_PER_WORD - dest_cursor->shift)),
+					(intermediate_value >> (SG_PIXELS_PER_WORD(dest_cursor->bmap) - dest_cursor->shift)),
 					~mask,
 					o_flags);
 		}
@@ -171,9 +171,9 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 	sg_size_t operating_width;
 
 	//calculate the pixels around boundaries
-	pixels_until_first_boundary = calc_pixels_until_first_boundary(shift_width, cursor->shift);
-	aligned_words = calc_aligned_words(shift_width, pixels_until_first_boundary);
-	pixels_after_last_boundary = calc_pixels_after_last_boundary(shift_width, pixels_until_first_boundary, aligned_words);
+	pixels_until_first_boundary = calc_pixels_until_first_boundary(cursor, shift_width, cursor->shift);
+	aligned_words = calc_aligned_words(cursor, shift_width, pixels_until_first_boundary);
+	pixels_after_last_boundary = calc_pixels_after_last_boundary(cursor, shift_width, pixels_until_first_boundary, aligned_words);
 
 	sg_cursor_copy(&shift_cursor, cursor);
 
@@ -202,7 +202,7 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 			operating_width = shift_width;
 		}
 
-		mask = ((1<<operating_width*SG_BITS_PER_PIXEL) - 1);
+		mask = ((1<<operating_width*SG_BITS_PER_PIXEL_VALUE(cursor->bmap)) - 1);
 		value = (*shift_cursor.target) & mask;
 
 		*shift_cursor.target &= ~(mask);
@@ -212,8 +212,8 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
 		}
 	}
 
@@ -232,8 +232,8 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
 		}
 
 		dest_cursor.target--;
@@ -251,7 +251,7 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 			sg_cursor_dec_x(&dest_cursor);
 		}
 
-		mask = ((1<<operating_width*SG_BITS_PER_PIXEL) - 1);
+		mask = ((1<<operating_width*SG_BITS_PER_PIXEL_VALUE(cursor->bmap)) - 1);
 		value = (*shift_cursor.target >> shift_cursor.shift) & mask;
 
 		*shift_cursor.target &= ~(mask << shift_cursor.shift);
@@ -261,8 +261,8 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
 		}
 	}
 }
@@ -280,9 +280,9 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 	sg_size_t operating_width;
 
 	//calculate the pixels around boundaries
-	pixels_until_first_boundary = calc_pixels_until_first_boundary(shift_width, cursor->shift);
-	aligned_words = calc_aligned_words(shift_width, pixels_until_first_boundary);
-	pixels_after_last_boundary = calc_pixels_after_last_boundary(shift_width, pixels_until_first_boundary, aligned_words);
+	pixels_until_first_boundary = calc_pixels_until_first_boundary(cursor, shift_width, cursor->shift);
+	aligned_words = calc_aligned_words(cursor, shift_width, pixels_until_first_boundary);
+	pixels_after_last_boundary = calc_pixels_after_last_boundary(cursor, shift_width, pixels_until_first_boundary, aligned_words);
 
 	sg_cursor_copy(&shift_cursor, cursor);
 
@@ -300,7 +300,7 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 			operating_width = shift_width;
 		}
 
-		mask = ((1<<operating_width*SG_BITS_PER_PIXEL) - 1);
+		mask = ((1<<operating_width*SG_BITS_PER_PIXEL_VALUE(cursor->bmap)) - 1);
 		value = (*shift_cursor.target >> shift_cursor.shift) & mask;
 
 		(*shift_cursor.target) &= ~(mask << shift_cursor.shift);
@@ -310,8 +310,8 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
 		}
 
 		shift_cursor.target++;
@@ -336,8 +336,8 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
 		}
 
 		dest_cursor.target++;
@@ -347,7 +347,7 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 	if( pixels_after_last_boundary > 0 ){
 		operating_width = pixels_after_last_boundary;
 
-		mask = ((1<<operating_width*SG_BITS_PER_PIXEL) - 1);
+		mask = ((1<<operating_width*SG_BITS_PER_PIXEL_VALUE(cursor->bmap)) - 1);
 		value = (*shift_cursor.target) & mask;
 
 		*shift_cursor.target &= ~(mask);
@@ -357,8 +357,8 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
 		}
 
 	}
@@ -368,13 +368,13 @@ sg_color_t get_pixel(const sg_cursor_t * cursor){
 	sg_color_t color;
 	sg_bmap_data_t value;
 	value = *(cursor->target) >> cursor->shift;
-	color = value & SG_PIXEL_MASK;
+	color = value & SG_PIXEL_MASK(cursor->bmap);
 	return color;
 }
 
 void sg_cursor_inc_x(sg_cursor_t * cursor){
-	cursor->shift += SG_BITS_PER_PIXEL;
-	if( cursor->shift == SG_BITS_PER_WORD ){
+	cursor->shift += SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
+	if( cursor->shift == SG_PIXELS_PER_WORD(cursor->bmap) ){
 		cursor->target++; //go to the next word
 		cursor->shift = 0;
 	}
@@ -386,12 +386,12 @@ void copy_pixel(sg_cursor_t * dest, sg_cursor_t * src){
 	sg_cursor_inc_x(dest);
 }
 
-sg_size_t calc_pixels_until_first_boundary(sg_size_t w, sg_size_t shift){
+sg_size_t calc_pixels_until_first_boundary(const sg_cursor_t * cursor, sg_size_t w, sg_size_t shift){
 	sg_size_t pixels_until_first_boundary;
 
-	pixels_until_first_boundary = (SG_BITS_PER_WORD - shift)/SG_BITS_PER_PIXEL;
+	pixels_until_first_boundary = (SG_PIXELS_PER_WORD(cursor->bmap) - shift)/SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
 
-	if( pixels_until_first_boundary == SG_PIXELS_PER_WORD ){
+	if( pixels_until_first_boundary == SG_PIXELS_PER_WORD(cursor->bmap) ){
 		pixels_until_first_boundary = 0;
 	}
 
@@ -402,17 +402,17 @@ sg_size_t calc_pixels_until_first_boundary(sg_size_t w, sg_size_t shift){
 	return pixels_until_first_boundary;
 }
 
-sg_size_t calc_aligned_words(sg_size_t w, sg_size_t pixels_until_first_boundary){
-	return (w - pixels_until_first_boundary) / SG_PIXELS_PER_WORD;
+sg_size_t calc_aligned_words(const sg_cursor_t * cursor, sg_size_t w, sg_size_t pixels_until_first_boundary){
+	return (w - pixels_until_first_boundary) / SG_PIXELS_PER_WORD(cursor->bmap);
 }
 
-sg_size_t calc_pixels_after_last_boundary(sg_size_t w, sg_size_t pixels_until_first_boundary, sg_size_t aligned_words){
-	return w - pixels_until_first_boundary - aligned_words * SG_PIXELS_PER_WORD;
+sg_size_t calc_pixels_after_last_boundary(const sg_cursor_t * cursor, sg_size_t w, sg_size_t pixels_until_first_boundary, sg_size_t aligned_words){
+	return w - pixels_until_first_boundary - aligned_words * SG_PIXELS_PER_WORD(cursor->bmap);
 }
 
 void draw_pixel(const sg_cursor_t * cursor, sg_color_t color){
 	u16 o_flags = cursor->bmap->pen.o_flags;
-	sg_bmap_data_t data = (color & SG_PIXEL_MASK) << cursor->shift;
+	sg_bmap_data_t data = (color & SG_PIXEL_MASK(cursor->bmap)) << cursor->shift;
 	if( o_flags & SG_PEN_FLAG_IS_ERASE ){
 		*(cursor->target) &= ~data;
 	} else if( o_flags & SG_PEN_FLAG_IS_INVERT ){
@@ -420,7 +420,7 @@ void draw_pixel(const sg_cursor_t * cursor, sg_color_t color){
 	} else if( o_flags & SG_PEN_FLAG_IS_BLEND ){
 		*(cursor->target) |= data;
 	} else {
-		*(cursor->target) &= ~(SG_PIXEL_MASK << cursor->shift);
+		*(cursor->target) &= ~(SG_PIXEL_MASK(cursor->bmap) << cursor->shift);
 		*(cursor->target) |= data;
 	}
 }

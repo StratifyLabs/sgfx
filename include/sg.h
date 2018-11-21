@@ -52,9 +52,9 @@ extern "C" {
  */
 
 /*! \details Change effective size without free/alloc sequence */
-void sg_bmap_set_data(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_dim_t dim);
+void sg_bmap_set_data(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_dim_t dim, u8 bits_per_pixel);
 sg_bmap_data_t * sg_bmap_data(const sg_bmap_t * bmap, sg_point_t p);
-size_t sg_calc_bmap_size(sg_dim_t dim);
+size_t sg_calc_bmap_size(const sg_bmap_t * bmap, sg_dim_t dim);
 
 static inline u16 sg_calc_word_width(sg_size_t w){ return (w + 31) >> 5; }
 
@@ -582,9 +582,9 @@ typedef struct MCU_PACK {
 	u32 version;
 	sg_size_t bits_per_pixel;
     const char * git_hash;
-	void (*bmap_set_data)(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_dim_t dim);
+	void (*bmap_set_data)(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_dim_t dim, u8 bits_per_pixel);
 	sg_bmap_data_t * (*bmap_data)(const sg_bmap_t * bmap, sg_point_t p);
-	size_t (*calc_bmap_size)(sg_dim_t dim);
+	size_t (*calc_bmap_size)(const sg_bmap_t * bmap, sg_dim_t dim);
 
 	void (*point_set)(sg_point_t * d, sg_point_t p);
 	void (*point_map)(sg_point_t * d, const sg_vector_map_t * m);
