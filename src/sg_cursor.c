@@ -16,7 +16,7 @@ static inline sg_color_t get_pixel(const sg_cursor_t * cursor);
 void sg_cursor_set(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p){
 	cursor->bmap = bmap;
 	cursor->target = sg_bmap_data(bmap, p);
-	cursor->shift = ((p.x % SG_PIXELS_PER_WORD(bmap))*SG_BITS_PER_PIXEL_VALUE(cursor->bmap));
+	cursor->shift = ((p.x % SG_PIXELS_PER_WORD(bmap))*SG_BITS_PER_PIXEL_VALUE(bmap));
 }
 
 sg_color_t sg_cursor_get_pixel_no_inc(sg_cursor_t * cursor){
@@ -118,42 +118,50 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 
 	sg_cursor_copy(&shift_cursor, src_cursor);
 
+	if( dest_cursor->bmap->bits_per_pixel == src_cursor->bmap->bits_per_pixel ){
 
-	//calculate the pixels around boundaries
-	pixels_until_first_boundary = calc_pixels_until_first_boundary(src_cursor, width, shift_cursor.shift);
-	aligned_words = calc_aligned_words(src_cursor, width, pixels_until_first_boundary);
-	pixels_after_last_boundary = calc_pixels_after_last_boundary(src_cursor, width, pixels_until_first_boundary, aligned_words);
+		//calculate the pixels around boundaries
+		pixels_until_first_boundary = calc_pixels_until_first_boundary(src_cursor, width, shift_cursor.shift);
+		aligned_words = calc_aligned_words(src_cursor, width, pixels_until_first_boundary);
+		pixels_after_last_boundary = calc_pixels_after_last_boundary(src_cursor, width, pixels_until_first_boundary, aligned_words);
 
-	for(i=0; i < pixels_until_first_boundary; i++){
-		copy_pixel(dest_cursor, &shift_cursor);
-	}
-
-	//now handle all the words that are aligned
-	for(i=0; i < aligned_words; i++){
-
-		intermediate_value = *(shift_cursor.target);
-
-		//shift into the dest area
-		mask = (1<<dest_cursor->shift)-1;
-		draw_pixel_group(dest_cursor->target,
-				((intermediate_value) << dest_cursor->shift),
-				mask,
-				o_flags);
-
-		if( mask != 0 ){ //if mask is zero, then this copy is aligned -- no need for a second operation
-			draw_pixel_group(dest_cursor->target+1,
-					(intermediate_value >> (SG_PIXELS_PER_WORD(dest_cursor->bmap) - dest_cursor->shift)),
-					~mask,
-					o_flags);
+		for(i=0; i < pixels_until_first_boundary; i++){
+			copy_pixel(dest_cursor, &shift_cursor);
 		}
 
-		dest_cursor->target++;
-		shift_cursor.target++;
-	}
+		//now handle all the words that are aligned
+		for(i=0; i < aligned_words; i++){
 
-	//copy the pixels past the boundary
-	for(i=0; i < pixels_after_last_boundary; i++){
-		copy_pixel(dest_cursor, &shift_cursor);
+			intermediate_value = *(shift_cursor.target);
+
+			//shift into the dest area
+			mask = (1<<dest_cursor->shift)-1;
+			draw_pixel_group(dest_cursor->target,
+								  ((intermediate_value) << dest_cursor->shift),
+								  mask,
+								  o_flags);
+
+			if( mask != 0 ){ //if mask is zero, then this copy is aligned -- no need for a second operation
+				draw_pixel_group(dest_cursor->target+1,
+									  (intermediate_value >> (SG_PIXELS_PER_WORD(dest_cursor->bmap) - dest_cursor->shift)),
+									  ~mask,
+									  o_flags);
+			}
+
+			dest_cursor->target++;
+			shift_cursor.target++;
+		}
+
+
+		//copy the pixels past the boundary
+		for(i=0; i < pixels_after_last_boundary; i++){
+			copy_pixel(dest_cursor, &shift_cursor);
+		}
+
+	} else {
+		for(i=0; i < width; i++){
+			copy_pixel(dest_cursor, &shift_cursor);
+		}
 	}
 
 }
