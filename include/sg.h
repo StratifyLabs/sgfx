@@ -169,6 +169,7 @@ static inline sg_point_t sg_point_origin(){ sg_point_t p; p.point = 0; return p;
 
 void sg_point_set(sg_point_t * d, sg_point_t p);
 void sg_point_map(sg_point_t * d, const sg_vector_map_t * m);
+void sg_point_unmap(sg_point_t * d, const sg_vector_map_t * m);
 sg_size_t sg_point_map_pixel_size(const sg_vector_map_t * m);
 void sg_point_add(sg_point_t * d, const sg_point_t * a);
 void sg_point_subtract(sg_point_t * d, const sg_point_t * a);
@@ -588,6 +589,7 @@ typedef struct MCU_PACK {
 
 	void (*point_set)(sg_point_t * d, sg_point_t p);
 	void (*point_map)(sg_point_t * d, const sg_vector_map_t * m);
+	void (*point_unmap)(sg_point_t * d, const sg_vector_map_t * m);
 	sg_size_t (*point_map_pixel_size)(const sg_vector_map_t * m);
 	void (*point_add)(sg_point_t * d, const sg_point_t * a);
 	void (*point_subtract)(sg_point_t * d, const sg_point_t * a);

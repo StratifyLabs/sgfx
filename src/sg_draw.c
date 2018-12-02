@@ -226,6 +226,10 @@ void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t
 	steps += calc_largest_delta(p1, p2);
 	steps2 = steps*steps;
 
+	if( steps2 == 0 ){
+		return;
+	}
+
 	if( corners ){
 		min.x = SG_MAX;
 		min.y = SG_MAX;
@@ -285,6 +289,9 @@ void sg_draw_cubic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, 
 	steps += calc_largest_delta(p2, p3);
 
 	steps3 = steps*steps*steps;
+	if( steps3 == 0 ){
+		return;
+	}
 
 	if( corners ){
 		min.x = SG_MAX;

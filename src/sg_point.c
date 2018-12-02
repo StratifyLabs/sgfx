@@ -543,6 +543,24 @@ void sg_point_map(sg_point_t * d, const sg_vector_map_t * m){
 	d->y = m->region.point.y + tmp;
 }
 
+void sg_point_unmap(sg_point_t * d, const sg_vector_map_t * m){
+	sg_point_rotate(d, (SG_TRIG_POINTS - m->rotation) % SG_TRIG_POINTS);
+	//api::SgfxObject::api()->point_rotate(d, (SG_TRIG_POINTS - m->rotation) % SG_TRIG_POINTS);
+	//map to the space
+	s32 tmp_x;
+	s32 tmp_y;
+	//x' = m->region.point.x + ((x + SG_MAX) * m->region.dim.width) / (SG_MAX-SG_MIN);
+	//y' = m->region.point.y + ((y + SG_MAX) * m->region.dim.height) / (SG_MAX-SG_MIN);
+
+	//(x' - m->region.point.x)*(SG_MAX-SG_MIN)/ m->region.dim.width - SG_MAX = x
+	//printer().message("%d - %d * %d / %d", d->x, m->region.point.x, (SG_MAX-SG_MIN), m->region.dim.width);
+	tmp_x = ((d->x - m->region.point.x)*(SG_MAX-SG_MIN) + m->region.dim.width/2) / m->region.dim.width;
+	tmp_y = ((d->y - m->region.point.y)*(SG_MAX-SG_MIN) + m->region.dim.height/2) / m->region.dim.height;
+
+	d->x = tmp_x - SG_MAX,
+	d->y = tmp_y - SG_MAX;
+}
+
 sg_size_t sg_point_map_pixel_size(const sg_vector_map_t * m){
 	sg_size_t p;
 	sg_size_t max = m->region.dim.width > m->region.dim.height ? m->region.dim.width : m->region.dim.height;

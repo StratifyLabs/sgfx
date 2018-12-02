@@ -284,6 +284,25 @@ typedef struct MCU_PACK {
 	sg_region_t region /*! Destination for region specifications */;
 } sg_vector_path_t;
 
+/*! \details Header for a file that
+ * holds vector icon descriptions.
+ *
+ * File:
+ * 0: sg_vector_path_icon_header_t
+ * X: sg_vector_path_description_t[] icon descriptors
+ * Y: sg_vector_path_icon_header_t next icon
+ *
+ */
+typedef struct MCU_PACK {
+	char name[24];
+	u16 count /*! number of items in the vector icon */;
+} sg_vector_path_icon_header_t;
+
+
+
+typedef struct MCU_PACK {
+	u32 count /*! number of icons in the file */;
+} sg_vector_header_t;
 
 enum {
 	SG_ANIMATION_TYPE_PUSH_LEFT,
