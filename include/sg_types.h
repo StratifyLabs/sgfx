@@ -296,6 +296,7 @@ typedef struct MCU_PACK {
 typedef struct MCU_PACK {
 	char name[24];
 	u16 count /*! number of items in the vector icon */;
+	u16 list_offset /*! Location of the list in the file */;
 } sg_vector_path_icon_header_t;
 
 
