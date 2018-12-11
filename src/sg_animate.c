@@ -107,14 +107,14 @@ int sg_animate_push_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t 
 		draw_dest_point = animation->region.point;
 
 		//adjust shift values
-		shift_region.dim.width -= count;
+		shift_region.area.width -= count;
 		shift.x = count;
 		shift.y = 0;
 		sg_transform_shift(bmap, shift, &shift_region);
 
 		//adjust bitmap draw operations
-		draw_src_region.point.x = animation->region.point.x + animation->region.dim.width - animation->path.motion - count;
-		draw_src_region.dim.width = count;
+		draw_src_region.point.x = animation->region.point.x + animation->region.area.width - animation->path.motion - count;
+		draw_src_region.area.width = count;
 		sg_draw_sub_bitmap(bmap, draw_dest_point, scratch, &draw_src_region);
 
 		animation->path.motion += count;
@@ -146,15 +146,15 @@ int sg_animate_push_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 
 		//adjust shift values
 		shift_region.point.x += count;
-		shift_region.dim.width -= count;
+		shift_region.area.width -= count;
 		shift.x = -1*count;
 		shift.y = 0;
 		sg_transform_shift(bmap, shift, &shift_region);
 
 		//adjust bitmap draw operations
 		draw_src_region.point.x = animation->region.point.x + animation->path.motion;
-		draw_dest_point.x = animation->region.point.x + animation->region.dim.width - count;
-		draw_src_region.dim.width = count;
+		draw_dest_point.x = animation->region.point.x + animation->region.area.width - count;
+		draw_src_region.area.width = count;
 		sg_draw_sub_bitmap(bmap, draw_dest_point, scratch, &draw_src_region);
 
 		animation->path.motion += count;
@@ -181,16 +181,16 @@ int sg_animate_push_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * a
 
 			shift_region.point.x = animation->region.point.x;
 			shift_region.point.y = animation->region.point.y + count;
-			shift_region.dim.width = animation->region.dim.width;
-			shift_region.dim.height = animation->region.dim.height - count;
+			shift_region.area.width = animation->region.area.width;
+			shift_region.area.height = animation->region.area.height - count;
 			sg_transform_shift(bmap, shift, &shift_region);
 
-			draw_src_region.dim.width = animation->region.dim.width;
-			draw_src_region.dim.height = count;
+			draw_src_region.area.width = animation->region.area.width;
+			draw_src_region.area.height = count;
 			draw_src_region.point.x = animation->region.point.x;
 			draw_src_region.point.y = animation->region.point.y + animation->path.motion;
 			dest_point.x = animation->region.point.x;
-			dest_point.y = animation->region.point.y + animation->region.dim.height - count;
+			dest_point.y = animation->region.point.y + animation->region.area.height - count;
 			sg_draw_sub_bitmap(bmap, dest_point, scratch, &draw_src_region);
 		}
 
@@ -217,16 +217,16 @@ int sg_animate_push_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 			shift.y = count;
 
 			shift_region = animation->region;
-			shift_region.dim.height = animation->region.dim.height - count;
+			shift_region.area.height = animation->region.area.height - count;
 			sg_transform_shift(bmap, shift, &shift_region);
 
 
 			animation->path.motion += count;
 
-			draw_src_region.dim.width = animation->region.dim.width;
-			draw_src_region.dim.height = count;
+			draw_src_region.area.width = animation->region.area.width;
+			draw_src_region.area.height = count;
 			draw_src_region.point.x = animation->region.point.x;
-			draw_src_region.point.y = animation->region.point.y + animation->region.dim.height - animation->path.motion;
+			draw_src_region.point.y = animation->region.point.y + animation->region.area.height - animation->path.motion;
 			dest_point.x = animation->region.point.x;
 			dest_point.y = animation->region.point.y;
 			sg_draw_sub_bitmap(bmap, dest_point, scratch, &draw_src_region);
@@ -266,10 +266,10 @@ int sg_animate_slide_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t * 
 		animation->path.motion += sg_animate_calc_count(animation);
 
 		region.point = animation->region.point;
-		region.dim.width = animation->region.dim.width;
-		region.dim.height = animation->path.motion;
+		region.area.width = animation->region.area.width;
+		region.area.height = animation->path.motion;
 		dest.x = animation->region.point.x;
-		dest.y = animation->region.point.y + animation->region.dim.height - animation->path.motion;
+		dest.y = animation->region.point.y + animation->region.area.height - animation->path.motion;
 		sg_draw_sub_bitmap(bmap, dest, scratch, &region);
 
 		return 1;
@@ -293,15 +293,15 @@ int sg_animate_undo_slide_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation
 			shift.x = 0;
 			shift.y = count;
 
-			shift_region.dim.width = animation->region.dim.width;
-			shift_region.dim.height = animation->region.dim.height - (animation->path.motion + count);
+			shift_region.area.width = animation->region.area.width;
+			shift_region.area.height = animation->region.area.height - (animation->path.motion + count);
 			sg_transform_shift(bmap, shift, &shift_region);
 
 			draw_src_region.point.x = animation->region.point.x;
 			draw_src_region.point.y = animation->region.point.y + animation->path.motion;
 
-			draw_src_region.dim.width = animation->region.dim.width;
-			draw_src_region.dim.height = count;
+			draw_src_region.area.width = animation->region.area.width;
+			draw_src_region.area.height = count;
 			sg_draw_sub_bitmap(bmap, draw_src_region.point, scratch, &draw_src_region);
 
 			animation->path.motion += count;
@@ -326,10 +326,10 @@ int sg_animate_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t 
 		dest.y = start.y;
 
 		draw_src_region.point.x = start.x;
-		draw_src_region.point.y = start.y + animation->region.dim.height - animation->path.motion;
+		draw_src_region.point.y = start.y + animation->region.area.height - animation->path.motion;
 
-		draw_src_region.dim.width = animation->region.dim.width;
-		draw_src_region.dim.height = animation->path.motion;
+		draw_src_region.area.width = animation->region.area.width;
+		draw_src_region.area.height = animation->path.motion;
 
 		sg_draw_sub_bitmap(bmap, dest, scratch, &draw_src_region);
 		return 1;
@@ -355,15 +355,15 @@ int sg_animate_undo_slide_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animati
 			shift.x = 0;
 			shift.y = -1*count;
 
-			shift_region.dim.width = animation->region.dim.width;
-			shift_region.dim.height = animation->region.dim.height - (animation->path.motion);
+			shift_region.area.width = animation->region.area.width;
+			shift_region.area.height = animation->region.area.height - (animation->path.motion);
 			sg_transform_shift(bmap, shift, &shift_region);
 
 			draw_region.point.x = animation->region.point.x;
-			draw_region.point.y = animation->region.point.y + animation->region.dim.height - animation->path.motion;
+			draw_region.point.y = animation->region.point.y + animation->region.area.height - animation->path.motion;
 
-			draw_region.dim.width = animation->region.dim.width;
-			draw_region.dim.height = count;
+			draw_region.area.width = animation->region.area.width;
+			draw_region.area.height = count;
 			sg_draw_sub_bitmap(bmap, draw_region.point, scratch, &draw_region);
 
 
@@ -403,8 +403,8 @@ int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 			dest.x = animation->region.point.x;
 			dest.y = animation->region.point.y + animation->path.motion_total - animation->path.motion;
 
-			region.dim.width = animation->region.dim.width;
-			region.dim.height = animation->region.dim.height - animation->path.motion_total + animation->path.motion;
+			region.area.width = animation->region.area.width;
+			region.area.height = animation->region.area.height - animation->path.motion_total + animation->path.motion;
 
 			sg_draw_sub_bitmap(bmap, dest, scratch, &region);
 
@@ -417,8 +417,8 @@ int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 			region.point.x = animation->region.point.x;
 			region.point.y = animation->region.point.y + animation->path.motion;
 
-			region.dim.width = animation->region.dim.width;
-			region.dim.height = animation->region.dim.height - animation->path.motion - count;
+			region.area.width = animation->region.area.width;
+			region.area.height = animation->region.area.height - animation->path.motion - count;
 
 			dest = animation->region.point;
 
@@ -426,7 +426,7 @@ int sg_animate_bounce_up(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_animation_t *
 			shift.y = count;
 			sg_transform_shift(bmap, shift, &region);
 
-			region.dim.height = animation->path.motion + count;
+			region.area.height = animation->path.motion + count;
 
 			//Checkerboard Area
 			region.point = dest;
@@ -470,8 +470,8 @@ static int sg_animate_bounce_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 			dest.x = animation->region.point.x;
 			dest.y = animation->region.point.y;
 
-			region.dim.width = animation->region.dim.width;
-			region.dim.height = animation->region.dim.height - animation->path.motion_total + animation->path.motion;
+			region.area.width = animation->region.area.width;
+			region.area.height = animation->region.area.height - animation->path.motion_total + animation->path.motion;
 
 			sg_draw_sub_bitmap(bmap, dest, scratch, &region);
 
@@ -485,15 +485,15 @@ static int sg_animate_bounce_down(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 
 			region.point = start;
 
-			region.dim.width = animation->region.dim.width;
-			region.dim.height = animation->region.dim.height - animation->path.motion - count;
+			region.area.width = animation->region.area.width;
+			region.area.height = animation->region.area.height - animation->path.motion - count;
 
 			shift.y = -1*count;
 			sg_transform_shift(bmap, shift, &region);
 
-			region.dim.height = animation->path.motion + count;
+			region.area.height = animation->path.motion + count;
 			region.point.x = start.x;
-			region.point.y = start.y + animation->region.dim.height - region.dim.height;
+			region.point.y = start.y + animation->region.area.height - region.area.height;
 
 			//Checkboard background
 			sg_draw_pattern(bmap, &region, 0xAAAAAAAA, 0x55555555, 1);
@@ -529,8 +529,8 @@ static int sg_animate_bounce_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 
 			//bounce back phase
 			region.point = animation->region.point;
-			region.dim.width = animation->region.dim.width - animation->path.motion_total + animation->path.motion;
-			region.dim.height = animation->region.dim.height;
+			region.area.width = animation->region.area.width - animation->path.motion_total + animation->path.motion;
+			region.area.height = animation->region.area.height;
 			dest.x = animation->region.point.x + animation->path.motion_total - animation->path.motion;
 			dest.y = animation->region.point.y;
 			sg_draw_sub_bitmap(bmap, dest, scratch, &region);
@@ -543,14 +543,14 @@ static int sg_animate_bounce_left(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_anim
 
 			region.point.x = animation->region.point.x + animation->path.motion;
 			region.point.y = animation->region.point.y;
-			region.dim.width = animation->region.dim.width - animation->path.motion;
-			region.dim.height = animation->region.dim.height;
+			region.area.width = animation->region.area.width - animation->path.motion;
+			region.area.height = animation->region.area.height;
 			shift.x = count;
 			shift.y = 0;
 			sg_transform_shift(bmap, shift, &region);
 
 			region.point = animation->region.point;
-			region.dim.width = animation->path.motion + count;
+			region.area.width = animation->path.motion + count;
 			sg_draw_pattern(bmap, &region, 0xAAAAAAAA, 0x55555555, 1); //checkerboard area
 
 			if( animation->path.step == animation->path.step_total ){
@@ -587,8 +587,8 @@ static int sg_animate_bounce_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_ani
 
 			dest = animation->region.point;
 
-			region.dim.width = animation->region.dim.width - animation->path.motion_total + animation->path.motion;
-			region.dim.height = animation->region.dim.height;
+			region.area.width = animation->region.area.width - animation->path.motion_total + animation->path.motion;
+			region.area.height = animation->region.area.height;
 
 			sg_draw_sub_bitmap(bmap, dest, scratch, &region);
 
@@ -601,14 +601,14 @@ static int sg_animate_bounce_right(sg_bmap_t * bmap, sg_bmap_t * scratch, sg_ani
 			}
 
 			region.point = animation->region.point;
-			region.dim.width = animation->region.dim.width - animation->path.motion;
-			region.dim.height = animation->region.dim.height;
+			region.area.width = animation->region.area.width - animation->path.motion;
+			region.area.height = animation->region.area.height;
 			shift.x = -1*count;
 			shift.y = 0;
 			sg_transform_shift(bmap, shift, &region);
 
-			region.dim.width = animation->path.motion + count;
-			region.point.x = animation->region.point.x + animation->region.dim.width - region.dim.width;
+			region.area.width = animation->path.motion + count;
+			region.point.x = animation->region.point.x + animation->region.area.width - region.area.width;
 			region.point.y = animation->region.point.y;
 
 			//Checkboard area
@@ -659,12 +659,12 @@ int sg_animate_init(sg_animation_t * animation,
 		u8 step_total,
 		sg_size_t motion_total,
 		sg_point_t start,
-		sg_dim_t dim){
+		sg_area_t area){
 	animation->type = type;
 	animation->path.type = path;
 	animation->path.step = 0;
 	animation->region.point = start;
-	animation->region.dim = dim;
+	animation->region.area = area;
 	animation->path.step_total = step_total;
 	animation->path.motion = 0;
 	animation->path.motion_total = motion_total;

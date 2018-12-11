@@ -20,8 +20,8 @@ typedef int64_t s64;
 
 #include <sys/types.h>
 
-#define SG_STR_VERSION "2.3"
-#define SG_VERSION 0x0203
+#define SG_STR_VERSION "3.0"
+#define SG_VERSION 0x0300
 
 #define SG_MAX (32767)
 #define SG_MIN (-32767)
@@ -84,8 +84,11 @@ typedef union MCU_PACK {
 		sg_size_t width /*! Width */;
 		sg_size_t height /*! Height */;
 	};
-	sg_unified_t dim;
-} sg_dim_t;
+	sg_unified_t area;
+} sg_area_t;
+
+
+typedef sg_area_t sg_dim_t;
 
 enum {
 	SG_PEN_FLAG_IS_SOLID /*! Assigns color when drawing (default) */ = 0,
@@ -117,9 +120,9 @@ typedef struct MCU_PACK {
 typedef struct MCU_PACK {
 	sg_bmap_data_t * data /*! A pointer to the bitmap data */;
 	sg_pen_t pen /*! The bitmap pen used for drawing on the bitmap */;
-	sg_dim_t dim /*! The bitmap's dimensions */;
-	sg_dim_t margin_top_left /*! Bitmap's top/left margins */;
-	sg_dim_t margin_bottom_right /*! Bitmap's bottom/right margins */;
+	sg_area_t area /*! The bitmap's dimensions */;
+	sg_area_t margin_top_left /*! Bitmap's top/left margins */;
+	sg_area_t margin_bottom_right /*! Bitmap's bottom/right margins */;
 	sg_size_t columns /*! The number of columns in the bitmap (used internally) */;
 	u8 bits_per_pixel /*! The number of bits in each pixel */;
 } sg_bmap_t;
@@ -130,16 +133,6 @@ typedef struct MCU_PACK {
 	sg_size_t shift;
 } sg_cursor_t;
 
-
-enum {
-	SG_LINE /*! A line */,
-	SG_ARC /*! An Arc */,
-	SG_POUR /*! Pour in the area */,
-	SG_QUADRATIC_BEZIER /*! Quadratic Bezier */,
-	SG_CUBIC_BEZIER /*! Cubic Bezier */,
-	SG_TYPE_TOTAL
-};
-
 typedef struct MCU_PACK {
 	sg_size_t width;
 	sg_size_t height;
@@ -149,58 +142,12 @@ typedef struct MCU_PACK {
 	//this must be 4 byte aligned
 } sg_bmap_header_t;
 
-
 /*! \brief Graphics Region Structure
  * \details Describes an area using a point and a dimension */
 typedef struct MCU_PACK {
 	sg_point_t point /*! Top left corner of the region */;
-	sg_dim_t dim /*! Dimensions of the region */;
+	sg_area_t area /*! Area of the region */;
 } sg_region_t;
-
-
-typedef struct MCU_PACK {
-	sg_point_t p1;
-	sg_point_t p2;
-} sg_vector_line_t;
-
-typedef struct MCU_PACK {
-	sg_point_t center /*! Arc center */;
-	sg_size_t rx /*! X radius */;
-	sg_size_t ry /*! Y radius */;
-	s16 start /*! Start angle */;
-	s16 stop /*!  Stop angle */;
-	s16 rotation /*! Arc Rotation */;
-} sg_vector_arc_t;
-
-typedef struct MCU_PACK {
-	sg_point_t p1;
-	sg_point_t p2;
-	sg_point_t p3;
-} sg_vector_quadtratic_bezier_t;
-
-typedef struct MCU_PACK {
-	sg_point_t p1;
-	sg_point_t p2;
-	sg_point_t p3;
-	sg_point_t p4;
-} sg_vector_cubic_bezier_t;
-
-typedef struct MCU_PACK {
-	sg_point_t center;
-} sg_vector_pour_t;
-
-/*! \brief Icon Primitive Structure
- * \details Describes an icon primitive */
-typedef struct MCU_PACK {
-	u16 type /*! type of primitive object (e.g. SG_LINE) */;
-	union {
-		sg_vector_arc_t arc /*! Primitive data for SG_ARC */;
-		sg_vector_line_t line /*! Primitive data for SG_LINE */;
-		sg_vector_quadtratic_bezier_t quadratic_bezier /*! Primitive data for SG_QUADRATIC_BEZIER */;
-		sg_vector_cubic_bezier_t cubic_bezier /*! Primitive data for SG_CUBIC_BEZIER */;
-		sg_vector_pour_t pour /*! Primitive data for pour */;
-	};
-} sg_vector_primitive_t;
 
 enum {
 	SG_VECTOR_PATH_FLAG_CLOSE_PATH = (1<<0),
@@ -258,13 +205,6 @@ typedef struct MCU_PACK {
 	const sg_vector_path_description_t * list;
 } sg_vector_path_icon_t;
 
-/*! \brief Graphics Icon Structure
- * \details Describes a scalable graphic that can be drawn on a bitmap */
-typedef struct MCU_PACK {
-	u16 total /*! Total number of primitives */;
-	u16 fill_total /*! Total number of fill primitives */;
-	const sg_vector_primitive_t * primitives;
-} sg_vector_icon_t;
 
 /*! \brief Graphics Map Structure
  * \details Describes how an sg_icon_t is mapped to a sg_bitmap_t */
@@ -297,13 +237,8 @@ typedef struct MCU_PACK {
 	char name[24];
 	u16 count /*! number of items in the vector icon */;
 	u16 list_offset /*! Location of the list in the file */;
-} sg_vector_path_icon_header_t;
+} sg_vector_icon_header_t;
 
-
-
-typedef struct MCU_PACK {
-	u32 count /*! number of icons in the file */;
-} sg_vector_header_t;
 
 enum {
 	SG_ANIMATION_TYPE_PUSH_LEFT,

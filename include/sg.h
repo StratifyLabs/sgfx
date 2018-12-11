@@ -52,9 +52,9 @@ extern "C" {
  */
 
 /*! \details Change effective size without free/alloc sequence */
-void sg_bmap_set_data(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_dim_t dim, u8 bits_per_pixel);
+void sg_bmap_set_data(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_area_t area, u8 bits_per_pixel);
 sg_bmap_data_t * sg_bmap_data(const sg_bmap_t * bmap, sg_point_t p);
-size_t sg_calc_bmap_size(const sg_bmap_t * bmap, sg_dim_t dim);
+size_t sg_calc_bmap_size(const sg_bmap_t * bmap, sg_area_t area);
 
 static inline u16 sg_calc_word_width(sg_size_t w){ return (w + 31) >> 5; }
 
@@ -66,10 +66,10 @@ static inline sg_size_t sg_bmap_margin_left(const sg_bmap_t * bmap){ return bmap
 static inline sg_size_t sg_bmap_margin_right(const sg_bmap_t * bmap){ return bmap->margin_bottom_right.width; }
 static inline sg_size_t sg_bmap_margin_top(const sg_bmap_t * bmap){ return bmap->margin_top_left.height; }
 static inline sg_size_t sg_bmap_margin_bottom(const sg_bmap_t * bmap){ return bmap->margin_bottom_right.height; }
-static inline sg_int_t sg_bmap_x_max(const sg_bmap_t * bmap){ return bmap->dim.width -1; }
-static inline sg_int_t sg_bmap_y_max(const sg_bmap_t * bmap){ return bmap->dim.height -1; }
-static inline sg_size_t sg_bmap_h(const sg_bmap_t * bmap){ return bmap->dim.height; }
-static inline sg_size_t sg_bmap_w(const sg_bmap_t * bmap){ return bmap->dim.width; }
+static inline sg_int_t sg_bmap_x_max(const sg_bmap_t * bmap){ return bmap->area.width -1; }
+static inline sg_int_t sg_bmap_y_max(const sg_bmap_t * bmap){ return bmap->area.height -1; }
+static inline sg_size_t sg_bmap_h(const sg_bmap_t * bmap){ return bmap->area.height; }
+static inline sg_size_t sg_bmap_w(const sg_bmap_t * bmap){ return bmap->area.width; }
 static inline sg_size_t sg_bmap_cols(const sg_bmap_t * bmap){ return bmap->columns; }
 
 
@@ -116,28 +116,28 @@ enum Rotation {
 
 static inline sg_point_t sg_point_region_center(const sg_region_t * region){
 	sg_point_t p;
-	p.x = region->point.x + region->dim.width/2;
-	p.y = region->point.y + region->dim.height/2;
+	p.x = region->point.x + region->area.width/2;
+	p.y = region->point.y + region->area.height/2;
 	return p;
 }
 
 static inline u8 sg_y_visible(const sg_bmap_t * bmap, sg_int_t y){
 	if( y < 0  ) return 0;
-	if( y >= bmap->dim.height) return 0;
+	if( y >= bmap->area.height) return 0;
 	return 1;
 }
 
 static inline u8 sg_x_visible(const sg_bmap_t * bmap, sg_int_t x){
 	if( x < 0  ) return 0;
-	if( x >= bmap->dim.width) return 0;
+	if( x >= bmap->area.width) return 0;
 	return 1;
 }
 
 static inline u8 sg_point_visible(const sg_bmap_t * bmap, sg_point_t p){
 	if( p.x < 0 ) return 0;
 	if( p.y < 0 ) return 0;
-	if( p.x >= bmap->dim.width ) return 0;
-	if( p.y >= bmap->dim.height ) return 0;
+	if( p.x >= bmap->area.width ) return 0;
+	if( p.y >= bmap->area.height ) return 0;
 	return 1;
 }
 
@@ -150,15 +150,15 @@ static inline sg_point_t sg_point(sg_int_t x, sg_int_t y){
 	return p;
 }
 
-static inline sg_region_t sg_region(sg_point_t point, sg_dim_t dim){
+static inline sg_region_t sg_region(sg_point_t point, sg_area_t area){
 	sg_region_t region;
 	region.point = point;
-	region.dim = dim;
+	region.area = area;
 	return region;
 }
 
-static inline sg_dim_t sg_dim(sg_size_t w, sg_size_t h){
-	sg_dim_t d;
+static inline sg_area_t sg_dim(sg_size_t w, sg_size_t h){
+	sg_area_t d;
 	d.width = w;
 	d.height = h;
 	return d;
@@ -498,51 +498,6 @@ void sg_draw_sub_bitmap(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg
  */
 
 //drawing
-/*! \details Draws a vector primitive.
- *
- * @param bmap A pointer to the bitmap object
- * @param prim A pointer to the primitive to draw
- * @param map A pointer to the map
- * @param bounds A pointer to the bounding region object that will be populate on return if not null
- *
- * The vector primitive can be one of the following types:
- * - Line (SG_LINE)
- * - Arc (SG_ARC)
- * - Pour (SG_POUR)
- * - Quadratic Bezier (SG_QUADRATIC_BEZIER)
- * - Cubic Bezier (SG_CUBIC_BEZIER)
- *
- * The vector primitive is defined in an abstract drawing space with dimesions
- * of -16384 to +16384 for both width and height. The \a map defines how
- * the primitive is mapped onto the bitmap. The map->size dimension
- * specifies the pixel width and height in the destination bitmap. The
- * map->shift point determines the center of the primitive on the bitmap.
- * Finally, the map->rotation values determines the rotation of the
- * primitive on the bitmap.
- *
- * After the primitive is drawn, the \a bounds parameter (if not null) will
- * be written to hold the top left and bottom right corners of the primitive
- * in the bitmap.
- */
-void sg_vector_draw_primitive(sg_bmap_t * bmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_region_t * bounds);
-
-/*! \details Draw a list of primitives.
- *
- * \sa sg_vector_draw_primitive()
- */
-void sg_vector_draw_primitive_list(sg_bmap_t * bmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_region_t * bounds);
-
-/*! \details Draw an icon (collection of primitives).
- *
- * @param bmap The bitmap to draw on
- * @param icon A pointer to the icon object
- * @param map A pointer to the map object
- * @param bounds If not null, will be written with the bounding region of the icon drawn on the bitmap
- *
- *
- */
-void sg_vector_draw_icon(sg_bmap_t * bmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_region_t * bounds);
-
 /*! \details Draws a vector path icon on the bitmap.
  *
  * @param bmap The bitmap to draw on
@@ -574,7 +529,7 @@ int sg_animate_init(sg_animation_t * animation,
 		u8 step_total,
 		sg_size_t motion_total,
 		sg_point_t start,
-		sg_dim_t dim);
+		sg_area_t area);
 
 /*! @} */
 
@@ -583,9 +538,9 @@ typedef struct MCU_PACK {
 	u32 version;
 	sg_size_t bits_per_pixel;
     const char * git_hash;
-	void (*bmap_set_data)(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_dim_t dim, u8 bits_per_pixel);
+	void (*bmap_set_data)(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_area_t area, u8 bits_per_pixel);
 	sg_bmap_data_t * (*bmap_data)(const sg_bmap_t * bmap, sg_point_t p);
-	size_t (*calc_bmap_size)(const sg_bmap_t * bmap, sg_dim_t dim);
+	size_t (*calc_bmap_size)(const sg_bmap_t * bmap, sg_area_t area);
 
 	void (*point_set)(sg_point_t * d, sg_point_t p);
 	void (*point_map)(sg_point_t * d, const sg_vector_map_t * m);
@@ -633,13 +588,10 @@ typedef struct MCU_PACK {
 	void (*draw_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src);
 	void (*draw_sub_bitmap)(const sg_bmap_t * bmap_dest, sg_point_t p_dest, const sg_bmap_t * bmap_src, const sg_region_t * src_region);
 
-	void (*vector_draw_primitive)(sg_bmap_t * bitmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_region_t * region);
-	void (*vector_draw_primitive_list)(sg_bmap_t * bitmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_region_t * region);
-	void (*vector_draw_icon)(sg_bmap_t * bitmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_region_t * region);
 	void (*vector_draw_path)(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map);
 
 	int (*animate)(sg_bmap_t * bmap, sg_bmap_t * bitmap, sg_animation_t * animation);
-	int (*animate_init)(sg_animation_t * animation, u8 type, u8 path, u8 step_total, sg_size_t motion_total, sg_point_t start, sg_dim_t dim);
+	int (*animate_init)(sg_animation_t * animation, u8 type, u8 path, u8 step_total, sg_size_t motion_total, sg_point_t start, sg_area_t area);
 
 } sg_api_t;
 

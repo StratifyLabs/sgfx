@@ -21,19 +21,7 @@ static void draw_path_cubic_bezier(sg_bmap_t * bmap, sg_vector_path_t * path, co
 static void draw_path_close(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map, const sg_vector_path_description_t * description);
 static void draw_path_pour(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map, const sg_vector_path_description_t * description);
 
-static void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region);
-static void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region);
-static void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region);
-static void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region);
-static void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region);
 
-static void (*draw_func [SG_TYPE_TOTAL])(const sg_vector_primitive_t * p, sg_bmap_t * bm, const sg_vector_map_t * map, sg_region_t * region) = {
-		draw_line,
-		draw_arc,
-		draw_fill,
-		draw_quadtratic_bezier,
-		draw_cubic_bezier
-};
 
 static void (*draw_path_func [SG_VECTOR_PATH_TOTAL])(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map, const sg_vector_path_description_t * description) = {
 		draw_path_none,
@@ -46,16 +34,6 @@ static void (*draw_path_func [SG_VECTOR_PATH_TOTAL])(sg_bmap_t * bmap, sg_vector
 };
 
 
-void sg_vector_draw_primitive(sg_bmap_t * bitmap, const sg_vector_primitive_t * prim, const sg_vector_map_t * map, sg_region_t * region){
-	int type;
-	type = prim->type & SG_TYPE_MASK;
-	if( prim->type & SG_ENABLE_FLAG ){
-		if( type < SG_TYPE_TOTAL ){
-			draw_func[type](prim, bitmap, map, region);
-		}
-	}
-}
-
 void sg_vector_draw_path(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map){
 	u32 i;
 	u32 type;
@@ -67,111 +45,28 @@ void sg_vector_draw_path(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vec
 	}
 }
 
-void sg_vector_draw_icon(sg_bmap_t * bmap, const sg_vector_icon_t * icon, const sg_vector_map_t * map, sg_region_t * region){
-	unsigned int total;
-	if( bmap->pen.o_flags & SG_PEN_FLAG_IS_FILL ){
-		total = icon->total;
-	} else {
-		total = icon->total - icon->fill_total;
-	}
-	sg_vector_draw_primitive_list(bmap, icon->primitives, total, map, region);
-}
-
-void sg_vector_draw_primitive_list(sg_bmap_t * bitmap, const sg_vector_primitive_t prim_list[], unsigned int total, const sg_vector_map_t * map, sg_region_t * region){
-	unsigned int i;
-
-	if( region ){
-		region->dim.width = 0;
-		region->dim.height = 0;
-		region->point.x = SG_MAX;
-		region->point.y = SG_MAX;
-	}
-
-	for(i=0; i < total; i++){
-		sg_vector_draw_primitive(bitmap, &(prim_list[i]), map, region);
-	}
-}
-
-
-void draw_line(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region){
-	//draw a line from bottom left to top right
-	sg_point_t p1;
-	sg_point_t p2;
-
-	p1 = p->line.p1;
-	p2 = p->line.p2;
-
-	draw_line_with_map(p1, p2, bmap, map, region);
-}
-
-void draw_arc(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region){
-	sg_point_t corners[2];
-	s32 tmp;
-
-	sg_region_t arc_region;
-
-	arc_region.point = p->arc.center;
-
-	//scale radii to bitmap dimension
-	tmp = ((p->arc.rx*2) * map->region.dim.width + SG_MAX) / (SG_MAX-SG_MIN);
-	arc_region.dim.width = tmp;
-
-	tmp = ((p->arc.ry*2) * map->region.dim.height + SG_MAX) / (SG_MAX-SG_MIN);
-	arc_region.dim.height = tmp;
-
-	sg_point_map(&arc_region.point, map);
-
-	//make dim a bounding box
-
-	//move point to upper left corner
-	arc_region.point.x -= arc_region.dim.width/2;
-	arc_region.point.y -= arc_region.dim.height/2;
-
-	sg_draw_arc(bmap, &arc_region, p->arc.start, p->arc.stop, p->arc.rotation, corners);
-
-	if( region ){
-		update_bounds(corners[0], corners[1], region);
-	}
-
-}
-
-void draw_quadtratic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region){
-	draw_quadtratic_bezier_with_map(p->quadratic_bezier.p1, p->quadratic_bezier.p2, p->quadratic_bezier.p3, bmap, map, region);
-}
-
-void draw_cubic_bezier(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region){
-	draw_cubic_bezier_with_map(p->cubic_bezier.p1, p->cubic_bezier.p2, p->cubic_bezier.p3, p->cubic_bezier.p4, bmap, map, region);
-}
-
-void draw_fill(const sg_vector_primitive_t * p, sg_bmap_t * bmap, const sg_vector_map_t * map, sg_region_t * region){
-	sg_point_t center;
-	center = p->pour.center;
-	sg_point_map(&center, map);
-	sg_draw_pour(bmap, center, &map->region);
-}
-
 void update_bounds(sg_point_t min, sg_point_t max, sg_region_t * region){
 	if( min.x < region->point.x ){
-		if( region->dim.width ){
-			region->dim.width += (region->point.x - min.x);
+		if( region->area.width ){
+			region->area.width += (region->point.x - min.x);
 		}
 		region->point.x = min.x;
 
 	}
 
-	if( (max.x >= region->point.x + region->dim.width) || (region->dim.width == 0) ){
-		region->dim.width = max.x - region->point.x + 1;
+	if( (max.x >= region->point.x + region->area.width) || (region->area.width == 0) ){
+		region->area.width = max.x - region->point.x + 1;
 	}
 
 	if( min.y < region->point.y ){
-		if( region->dim.height ){
-			region->dim.height += (region->point.y - min.y);
+		if( region->area.height ){
+			region->area.height += (region->point.y - min.y);
 		}
 		region->point.y = min.y;
 	}
 
-	if( (max.y >= region->point.y + region->dim.height) || (region->dim.width == 0) ){
-		region->dim.height = max.y - region->point.y + 1;
+	if( (max.y >= region->point.y + region->area.height) || (region->area.width == 0) ){
+		region->area.height = max.y - region->point.y + 1;
 	}
 }
 

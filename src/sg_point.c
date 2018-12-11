@@ -537,9 +537,9 @@ void sg_point_map(sg_point_t * d, const sg_vector_map_t * m){
 	sg_point_rotate(d, m->rotation);
 	//map to the space
 	s32 tmp;
-	tmp = ((d->x + SG_MAX) * m->region.dim.width + SG_MAX) / (SG_MAX-SG_MIN);
+	tmp = ((d->x + SG_MAX) * m->region.area.width + SG_MAX) / (SG_MAX-SG_MIN);
 	d->x = m->region.point.x + tmp;
-	tmp = ((d->y + SG_MAX) * m->region.dim.height + SG_MAX) / (SG_MAX-SG_MIN);
+	tmp = ((d->y + SG_MAX) * m->region.area.height + SG_MAX) / (SG_MAX-SG_MIN);
 	d->y = m->region.point.y + tmp;
 }
 
@@ -549,13 +549,13 @@ void sg_point_unmap(sg_point_t * d, const sg_vector_map_t * m){
 	//map to the space
 	s32 tmp_x;
 	s32 tmp_y;
-	//x' = m->region.point.x + ((x + SG_MAX) * m->region.dim.width) / (SG_MAX-SG_MIN);
-	//y' = m->region.point.y + ((y + SG_MAX) * m->region.dim.height) / (SG_MAX-SG_MIN);
+	//x' = m->region.point.x + ((x + SG_MAX) * m->region.area.width) / (SG_MAX-SG_MIN);
+	//y' = m->region.point.y + ((y + SG_MAX) * m->region.area.height) / (SG_MAX-SG_MIN);
 
-	//(x' - m->region.point.x)*(SG_MAX-SG_MIN)/ m->region.dim.width - SG_MAX = x
-	//printer().message("%d - %d * %d / %d", d->x, m->region.point.x, (SG_MAX-SG_MIN), m->region.dim.width);
-	tmp_x = ((d->x - m->region.point.x)*(SG_MAX-SG_MIN) + m->region.dim.width/2) / m->region.dim.width;
-	tmp_y = ((d->y - m->region.point.y)*(SG_MAX-SG_MIN) + m->region.dim.height/2) / m->region.dim.height;
+	//(x' - m->region.point.x)*(SG_MAX-SG_MIN)/ m->region.area.width - SG_MAX = x
+	//printer().message("%d - %d * %d / %d", d->x, m->region.point.x, (SG_MAX-SG_MIN), m->region.area.width);
+	tmp_x = ((d->x - m->region.point.x)*(SG_MAX-SG_MIN) + m->region.area.width/2) / m->region.area.width;
+	tmp_y = ((d->y - m->region.point.y)*(SG_MAX-SG_MIN) + m->region.area.height/2) / m->region.area.height;
 
 	d->x = tmp_x - SG_MAX,
 	d->y = tmp_y - SG_MAX;
@@ -563,7 +563,7 @@ void sg_point_unmap(sg_point_t * d, const sg_vector_map_t * m){
 
 sg_size_t sg_point_map_pixel_size(const sg_vector_map_t * m){
 	sg_size_t p;
-	sg_size_t max = m->region.dim.width > m->region.dim.height ? m->region.dim.width : m->region.dim.height;
+	sg_size_t max = m->region.area.width > m->region.area.height ? m->region.area.width : m->region.area.height;
 	s32 tmp;
 	//how many map space units maps to one pixel
 	tmp = ((SG_MAX-SG_MIN) + (max>>1)) / max;
@@ -642,8 +642,8 @@ void sg_point_bound(const sg_bmap_t * bmap, sg_point_t * p){
 		t = 0;
 	}
 
-	if( t >= bmap->dim.width ){
-		t = bmap->dim.width - 1 ;
+	if( t >= bmap->area.width ){
+		t = bmap->area.width - 1 ;
 	}
 
 	p->x = t;
@@ -653,8 +653,8 @@ void sg_point_bound(const sg_bmap_t * bmap, sg_point_t * p){
 		t = 0;
 	}
 
-	if( t >= bmap->dim.height ){
-		t = bmap->dim.height - 1 ;
+	if( t >= bmap->area.height ){
+		t = bmap->area.height - 1 ;
 	}
 
 	p->y = t;
@@ -671,8 +671,8 @@ void sg_point_bound_x(const sg_bmap_t * bmap, sg_int_t * x){
 		t = 0;
 	}
 
-	if( t >= bmap->dim.width ){
-		t = bmap->dim.width - 1 ;
+	if( t >= bmap->area.width ){
+		t = bmap->area.width - 1 ;
 	}
 
 	*x = t;
@@ -684,8 +684,8 @@ void sg_point_bound_y(const sg_bmap_t * bmap, sg_int_t * y){
 		t = 0;
 	}
 
-	if( t >= bmap->dim.height ){
-		t = bmap->dim.height - 1 ;
+	if( t >= bmap->area.height ){
+		t = bmap->area.height - 1 ;
 	}
 
 	*y = t;

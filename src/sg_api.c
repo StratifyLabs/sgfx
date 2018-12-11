@@ -69,9 +69,6 @@ const sg_api_t sg_api = {
 	.draw_sub_bitmap = sg_draw_sub_bitmap,
 
 	//vector drawing
-	.vector_draw_primitive = sg_vector_draw_primitive,
-	.vector_draw_primitive_list = sg_vector_draw_primitive_list,
-	.vector_draw_icon = sg_vector_draw_icon,
 	.vector_draw_path = sg_vector_draw_path,
 
 	//animations
