@@ -16,7 +16,8 @@ static inline sg_color_t get_pixel(const sg_cursor_t * cursor);
 void sg_cursor_set(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p){
 	cursor->bmap = bmap;
 	cursor->target = sg_bmap_data(bmap, p);
-	cursor->shift = ((p.x % SG_PIXELS_PER_WORD(bmap))*SG_BITS_PER_PIXEL_VALUE(bmap));
+	cursor->shift = ((p.x % SG_PIXELS_PER_WORD(bmap))*SG_BITS_PER_PIXEL_VALUE(bmap)); //up to 32
+
 }
 
 sg_color_t sg_cursor_get_pixel_no_inc(sg_cursor_t * cursor){
@@ -38,7 +39,7 @@ void sg_cursor_dec_x(sg_cursor_t * cursor){
 
 	if( cursor->shift == 0 ){
 		cursor->target--; //go to the previous word
-		cursor->shift = SG_PIXELS_PER_WORD(cursor->bmap) - SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
+		cursor->shift = 32 - SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
 	} else {
 		cursor->shift -= SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
 	}
@@ -63,10 +64,9 @@ void sg_cursor_draw_hline(sg_cursor_t * cursor, sg_size_t width){
 	sg_size_t i;
 
 	pattern = 0;
-	for(i=0; i < SG_PIXELS_PER_WORD(cursor->bmap); i+=SG_BITS_PER_PIXEL_VALUE(cursor->bmap)){
+	for(i=0; i < 32; i+=SG_BITS_PER_PIXEL_VALUE(cursor->bmap)){
 		pattern |= ((cursor->bmap->pen.color & SG_PIXEL_MASK(cursor->bmap)) << i);
 	}
-
 	sg_cursor_draw_pattern(cursor, width, pattern);
 }
 
@@ -220,8 +220,8 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
 		}
 	}
 
@@ -240,8 +240,8 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
 		}
 
 		dest_cursor.target--;
@@ -269,8 +269,8 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
 		}
 	}
 }
@@ -318,8 +318,8 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
 		}
 
 		shift_cursor.target++;
@@ -344,8 +344,8 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
 		}
 
 		dest_cursor.target++;
@@ -365,8 +365,8 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (SG_PIXELS_PER_WORD(cursor->bmap) - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
 		}
 
 	}
@@ -382,7 +382,7 @@ sg_color_t get_pixel(const sg_cursor_t * cursor){
 
 void sg_cursor_inc_x(sg_cursor_t * cursor){
 	cursor->shift += SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
-	if( cursor->shift == SG_PIXELS_PER_WORD(cursor->bmap) ){
+	if( cursor->shift == 32 ){
 		cursor->target++; //go to the next word
 		cursor->shift = 0;
 	}
@@ -390,6 +390,11 @@ void sg_cursor_inc_x(sg_cursor_t * cursor){
 
 void copy_pixel(sg_cursor_t * dest, sg_cursor_t * src){
 	sg_color_t color = sg_cursor_get_pixel(src);
+	if( src->bmap->bits_per_pixel > dest->bmap->bits_per_pixel ){
+		//scale the color
+		color = color * dest->bmap->bits_per_pixel / src->bmap->bits_per_pixel;
+	}
+
 	draw_pixel(dest, color);
 	sg_cursor_inc_x(dest);
 }
@@ -397,7 +402,7 @@ void copy_pixel(sg_cursor_t * dest, sg_cursor_t * src){
 sg_size_t calc_pixels_until_first_boundary(const sg_cursor_t * cursor, sg_size_t w, sg_size_t shift){
 	sg_size_t pixels_until_first_boundary;
 
-	pixels_until_first_boundary = (SG_PIXELS_PER_WORD(cursor->bmap) - shift)/SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
+	pixels_until_first_boundary = (32 - shift)/SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
 
 	if( pixels_until_first_boundary == SG_PIXELS_PER_WORD(cursor->bmap) ){
 		pixels_until_first_boundary = 0;

@@ -54,7 +54,6 @@ const sg_api_t sg_api = {
 	.cursor_shift_right = sg_cursor_shift_right,
 	.cursor_shift_left = sg_cursor_shift_left,
 
-
 	//drawing
 	.get_pixel = sg_get_pixel,
 	.draw_pixel = sg_draw_pixel,

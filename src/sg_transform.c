@@ -10,11 +10,17 @@ static void shift_up(const sg_bmap_t * bmap, int count, sg_point_t start, sg_are
 static void shift_down(const sg_bmap_t * bmap, int count, sg_point_t start, sg_area_t d);
 
 
-void sg_transform_flip_xy(const sg_bmap_t * bmap){}
+void sg_transform_flip_xy(const sg_bmap_t * bmap){
 
-void sg_transform_flip_x(const sg_bmap_t * bmap){}
+}
 
-void sg_transform_flip_y(const sg_bmap_t * bmap){}
+void sg_transform_flip_x(const sg_bmap_t * bmap){
+
+}
+
+void sg_transform_flip_y(const sg_bmap_t * bmap){
+
+}
 
 void sg_transform_shift(const sg_bmap_t * bmap, sg_point_t shift, const sg_region_t * region){
 	sg_point_t p = region->point;

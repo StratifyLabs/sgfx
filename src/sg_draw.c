@@ -22,6 +22,7 @@ sg_color_t sg_get_pixel(const sg_bmap_t * bmap, sg_point_t p){
 	return (sg_color_t)-1;
 }
 
+//add antialiasing here, needs both a pixel and another point for adjustment
 void sg_draw_pixel(const sg_bmap_t * bmap, sg_point_t p){
 	//draw a pixel at point p
 	sg_cursor_t cursor;

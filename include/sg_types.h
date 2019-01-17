@@ -48,7 +48,8 @@ enum {
 	SG_FORMAT_2BPP /*! 2-bit, 4-color palette */ = 2,
 	SG_FORMAT_4BPP /*! 4-bit, 16-color palette */ = 4,
 	SG_FORMAT_8BPP /*! 8-bit, 256-color palette */ = 8,
-	SG_FORMAT_RGB565 /*! 16-bit R5 G6 B5 */ = 16
+	SG_FORMAT_RGB565 /*! 16-bit R5 G6 B5 */ = 16,
+	SG_FORMAT_ARGB8888 /*! 32-bit A8 R8 G8 B8 */ = 32
 };
 
 #define SG_TYPE_MASK (0xFF)
