@@ -143,7 +143,7 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 
 			if( mask != 0 ){ //if mask is zero, then this copy is aligned -- no need for a second operation
 				draw_pixel_group(dest_cursor->target+1,
-									  (intermediate_value >> (SG_PIXELS_PER_WORD(dest_cursor->bmap) - dest_cursor->shift)),
+									  (intermediate_value >> (32 - dest_cursor->shift)),
 									  ~mask,
 									  o_flags);
 			}
