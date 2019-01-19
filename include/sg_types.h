@@ -58,7 +58,7 @@ enum {
 typedef s16 sg_int_t;
 typedef u16 sg_uint_t;
 typedef sg_uint_t sg_size_t;
-typedef u16 sg_color_t;
+typedef u32 sg_color_t;
 
 //this needs to be based on 32 bit data so it's faster
 typedef u32 sg_bmap_data_t;

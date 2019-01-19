@@ -206,6 +206,8 @@ static inline void sg_cursor_copy(sg_cursor_t * dest, const sg_cursor_t * src){ 
  */
 void sg_cursor_set(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p);
 
+void sg_cursor_update(sg_cursor_t * cursor, sg_point_t p);
+
 /*! \details Increments the cursor's x value by one.
  *
  * @param cursor A pointer to the cursor
@@ -273,6 +275,7 @@ void sg_cursor_dec_y(sg_cursor_t * cursor);
  * @return The value of the pixel at the cursor's location (before incrementing)
  */
 sg_color_t sg_cursor_get_pixel(sg_cursor_t * cursor);
+sg_color_t sg_cursor_get_pixel_increment(sg_cursor_t * cursor, int x, int y);
 
 /*! \details Draws a pixel at the cursor's location
  * and increments the location of the pixel.
@@ -564,6 +567,10 @@ typedef struct MCU_PACK {
 	void (*transform_shift)(const sg_bmap_t * bmap, sg_point_t shift, const sg_region_t * region);
 
 	void (*cursor_set)(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p);
+	void (*cursor_update)(sg_cursor_t * cursor, sg_point_t p);
+	sg_color_t (*cursor_get_pixel_increment)(sg_cursor_t * cursor, int x, int y);
+
+	void (*cursor_increment)(sg_cursor_t * cursor, sg_point_t p);
 	void (*cursor_inc_x)(sg_cursor_t * cursor);
 	void (*cursor_dec_x)(sg_cursor_t * cursor);
 	void (*cursor_inc_y)(sg_cursor_t * cursor);

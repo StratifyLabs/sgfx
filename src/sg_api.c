@@ -42,6 +42,8 @@ const sg_api_t sg_api = {
 
 	//cursor
 	.cursor_set = sg_cursor_set,
+	.cursor_update = sg_cursor_update,
+	.cursor_get_pixel_increment = sg_cursor_get_pixel_increment,
 	.cursor_inc_x = sg_cursor_inc_x,
 	.cursor_dec_x = sg_cursor_dec_x,
 	.cursor_inc_y = sg_cursor_inc_y,

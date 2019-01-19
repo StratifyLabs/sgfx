@@ -17,11 +17,25 @@ void sg_cursor_set(sg_cursor_t * cursor, const sg_bmap_t * bmap, sg_point_t p){
 	cursor->bmap = bmap;
 	cursor->target = sg_bmap_data(bmap, p);
 	cursor->shift = ((p.x % SG_PIXELS_PER_WORD(bmap))*SG_BITS_PER_PIXEL_VALUE(bmap)); //up to 32
-
 }
+
+void sg_cursor_update(sg_cursor_t * cursor, sg_point_t p){
+	cursor->target = sg_bmap_data(cursor->bmap, p);
+	cursor->shift = ((p.x % SG_PIXELS_PER_WORD(cursor->bmap))*SG_BITS_PER_PIXEL_VALUE(cursor->bmap)); //up to 32
+}
+
 
 sg_color_t sg_cursor_get_pixel_no_inc(sg_cursor_t * cursor){
 	return get_pixel(cursor);
+}
+
+sg_color_t sg_cursor_get_pixel_increment(sg_cursor_t * cursor, int x, int y){
+	sg_color_t result = get_pixel(cursor);
+	if( x > 0 ){ sg_cursor_inc_x(cursor); }
+	if( x < 0 ){ sg_cursor_dec_x(cursor); }
+	if( y > 0 ){ sg_cursor_inc_y(cursor); }
+	if( y < 0 ){ sg_cursor_dec_y(cursor); }
+	return result;
 }
 
 void sg_cursor_draw_pixel_no_inc(sg_cursor_t * cursor){
@@ -39,7 +53,7 @@ void sg_cursor_dec_x(sg_cursor_t * cursor){
 
 	if( cursor->shift == 0 ){
 		cursor->target--; //go to the previous word
-		cursor->shift = 32 - SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
+		cursor->shift = SG_BITS_PER_WORD - SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
 	} else {
 		cursor->shift -= SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
 	}
@@ -64,7 +78,7 @@ void sg_cursor_draw_hline(sg_cursor_t * cursor, sg_size_t width){
 	sg_size_t i;
 
 	pattern = 0;
-	for(i=0; i < 32; i+=SG_BITS_PER_PIXEL_VALUE(cursor->bmap)){
+	for(i=0; i < SG_BITS_PER_WORD; i+=SG_BITS_PER_PIXEL_VALUE(cursor->bmap)){
 		pattern |= ((cursor->bmap->pen.color & SG_PIXEL_MASK(cursor->bmap)) << i);
 	}
 	sg_cursor_draw_pattern(cursor, width, pattern);
@@ -143,7 +157,7 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 
 			if( mask != 0 ){ //if mask is zero, then this copy is aligned -- no need for a second operation
 				draw_pixel_group(dest_cursor->target+1,
-									  (intermediate_value >> (32 - dest_cursor->shift)),
+									  (intermediate_value >> (SG_BITS_PER_WORD - dest_cursor->shift)),
 									  ~mask,
 									  o_flags);
 			}
@@ -220,8 +234,8 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
 		}
 	}
 
@@ -240,8 +254,8 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
 		}
 
 		dest_cursor.target--;
@@ -269,8 +283,8 @@ void sg_cursor_shift_right(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
 		}
 	}
 }
@@ -318,8 +332,8 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
 		}
 
 		shift_cursor.target++;
@@ -344,8 +358,8 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
 		}
 
 		dest_cursor.target++;
@@ -365,15 +379,15 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 		(*dest_cursor.target) |= (value << dest_cursor.shift);
 
 		if( dest_cursor.shift > 0 ){
-			*(dest_cursor.target+1) &= ~(mask >> (32 - dest_cursor.shift));
-			*(dest_cursor.target+1) |= (value >> (32 - dest_cursor.shift));
+			*(dest_cursor.target+1) &= ~(mask >> (SG_BITS_PER_WORD - dest_cursor.shift));
+			*(dest_cursor.target+1) |= (value >> (SG_BITS_PER_WORD - dest_cursor.shift));
 		}
 
 	}
 }
 
 sg_color_t get_pixel(const sg_cursor_t * cursor){
-	sg_color_t color;
+	sg_color_t color = (u32)-1;
 	sg_bmap_data_t value;
 	value = *(cursor->target) >> cursor->shift;
 	color = value & SG_PIXEL_MASK(cursor->bmap);
@@ -382,7 +396,7 @@ sg_color_t get_pixel(const sg_cursor_t * cursor){
 
 void sg_cursor_inc_x(sg_cursor_t * cursor){
 	cursor->shift += SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
-	if( cursor->shift == 32 ){
+	if( cursor->shift == SG_BITS_PER_WORD ){
 		cursor->target++; //go to the next word
 		cursor->shift = 0;
 	}
@@ -402,7 +416,7 @@ void copy_pixel(sg_cursor_t * dest, sg_cursor_t * src){
 sg_size_t calc_pixels_until_first_boundary(const sg_cursor_t * cursor, sg_size_t w, sg_size_t shift){
 	sg_size_t pixels_until_first_boundary;
 
-	pixels_until_first_boundary = (32 - shift)/SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
+	pixels_until_first_boundary = (SG_BITS_PER_WORD - shift)/SG_BITS_PER_PIXEL_VALUE(cursor->bmap);
 
 	if( pixels_until_first_boundary == SG_PIXELS_PER_WORD(cursor->bmap) ){
 		pixels_until_first_boundary = 0;
