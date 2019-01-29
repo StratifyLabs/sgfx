@@ -402,11 +402,17 @@ void sg_cursor_inc_x(sg_cursor_t * cursor){
 	}
 }
 
+
 void copy_pixel(sg_cursor_t * dest, sg_cursor_t * src){
+
 	sg_color_t color = sg_cursor_get_pixel(src);
 	if( src->bmap->bits_per_pixel > dest->bmap->bits_per_pixel ){
-		//scale the color
-		color = color * dest->bmap->bits_per_pixel / src->bmap->bits_per_pixel;
+		//take only the most significant bits
+		color = color >> (src->bmap->bits_per_pixel - dest->bmap->bits_per_pixel);
+	} else if( (src->bmap->bits_per_pixel < dest->bmap->bits_per_pixel) && (dest->bmap->palette != 0) ){
+		//lookup the color from a palette
+		//convert from 1,2,4,8 to 2,4,8,16,32 using a palette if a palette is available
+		color = dest->bmap->palette->colors[color & dest->bmap->palette->mask];
 	}
 
 	draw_pixel(dest, color);

@@ -115,6 +115,11 @@ typedef struct MCU_PACK {
 	sg_color_t color /*! Pen color */;
 } sg_pen_t;
 
+typedef struct MCU_PACK {
+	u32 mask;
+	sg_bmap_data_t * colors;
+} sg_palette_t;
+
 /*! \brief Graphics Bitmap
  * \details Data structure for holding data for a bitmap.
  */
@@ -126,7 +131,10 @@ typedef struct MCU_PACK {
 	sg_area_t margin_bottom_right /*! Bitmap's bottom/right margins */;
 	sg_size_t columns /*! The number of columns in the bitmap (used internally) */;
 	u8 bits_per_pixel /*! The number of bits in each pixel */;
+	const sg_palette_t * palette /*! palette for importing bitmaps with fewer bits per pixel */;
 } sg_bmap_t;
+
+
 
 typedef struct MCU_PACK {
 	const sg_bmap_t * bmap;

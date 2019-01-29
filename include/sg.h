@@ -536,6 +536,7 @@ int sg_animate_init(sg_animation_t * animation,
 
 /*! @} */
 
+#define SG_API_T 1
 
 typedef struct MCU_PACK {
 	u32 version;
@@ -604,6 +605,11 @@ typedef struct MCU_PACK {
 
 extern const sg_api_t sg_api;
 
+#if defined __link
+#define SGFX_API_REQUEST &sg_api
+#else
+#define SGFX_API_REQUEST MCU_API_REQUEST_CODE('s','g','f','x')
+#endif
 
 
 
