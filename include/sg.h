@@ -398,7 +398,7 @@ void sg_draw_line(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
  * the bmap->pen object.
  *
  */
-void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t * corners);
+void sg_draw_quadratic_bezier(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t * corners);
 
 /*! \details Draws a cubic bezier curve on the bitmap.
  *
@@ -587,7 +587,7 @@ typedef struct MCU_PACK {
 	sg_color_t (*get_pixel)(const sg_bmap_t * bmap, sg_point_t p);
 	void (*draw_pixel)(const sg_bmap_t * bmap, sg_point_t p);
 	void (*draw_line)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
-	void (*draw_quadtratic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t * corners);
+	void (*draw_quadratic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t * corners);
 	void (*draw_cubic_bezier)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2, sg_point_t p3, sg_point_t p4, sg_point_t * corners);
 	void (*draw_rectangle)(const sg_bmap_t * bmap, const sg_region_t * region);
 	void (*draw_arc)(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, s16 end, s16 rotation, sg_point_t * corners);

@@ -213,7 +213,7 @@ void sg_draw_arc(const sg_bmap_t * bmap, const sg_region_t * region, s16 start, 
 
 }
 
-void sg_draw_quadtratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, sg_point_t p2, sg_point_t * corners){
+void sg_draw_quadratic_bezier(const sg_bmap_t * bmap, sg_point_t p0, sg_point_t p1, sg_point_t p2, sg_point_t * corners){
 	u32 i;
 	s32 x;
 	s32 y;

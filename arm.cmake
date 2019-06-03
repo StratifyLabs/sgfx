@@ -27,3 +27,7 @@ include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib-std.cmake)
 set(SOS_OPTION kernel_8bpp)
 set(SOS_DEFINITIONS SG_BITS_PER_PIXEL=8)
 include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib-std.cmake)
+
+set(SOS_OPTION kernel_16bpp)
+set(SOS_DEFINITIONS SG_BITS_PER_PIXEL=16)
+include(${SOS_TOOLCHAIN_CMAKE_PATH}/sos-lib-std.cmake)

@@ -155,7 +155,7 @@ void draw_quadtratic_bezier_with_map(sg_point_t p1, sg_point_t p2, sg_point_t p3
 		sg_point_map(points + i, map);
 	}
 
-	sg_draw_quadtratic_bezier(bmap, points[0], points[1], points[2], corners);
+	sg_draw_quadratic_bezier(bmap, points[0], points[1], points[2], corners);
 	if( region ){
 		update_bounds(corners[0], corners[1], region);
 	}
