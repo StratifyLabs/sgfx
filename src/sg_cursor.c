@@ -150,16 +150,20 @@ void sg_cursor_draw_cursor(sg_cursor_t * dest_cursor, const sg_cursor_t * src_cu
 
 			//shift into the dest area
 			mask = (1<<dest_cursor->shift)-1;
-			draw_pixel_group(dest_cursor->target,
-								  ((intermediate_value) << dest_cursor->shift),
-								  mask,
-								  o_flags);
+			draw_pixel_group(
+						dest_cursor->target,
+						((intermediate_value) << dest_cursor->shift),
+						mask,
+						o_flags
+						);
 
 			if( mask != 0 ){ //if mask is zero, then this copy is aligned -- no need for a second operation
-				draw_pixel_group(dest_cursor->target+1,
-									  (intermediate_value >> (SG_BITS_PER_WORD - dest_cursor->shift)),
-									  ~mask,
-									  o_flags);
+				draw_pixel_group(
+							dest_cursor->target+1,
+							(intermediate_value >> (SG_BITS_PER_WORD - dest_cursor->shift)),
+							~mask,
+							o_flags
+							);
 			}
 
 			dest_cursor->target++;
@@ -447,12 +451,16 @@ void draw_pixel(const sg_cursor_t * cursor, sg_color_t color){
 	u16 o_flags = cursor->bmap->pen.o_flags;
 	sg_bmap_data_t data = (color & SG_PIXEL_MASK(cursor->bmap)) << cursor->shift;
 	if( o_flags & SG_PEN_FLAG_IS_ERASE ){
+		//clear color bits
 		*(cursor->target) &= ~data;
 	} else if( o_flags & SG_PEN_FLAG_IS_INVERT ){
+		//XOR color bits
 		*(cursor->target) ^= data;
 	} else if( o_flags & SG_PEN_FLAG_IS_BLEND ){
+		//OR color bits
 		*(cursor->target) |= data;
 	} else {
+		//Assign color bits
 		*(cursor->target) &= ~(SG_PIXEL_MASK(cursor->bmap) << cursor->shift);
 		*(cursor->target) |= data;
 	}

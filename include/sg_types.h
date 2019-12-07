@@ -20,8 +20,8 @@ typedef int64_t s64;
 
 #include <sys/types.h>
 
-#define SG_STR_VERSION "3.0"
-#define SG_VERSION 0x0300
+#define SG_STR_VERSION "3.1"
+#define SG_VERSION 0x0301
 
 #define SG_MAX (32767)
 #define SG_MIN (-32767)
@@ -244,8 +244,8 @@ typedef struct MCU_PACK {
  */
 typedef struct MCU_PACK {
 	char name[24];
-	u16 count /*! number of items in the vector icon */;
-	u16 list_offset /*! Location of the list in the file */;
+	u32 count /*! number of items in the vector icon */;
+	u32 list_offset /*! Location of the list in the file */;
 } sg_vector_icon_header_t;
 
 

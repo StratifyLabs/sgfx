@@ -45,7 +45,7 @@ typedef struct MCU_PACK {
  * sg_font_char_t char1;
  * ...
  * sg_font_char_t char94;
- * const u8 char0_data[sg_calc_bmap_size(sg_dim(char0.width, char0.height)];
+ * const u32 char0_data[sg_calc_bmap_size(sg_dim(char0.width, char0.height)];
  * const u32 char1_data[sg_calc_bmap_size(sg_dim(char1.width, char1.height)];
  * ...
  * const u32 char94_data[sg_calc_bmap_size(sg_dim(char94.width, char94.height)];
