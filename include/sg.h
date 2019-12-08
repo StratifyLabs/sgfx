@@ -277,6 +277,10 @@ void sg_cursor_dec_y(sg_cursor_t * cursor);
 sg_color_t sg_cursor_get_pixel(sg_cursor_t * cursor);
 sg_color_t sg_cursor_get_pixel_increment(sg_cursor_t * cursor, int x, int y);
 
+sg_point_t sg_cursor_get_edge(
+		sg_cursor_t * cursor,
+		sg_size_t width
+		);
 /*! \details Draws a pixel at the cursor's location
  * and increments the location of the pixel.
  *
@@ -343,8 +347,8 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 
 
 
-sg_size_t sg_cursor_find_positive_edge(sg_cursor_t * cursor, sg_size_t max_distance);
-sg_size_t sg_cursor_find_negative_edge(sg_cursor_t * cursor, sg_size_t max_distance);
+sg_int_t sg_cursor_find_positive_edge(sg_cursor_t * cursor, sg_size_t max_distance);
+sg_int_t sg_cursor_find_negative_edge(sg_cursor_t * cursor, sg_size_t max_distance);
 
 /*! @} */
 
@@ -534,6 +538,17 @@ int sg_animate_init(sg_animation_t * animation,
 		sg_point_t start,
 		sg_area_t area);
 
+int sg_antialias_filter_init(
+      sg_antialias_filter_t * filter,
+      const sg_color_t contrast_data[8]
+);
+
+int sg_antialias_filter_apply(
+      const sg_bmap_t * bmap,
+      sg_antialias_filter_t * filter,
+      sg_region_t region
+      );
+
 /*! @} */
 
 #define SG_API_T 1
@@ -584,6 +599,10 @@ typedef struct MCU_PACK {
 	void (*cursor_shift_right)(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
 	void (*cursor_shift_left)(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t shift_distance);
 
+	sg_int_t (*cursor_find_positive_edge)(sg_cursor_t * cursor, sg_size_t width);
+	sg_int_t (*cursor_find_negative_edge)(sg_cursor_t * cursor, sg_size_t width);
+
+
 	sg_color_t (*get_pixel)(const sg_bmap_t * bmap, sg_point_t p);
 	void (*draw_pixel)(const sg_bmap_t * bmap, sg_point_t p);
 	void (*draw_line)(const sg_bmap_t * bmap, sg_point_t p1, sg_point_t p2);
@@ -600,6 +619,17 @@ typedef struct MCU_PACK {
 
 	int (*animate)(sg_bmap_t * bmap, sg_bmap_t * bitmap, sg_animation_t * animation);
 	int (*animate_init)(sg_animation_t * animation, u8 type, u8 path, u8 step_total, sg_size_t motion_total, sg_point_t start, sg_area_t area);
+
+   int (*antialias_filter_init)(
+         sg_antialias_filter_t * filter,
+         const sg_color_t contrast_data[8]
+   );
+
+   int (*antialias_filter_apply)(
+         const sg_bmap_t * bmap,
+         sg_antialias_filter_t * filter,
+         sg_region_t region
+         );
 
 } sg_api_t;
 

@@ -292,5 +292,9 @@ typedef struct MCU_PACK {
 	sg_animation_path_t path;
 } sg_animation_t;
 
+typedef struct MCU_PACK {
+	sg_color_t contrast_map[8];
+} sg_antialias_filter_t;
+
 
 #endif /* SG_TYPES_H_ */

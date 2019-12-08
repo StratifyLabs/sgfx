@@ -34,7 +34,11 @@ static void (*draw_path_func [SG_VECTOR_PATH_TOTAL])(sg_bmap_t * bmap, sg_vector
 };
 
 
-void sg_vector_draw_path(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map){
+void sg_vector_draw_path(
+		sg_bmap_t * bmap,
+		sg_vector_path_t * path,
+		const sg_vector_map_t * map
+		){
 	u32 i;
 	u32 type;
 	for(i=0; i < path->icon.count; i++){
@@ -80,7 +84,14 @@ void draw_path_move(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_m
 }
 
 void draw_path_line(sg_bmap_t * bmap, sg_vector_path_t * path, const sg_vector_map_t * map, const sg_vector_path_description_t * description){
-	draw_line_with_map(path->current, description->line.point, bmap, map, &path->region);
+	draw_line_with_map(
+				path->current,
+				description->line.point,
+				bmap,
+				map,
+				&path->region
+				);
+
 	path->current = description->line.point;
 }
 

@@ -4,6 +4,11 @@
 
 #include "sg.h"
 
+typedef struct {
+	u16 color;
+	u16 color_next_row;
+} color_pair_t;
+
 static sg_size_t calc_pixels_until_first_boundary(const sg_cursor_t * cursor, sg_size_t w, sg_size_t shift);
 static sg_size_t calc_aligned_words(const sg_cursor_t * cursor, sg_size_t w, sg_size_t pixels_until_first_boundary);
 static sg_size_t calc_pixels_after_last_boundary(const sg_cursor_t * cursor, sg_size_t w, sg_size_t pixels_until_first_boundary, sg_size_t aligned_words);
@@ -82,6 +87,235 @@ void sg_cursor_draw_hline(sg_cursor_t * cursor, sg_size_t width){
 		pattern |= ((cursor->bmap->pen.color & SG_PIXEL_MASK(cursor->bmap)) << i);
 	}
 	sg_cursor_draw_pattern(cursor, width, pattern);
+}
+
+
+sg_int_t sg_cursor_find_positive_edge(
+		sg_cursor_t * cursor,
+		sg_size_t width
+		){
+	sg_size_t pixels_until_first_boundary;
+	sg_size_t pixels_after_last_boundary;
+	sg_size_t aligned_words;
+	sg_size_t i;
+	sg_bmap_data_t color;
+	sg_size_t result = 0;
+
+	pixels_until_first_boundary =
+			calc_pixels_until_first_boundary(cursor, width, cursor->shift);
+	aligned_words =
+			calc_aligned_words(cursor, width, pixels_until_first_boundary);
+	pixels_after_last_boundary =
+			calc_pixels_after_last_boundary(cursor, width, pixels_until_first_boundary, aligned_words);
+
+
+	for(i=0; i < pixels_until_first_boundary; i++){
+		color = sg_cursor_get_pixel_no_inc(cursor);
+		if( color != 0 ){
+			return result;
+		}
+		sg_cursor_inc_x(cursor);
+		result++;
+	}
+
+	for(i=0; i < aligned_words; i++){
+		if( *cursor->target != 0 ){
+			for(i=0; i < SG_PIXELS_PER_WORD(cursor->bmap); i++){
+				color = sg_cursor_get_pixel_no_inc(cursor);
+				if( color != 0 ){
+					return result;
+				}
+				sg_cursor_inc_x(cursor);
+				result++;
+			}
+		} else {
+			cursor->target++;
+			result += SG_PIXELS_PER_WORD(cursor->bmap);
+		}
+	}
+
+	for(i=0; i < pixels_after_last_boundary; i++){
+		color = sg_cursor_get_pixel_no_inc(cursor);
+		if( color != 0 ){
+			return result;
+		}
+		sg_cursor_inc_x(cursor);
+		result++;
+	}
+
+	return width;
+}
+
+sg_int_t sg_cursor_find_negative_edge(
+		sg_cursor_t * cursor,
+		sg_size_t width
+		){
+	sg_size_t pixels_until_first_boundary;
+	sg_size_t pixels_after_last_boundary;
+	sg_size_t aligned_words;
+	sg_size_t i;
+	sg_bmap_data_t color;
+	sg_size_t result = 0;
+
+	pixels_until_first_boundary =
+			calc_pixels_until_first_boundary(cursor, width, cursor->shift);
+	aligned_words =
+			calc_aligned_words(cursor, width, pixels_until_first_boundary);
+	pixels_after_last_boundary =
+			calc_pixels_after_last_boundary(cursor, width, pixels_until_first_boundary, aligned_words);
+
+
+	for(i=0; i < pixels_until_first_boundary; i++){
+		color = sg_cursor_get_pixel_no_inc(cursor);
+		if( color == 0 ){
+			return result;
+		}
+		sg_cursor_inc_x(cursor);
+		result++;
+	}
+
+	for(i=0; i < aligned_words; i++){
+		if( *cursor->target != 0xffffffff ){
+			for(i=0; i < SG_PIXELS_PER_WORD(cursor->bmap); i++){
+				color = sg_cursor_get_pixel_no_inc(cursor);
+				if( color == 0 ){
+					return result;
+				}
+				sg_cursor_inc_x(cursor);
+				result++;
+			}
+		} else {
+			cursor->target++;
+			result += SG_PIXELS_PER_WORD(cursor->bmap);
+		}
+	}
+
+	for(i=0; i < pixels_after_last_boundary; i++){
+		color = sg_cursor_get_pixel_no_inc(cursor);
+		if( color == 0 ){
+			return result;
+		}
+		sg_cursor_inc_x(cursor);
+		result++;
+	}
+
+	return width;
+}
+
+
+
+void sg_cursor_get_edge_inside_word(
+		sg_cursor_t * cursor,
+		sg_cursor_t * cursor_next_row,
+		color_pair_t * last_color_pair,
+		sg_point_t * result,
+		sg_size_t pixel_count
+		){
+
+	color_pair_t color_pair;
+
+	int i;
+	for(i=0; i < pixel_count; i++){
+		color_pair.color = sg_cursor_get_pixel(cursor) != 0;
+		color_pair.color_next_row = sg_cursor_get_pixel(cursor_next_row) != 0;
+
+		if( !(last_color_pair->color == color_pair.color == last_color_pair->color_next_row) ){
+			//edges
+			result->y = 1;
+			return;
+		}
+
+		*last_color_pair = color_pair;
+		result->x++;
+	}
+
+}
+
+//positive edge 0 -> 1 transition or negative edge 1 -> 0
+sg_point_t sg_cursor_get_edge(
+		sg_cursor_t * cursor,
+		sg_size_t width
+		){
+	sg_point_t result;
+
+	sg_size_t pixels_until_first_boundary;
+	sg_size_t pixels_after_last_boundary;
+	sg_size_t aligned_words;
+	sg_size_t i;
+
+	color_pair_t color_pair;
+	color_pair_t last_color_pair;
+
+	sg_cursor_t cursor_next_row;
+
+	result.x = 0;
+	result.y = 0;
+
+	sg_cursor_copy(&cursor_next_row, cursor);
+	sg_cursor_inc_y(&cursor_next_row);
+
+	//calculate the pixels around the boundaries
+	pixels_until_first_boundary =
+			calc_pixels_until_first_boundary(cursor, width, cursor->shift);
+	aligned_words =
+			calc_aligned_words(cursor, width, pixels_until_first_boundary);
+	pixels_after_last_boundary =
+			calc_pixels_after_last_boundary(cursor, width, pixels_until_first_boundary, aligned_words);
+
+	if( pixels_until_first_boundary > 0 ){
+		last_color_pair.color
+				= sg_cursor_get_pixel(cursor) != 0;
+		last_color_pair.color_next_row
+				= sg_cursor_get_pixel(&cursor_next_row) != 0;
+		sg_cursor_get_edge_inside_word(
+					cursor,
+					&cursor_next_row,
+					&last_color_pair,
+					&result,
+					pixels_until_first_boundary - 1
+					);
+
+		if( result.y != 0 ){ return result; }
+	}
+
+	for(i=0; i < aligned_words; i++){
+		if( pixels_until_first_boundary == 0 ){
+			//no last color yet
+			last_color_pair.color = cursor->target != 0;
+			last_color_pair.color_next_row = cursor_next_row.target != 0;
+		} else {
+			color_pair.color = cursor->target != 0;
+			color_pair.color_next_row = cursor_next_row.target != 0;
+
+			if( !(last_color_pair.color == color_pair.color == last_color_pair.color_next_row) ){
+				//get edges within word
+				sg_cursor_get_edge_inside_word(
+							cursor,
+							&cursor_next_row,
+							&last_color_pair,
+							&result,
+							SG_PIXELS_PER_WORD(cursor->bmap)
+							);
+
+				return result;
+			}
+
+			last_color_pair = color_pair;
+
+			cursor->target++;
+			cursor_next_row.target++;
+		}
+	}
+
+	sg_cursor_get_edge_inside_word(
+				cursor,
+				&cursor_next_row,
+				&last_color_pair,
+				&result,
+				pixels_after_last_boundary
+				);
+
+	return result;
 }
 
 void sg_cursor_draw_pattern(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_t pattern){

@@ -55,6 +55,8 @@ const sg_api_t sg_api = {
 	.cursor_draw_pattern = sg_cursor_draw_pattern,
 	.cursor_shift_right = sg_cursor_shift_right,
 	.cursor_shift_left = sg_cursor_shift_left,
+	.cursor_find_positive_edge = sg_cursor_find_positive_edge,
+	.cursor_find_negative_edge = sg_cursor_find_negative_edge,
 
 	//drawing
 	.get_pixel = sg_get_pixel,
@@ -75,6 +77,9 @@ const sg_api_t sg_api = {
 	//animations
 	.animate = sg_animate,
 	.animate_init = sg_animate_init,
+
+	.antialias_filter_init = sg_antialias_filter_init,
+	.antialias_filter_apply = sg_antialias_filter_apply
 
 };
 
