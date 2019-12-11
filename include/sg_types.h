@@ -248,6 +248,32 @@ typedef struct MCU_PACK {
 	u32 list_offset /*! Location of the list in the file */;
 } sg_vector_icon_header_t;
 
+typedef struct {
+	u16 version;
+	u16 bits_per_pixel;
+	u16 entry_count;
+	sg_size_t icon_width;
+	sg_size_t icon_height;
+	u16 canvas_count;
+	sg_size_t canvas_width;
+	sg_size_t canvas_height;
+} sg_bitmap_icon_header_t;
+
+/*! \details Header for a file that
+ * holds vector icon descriptions.
+ *
+ * File:
+ * 0: sg_vector_path_icon_header_t
+ * X: sg_vector_path_description_t[] icon descriptors
+ * Y: sg_vector_path_icon_header_t next icon
+ *
+ */
+typedef struct MCU_PACK {
+	char name[24];
+	u16 canvas_id /*! the canvas where the icon is located */;
+	sg_point_t canvas_point /*! top left corner of the icon on the canvas */;
+} sg_bitmap_icon_entry_t;
+
 
 enum {
 	SG_ANIMATION_TYPE_PUSH_LEFT,
