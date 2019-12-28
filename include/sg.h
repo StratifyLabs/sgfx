@@ -277,10 +277,6 @@ void sg_cursor_dec_y(sg_cursor_t * cursor);
 sg_color_t sg_cursor_get_pixel(sg_cursor_t * cursor);
 sg_color_t sg_cursor_get_pixel_increment(sg_cursor_t * cursor, int x, int y);
 
-sg_point_t sg_cursor_get_edge(
-		sg_cursor_t * cursor,
-		sg_size_t width
-		);
 /*! \details Draws a pixel at the cursor's location
  * and increments the location of the pixel.
  *

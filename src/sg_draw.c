@@ -356,7 +356,7 @@ void sg_draw_rectangle(const sg_bmap_t * bmap, const sg_region_t * region){
 	if( truncate_visible(bmap, &p, &d) ){
 		sg_cursor_set(&y_cursor, bmap, p);
 		for(i=0; i < d.height; i++){
-			sg_cursor_copy(&x_cursor, &y_cursor);
+			x_cursor = y_cursor;
 			sg_cursor_draw_hline(&x_cursor, d.width);
 			sg_cursor_inc_y(&y_cursor);
 		}
