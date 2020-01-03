@@ -100,7 +100,8 @@ enum {
 	SG_PEN_FLAG_IS_XOR /*! Alias for SG_PEN_FLAG_IS_INVERT */ = SG_PEN_FLAG_IS_INVERT,
 	SG_PEN_FLAG_IS_ERASE /*! Erases the colors that are set in the pen (logical AND of inverse color) */ = (1<<2),
 	SG_PEN_FLAG_IS_AND /*! Alias for SG_PEN_FLAG_IS_ERASE */  = SG_PEN_FLAG_IS_ERASE,
-	SG_PEN_FLAG_IS_FILL /*! When drawing vector icons, this flag enables fill points specified by the icon */ = (1<<3)
+	SG_PEN_FLAG_IS_FILL /*! When drawing vector icons, this flag enables fill points specified by the icon */ = (1<<3),
+	SG_PEN_FLAG_IS_ZERO_TRANSPARENT /*! Don't draw anything if color value is zero */ = (1<<4)
 };
 
 #define SG_PEN_FLAG_NOT_SOLID_MASK (SG_PEN_FLAG_IS_BLEND|SG_PEN_FLAG_IS_INVERT|SG_PEN_FLAG_IS_ERASE)
@@ -319,7 +320,7 @@ typedef struct MCU_PACK {
 } sg_animation_t;
 
 typedef struct MCU_PACK {
-	sg_color_t contrast_map[8];
+	u8 contrast_map[8];
 } sg_antialias_filter_t;
 
 

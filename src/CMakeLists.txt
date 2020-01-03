@@ -9,4 +9,5 @@ set(SOURCES
 	${SOURCES_PREFIX}/sg_vector.c
 	${SOURCES_PREFIX}/sg_antialias_filter.c
 	${SOURCES_PREFIX}/sg.c
-  PARENT_SCOPE)
+	${SOURCES_PREFIX}/sg_config.h
+	PARENT_SCOPE)

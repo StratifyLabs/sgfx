@@ -345,6 +345,7 @@ void sg_cursor_shift_left(sg_cursor_t * cursor, sg_size_t shift_width, sg_size_t
 
 sg_int_t sg_cursor_find_positive_edge(sg_cursor_t * cursor, sg_size_t max_distance);
 sg_int_t sg_cursor_find_negative_edge(sg_cursor_t * cursor, sg_size_t max_distance);
+sg_int_t sg_cursor_find_edge(sg_cursor_t * cursor, sg_color_t current_color, sg_size_t max_distance);
 
 /*! @} */
 
@@ -536,7 +537,7 @@ int sg_animate_init(sg_animation_t * animation,
 
 int sg_antialias_filter_init(
       sg_antialias_filter_t * filter,
-      const sg_color_t contrast_data[8]
+      const u8 contrast_data[8]
 );
 
 int sg_antialias_filter_apply(
@@ -597,6 +598,7 @@ typedef struct MCU_PACK {
 
 	sg_int_t (*cursor_find_positive_edge)(sg_cursor_t * cursor, sg_size_t width);
 	sg_int_t (*cursor_find_negative_edge)(sg_cursor_t * cursor, sg_size_t width);
+	sg_int_t (*cursor_find_edge)(sg_cursor_t * cursor, sg_color_t current_color, sg_size_t width);
 
 
 	sg_color_t (*get_pixel)(const sg_bmap_t * bmap, sg_point_t p);
@@ -618,7 +620,7 @@ typedef struct MCU_PACK {
 
    int (*antialias_filter_init)(
          sg_antialias_filter_t * filter,
-         const sg_color_t contrast_data[8]
+         const u8 contrast_data[8]
    );
 
    int (*antialias_filter_apply)(
