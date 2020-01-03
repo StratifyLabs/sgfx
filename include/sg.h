@@ -542,7 +542,7 @@ int sg_antialias_filter_init(
 
 int sg_antialias_filter_apply(
       const sg_bmap_t * bmap,
-      sg_antialias_filter_t * filter,
+      const sg_antialias_filter_t * filter,
       sg_region_t region
       );
 
@@ -625,7 +625,7 @@ typedef struct MCU_PACK {
 
    int (*antialias_filter_apply)(
          const sg_bmap_t * bmap,
-         sg_antialias_filter_t * filter,
+         const sg_antialias_filter_t * filter,
          sg_region_t region
          );
 

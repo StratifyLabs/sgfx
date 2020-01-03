@@ -134,10 +134,9 @@ sg_int_t sg_cursor_find_edge(
 	pixels_after_last_boundary =
 			calc_pixels_after_last_boundary(cursor, width, pixels_until_first_boundary, aligned_words);
 
-
 	for(i=0; i < pixels_after_last_boundary; i++){
 		color = sg_cursor_get_pixel_no_increment(cursor);
-		if( color != 0 ){
+		if( color != current_color ){
 			return result;
 		}
 		sg_cursor_inc_x(cursor);
