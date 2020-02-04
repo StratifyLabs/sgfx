@@ -489,7 +489,7 @@ void sg_draw_pour(const sg_bmap_t * bmap, sg_point_t p, const sg_region_t * regi
 	if( bmap->pen.o_flags & SG_PEN_FLAG_IS_ERASE ){
 		active_color = 0;
 	} else {
-		active_color = bmap->pen.color;
+		active_color = bmap->pen.color & ((1<<SG_BITS_PER_PIXEL_VALUE(bmap)) - 1);
 	}
 
 	//limit bounds to inside the bmap
