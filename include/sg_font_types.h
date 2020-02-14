@@ -8,6 +8,7 @@
 #include <mcu/types.h>
 
 #define SG_FONT_VERSION 0x0301
+#define SG_FONT_ICON_MAX_NAME_LENGTH 47
 
 enum {
 	SG_FONT_TYPE_NONE,
@@ -83,6 +84,28 @@ typedef struct MCU_PACK {
 	u16 unicode_second;
 	s16 horizontal_kerning;
 } sg_font_kerning_pair_t;
+
+typedef struct MCU_PACK {
+	u16 version /*! Version of the font format */;
+	u16 icon_count /*! Number of characters in a font */;
+	u32 size /*! Number of bytes the header occupies (header + names) */;
+	u8 max_width /*! Max Icon width */;
+	u8 max_height /*! Max Icon height */;
+	u8 bits_per_pixel /*! Number of bits in each pixel of the font bitmap */;
+	u8 resd;
+	u16 canvas_width /*! Width of the canvas in pixels */;
+	u16 canvas_height /*! Height of the canvas in pixels */;
+} sg_font_icon_header_t;
+
+typedef struct MCU_PACK {
+	u16 id;
+	s16 canvas_x /*! X location of the character on the canvas */;
+	s16 canvas_y /*! Y location of the character on the canvas */;
+	u16 canvas_idx /*! The offset of the canvas */;
+	u16 width /*! Width of the icon */;
+	u16 height /*! Height of the icon */;
+	char name[SG_FONT_ICON_MAX_NAME_LENGTH+1];
+} sg_font_icon_t;
 
 
 #endif /* SGFX_FONT_H_ */
