@@ -4,7 +4,7 @@
 #define SG_H_
 
 #include <string.h>
-#include <mcu/types.h>
+#include <sos/api/sos_api.h>
 #include "sg_types.h"
 
 #if defined __cplusplus
@@ -528,32 +528,31 @@ int sg_animate(sg_bmap_t * bmap, sg_bmap_t * bitmap, sg_animation_t * animation)
  *
  */
 int sg_animate_init(sg_animation_t * animation,
-		u8 type,
-		u8 path,
-		u8 step_total,
-		sg_size_t motion_total,
-		sg_point_t start,
-		sg_area_t area);
+										u8 type,
+										u8 path,
+										u8 step_total,
+										sg_size_t motion_total,
+										sg_point_t start,
+										sg_area_t area);
 
 int sg_antialias_filter_init(
-      sg_antialias_filter_t * filter,
-      const u8 contrast_data[8]
+		sg_antialias_filter_t * filter,
+		const u8 contrast_data[8]
 );
 
 int sg_antialias_filter_apply(
-      const sg_bmap_t * bmap,
-      const sg_antialias_filter_t * filter,
-      sg_region_t region
-      );
+		const sg_bmap_t * bmap,
+		const sg_antialias_filter_t * filter,
+		sg_region_t region
+		);
 
 /*! @} */
 
 #define SG_API_T 1
 
 typedef struct MCU_PACK {
-	u32 version;
+	sos_api_t sos_api;
 	sg_size_t bits_per_pixel;
-    const char * git_hash;
 	void (*bmap_set_data)(sg_bmap_t * bmap, sg_bmap_data_t * mem, sg_area_t area, u8 bits_per_pixel);
 	sg_bmap_data_t * (*bmap_data)(const sg_bmap_t * bmap, sg_point_t p);
 	size_t (*calc_bmap_size)(const sg_bmap_t * bmap, sg_area_t area);
@@ -618,16 +617,16 @@ typedef struct MCU_PACK {
 	int (*animate)(sg_bmap_t * bmap, sg_bmap_t * bitmap, sg_animation_t * animation);
 	int (*animate_init)(sg_animation_t * animation, u8 type, u8 path, u8 step_total, sg_size_t motion_total, sg_point_t start, sg_area_t area);
 
-   int (*antialias_filter_init)(
-         sg_antialias_filter_t * filter,
-         const u8 contrast_data[8]
-   );
+	int (*antialias_filter_init)(
+			sg_antialias_filter_t * filter,
+			const u8 contrast_data[8]
+	);
 
-   int (*antialias_filter_apply)(
-         const sg_bmap_t * bmap,
-         const sg_antialias_filter_t * filter,
-         sg_region_t region
-         );
+	int (*antialias_filter_apply)(
+			const sg_bmap_t * bmap,
+			const sg_antialias_filter_t * filter,
+			sg_region_t region
+			);
 
 } sg_api_t;
 

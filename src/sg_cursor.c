@@ -279,7 +279,6 @@ void sg_cursor_draw_pattern(sg_cursor_t * cursor, sg_size_t width, sg_bmap_data_
 	}
 
 	for(i=0; i < aligned_words; i++){
-		//*(cursor->target++) = pattern; //assignment of new value
 		draw_pixel_group(cursor->target++, pattern, 0, o_flags);
 	}
 
@@ -310,7 +309,8 @@ void sg_cursor_draw_cursor(
 
 	sg_cursor_copy(&shift_cursor, src_cursor);
 
-	if( dest_cursor->bmap->bits_per_pixel == src_cursor->bmap->bits_per_pixel ){
+	if( (dest_cursor->bmap->bits_per_pixel == src_cursor->bmap->bits_per_pixel) &&
+			((o_flags & SG_PEN_FLAG_IS_ZERO_TRANSPARENT) == 0)){
 
 		//calculate the pixels around boundaries
 		pixels_until_first_boundary = calc_pixels_until_first_boundary(src_cursor, width, shift_cursor.shift);

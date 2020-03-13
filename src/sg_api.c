@@ -10,9 +10,12 @@
 
 
 const sg_api_t sg_api = {
-	.version = SG_VERSION,
+	.sos_api = {
+		.name = "sgfx",
+		.version = SG_VERSION,
+		.git_hash = SOS_GIT_HASH
+	},
 	.bits_per_pixel = SG_BITS_PER_PIXEL,
-	.git_hash = SOS_GIT_HASH,
 	.bmap_set_data = sg_bmap_set_data,
 	.bmap_data = sg_bmap_data,
 	.calc_bmap_size = sg_calc_bmap_size,
