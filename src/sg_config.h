@@ -1,4 +1,5 @@
-//COPYING: Copyright 2011-2020 Tyler Gilbert and Stratify Labs, Inc; see LICENSE.md for rights.
+// COPYING: Copyright 2011-2020 Tyler Gilbert and Stratify Labs, Inc; see
+// LICENSE.md for rights.
 
 #ifndef SG_CONFIG_H_
 #define SG_CONFIG_H_
@@ -18,13 +19,12 @@
 #endif
 
 #define SG_BITS_PER_WORD 32
-#define SG_BYTES_PER_WORD (SG_BITS_PER_WORD/8)
-#define SG_PIXELS_PER_WORD(bmap) (SG_BITS_PER_WORD / SG_BITS_PER_PIXEL_VALUE(bmap))
-#define SG_PIXEL_MASK(bmap) ((1<<SG_BITS_PER_PIXEL_VALUE(bmap)) - 1)
+#define SG_BYTES_PER_WORD (SG_BITS_PER_WORD / 8)
+#define SG_PIXELS_PER_WORD(bmap)                                               \
+  (SG_BITS_PER_WORD / SG_BITS_PER_PIXEL_VALUE(bmap))
+#define SG_PIXEL_MASK(bmap) ((1 << SG_BITS_PER_PIXEL_VALUE(bmap)) - 1)
 
-
-sg_color_t sg_cursor_get_pixel_no_increment(sg_cursor_t * cursor);
-void sg_cursor_draw_pixel_no_increment(sg_cursor_t * cursor);
-
+sg_color_t sg_cursor_get_pixel_no_increment(sg_cursor_t *cursor);
+void sg_cursor_draw_pixel_no_increment(sg_cursor_t *cursor);
 
 #endif /* SG_CONFIG_H_ */
